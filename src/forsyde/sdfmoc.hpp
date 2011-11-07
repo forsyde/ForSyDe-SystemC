@@ -41,7 +41,7 @@ using namespace sc_core;
 
 #define WRITE_VEC_MULTIPORT(PORT,VEC,TOKS) \
     for (int i=0;i<PORT.size();i++) \
-        for (uint j=0;j<TOKS;j++) PORT[i]->write(VEC[j]);
+        for (unsigned int j=0;j<TOKS;j++) PORT[i]->write(VEC[j]);
 
 //! Process constructor for a combinational process with one input and one output
 /*! This class is used to build combinational processes with one input
@@ -65,13 +65,13 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb(sc_module_name _name, uint itoks, uint otoks)
+    comb(sc_module_name _name, unsigned int itoks, unsigned int otoks)
          :sc_module(_name), citoks(itoks), cotoks(otoks)
     {
         SC_THREAD(worker);
     }
 private:
-    uint citoks, cotoks;
+    unsigned int citoks, cotoks;
     SC_HAS_PROCESS(comb);
 
     //! The main and only execution thread of the module
@@ -81,7 +81,7 @@ private:
         std::vector<OTYP> out_vals(cotoks);
         while (1)
         {
-            for (uint i=0;i<citoks;i++) in_vals[i] = iport.read();  // read from input
+            for (unsigned int i=0;i<citoks;i++) in_vals[i] = iport.read();  // read from input
             out_vals = _func(in_vals);// do the calculation
              WRITE_VEC_MULTIPORT(oport,out_vals,cotoks);  // write to the output
         }
@@ -111,14 +111,14 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb2(sc_module_name _name, uint i1toks, uint i2toks,
-             uint otoks)
+    comb2(sc_module_name _name, unsigned int i1toks, unsigned int i2toks,
+             unsigned int otoks)
          :sc_module(_name), ci1toks(i1toks), ci2toks(i2toks), cotoks(otoks)
     {
         SC_THREAD(worker);
     }
 private:
-    uint ci1toks, ci2toks, cotoks;
+    unsigned int ci1toks, ci2toks, cotoks;
     SC_HAS_PROCESS(comb2);
 
     //! The main and only execution thread of the module
@@ -129,8 +129,8 @@ private:
         std::vector<OTYP> out_vals(cotoks);
         while (1)
         {
-            for (uint i=0;i<ci1toks;i++) in_vals1[i] = iport1.read();  // read from input
-            for (uint i=0;i<ci2toks;i++) in_vals2[i] = iport2.read();  // read from input
+            for (unsigned int i=0;i<ci1toks;i++) in_vals1[i] = iport1.read();  // read from input
+            for (unsigned int i=0;i<ci2toks;i++) in_vals2[i] = iport2.read();  // read from input
             out_vals = _func(in_vals1, in_vals2);// do the calculation
             WRITE_VEC_MULTIPORT(oport,out_vals,cotoks);    // write to the output
         }
@@ -161,14 +161,14 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb3(sc_module_name _name, uint i1toks, uint i2toks,
-             uint i3toks, uint otoks)
+    comb3(sc_module_name _name, unsigned int i1toks, unsigned int i2toks,
+             unsigned int i3toks, unsigned int otoks)
          :sc_module(_name), ci1toks(i1toks), ci2toks(i2toks), ci3toks(i3toks), cotoks(otoks)
     {
         SC_THREAD(worker);
     }
 private:
-    uint ci1toks, ci2toks, ci3toks, cotoks;
+    unsigned int ci1toks, ci2toks, ci3toks, cotoks;
     SC_HAS_PROCESS(comb3);
 
     //! The main and only execution thread of the module
@@ -180,9 +180,9 @@ private:
         std::vector<OTYP> out_vals(cotoks);
         while (1)
         {
-            for (uint i=0;i<ci1toks;i++) in_vals1[i] = iport1.read();  // read from input
-            for (uint i=0;i<ci2toks;i++) in_vals2[i] = iport2.read();  // read from input
-            for (uint i=0;i<ci3toks;i++) in_vals3[i] = iport3.read();  // read from input
+            for (unsigned int i=0;i<ci1toks;i++) in_vals1[i] = iport1.read();  // read from input
+            for (unsigned int i=0;i<ci2toks;i++) in_vals2[i] = iport2.read();  // read from input
+            for (unsigned int i=0;i<ci3toks;i++) in_vals3[i] = iport3.read();  // read from input
             out_vals = _func(in_vals1, in_vals2, in_vals3);// do the calculation
             WRITE_VEC_MULTIPORT(oport,out_vals,cotoks);    // write to the output
         }
@@ -214,15 +214,15 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb4(sc_module_name _name, uint i1toks, uint i2toks,
-             uint i3toks, uint i4toks, uint otoks)
+    comb4(sc_module_name _name, unsigned int i1toks, unsigned int i2toks,
+             unsigned int i3toks, unsigned int i4toks, unsigned int otoks)
          :sc_module(_name), ci1toks(i1toks), ci2toks(i2toks), 
          ci3toks(i3toks), ci4toks(i4toks), cotoks(otoks)
     {
         SC_THREAD(worker);
     }
 private:
-    uint ci1toks, ci2toks, ci3toks, ci4toks, cotoks;
+    unsigned int ci1toks, ci2toks, ci3toks, ci4toks, cotoks;
     SC_HAS_PROCESS(comb4);
 
     //! The main and only execution thread of the module
@@ -235,10 +235,10 @@ private:
         std::vector<OTYP> out_vals(cotoks);
         while (1)
         {
-            for (uint i=0;i<ci1toks;i++) in_vals1[i] = iport1.read();  // read from input
-            for (uint i=0;i<ci2toks;i++) in_vals2[i] = iport2.read();  // read from input
-            for (uint i=0;i<ci3toks;i++) in_vals3[i] = iport3.read();  // read from input
-            for (uint i=0;i<ci4toks;i++) in_vals4[i] = iport4.read();  // read from input
+            for (unsigned int i=0;i<ci1toks;i++) in_vals1[i] = iport1.read();  // read from input
+            for (unsigned int i=0;i<ci2toks;i++) in_vals2[i] = iport2.read();  // read from input
+            for (unsigned int i=0;i<ci3toks;i++) in_vals3[i] = iport3.read();  // read from input
+            for (unsigned int i=0;i<ci4toks;i++) in_vals4[i] = iport4.read();  // read from input
             out_vals = _func(in_vals1, in_vals2, in_vals3, in_vals4);// do the calculation
             WRITE_VEC_MULTIPORT(oport,out_vals,cotoks);    // write to the output
         }
@@ -319,7 +319,7 @@ public:
      */
     delayn(sc_module_name _name,   ///< module (process) name
              IOTYP ival,             ///< initial value
-             uint n          ///< number of delay elements
+             unsigned int n          ///< number of delay elements
              )  // module name, init val
          :sc_module(_name), init_val(ival), ns(n)
     {
@@ -327,14 +327,14 @@ public:
     }
 private:
     IOTYP init_val;
-    uint ns;
+    unsigned int ns;
     SC_HAS_PROCESS(delayn);
 
     //! The main and only execution thread of the module
     void worker()
     {
         IOTYP in_val;
-        for (uint j=0;j<ns;j++)
+        for (unsigned int j=0;j<ns;j++)
             WRITE_MULTIPORT(oport,init_val);    // write the initial value
         while (1)
         {
@@ -533,7 +533,7 @@ public:
      * zips them together and writes the results using the output port
      */
     zipN(sc_module_name _name, ///< Module name
-         std::vector<uint> itoks
+         std::vector<unsigned int> itoks
         )
          :sc_module(_name), citoks(itoks)
     {
@@ -542,7 +542,7 @@ public:
         SC_THREAD(worker);
     }
 private:
-    std::vector<uint> citoks;
+    std::vector<unsigned int> citoks;
     SC_HAS_PROCESS(zipN);
 
     //! The main and only execution thread of the module
@@ -559,10 +559,10 @@ private:
     template<size_t N,class R, class T>
     struct fifo_read_helper
     {
-        static void read(R& ret, T& t, const std::vector<uint>& citoks)
+        static void read(R& ret, T& t, const std::vector<unsigned int>& citoks)
         {
             fifo_read_helper<N-1,R,T>::read(ret,t,citoks);
-            for (uint i=0;i<citoks[N];i++)
+            for (unsigned int i=0;i<citoks[N];i++)
                 std::get<N>(ret).push_back(std::get<N>(t).read());
         }
     };
@@ -570,16 +570,16 @@ private:
     template<class R, class T>
     struct fifo_read_helper<0,R,T>
     {
-        static void read(R& ret, T& t, const std::vector<uint>& citoks)
+        static void read(R& ret, T& t, const std::vector<unsigned int>& citoks)
         {
-            for (uint i=0;i<citoks[0];i++)
+            for (unsigned int i=0;i<citoks[0];i++)
                 std::get<0>(ret).push_back(std::get<0>(t).read());
         }
     };
 
     template<class... T>
     std::tuple<std::vector<T>...> sc_fifo_tuple_read(std::tuple<sc_fifo_in<T>...>& ports,
-                                                     const std::vector<uint>& citoks)
+                                                     const std::vector<unsigned int>& citoks)
     {
         std::tuple<std::vector<T>...> ret;
         fifo_read_helper<sizeof...(T)-1,
@@ -631,7 +631,7 @@ private:
         static void write(const R& vals, T& t)
         {
             fifo_write_helper<N-1,R,T>::write(vals,t);
-            for (uint i=0;i<(std::get<N>(vals)).size();i++)
+            for (unsigned int i=0;i<(std::get<N>(vals)).size();i++)
                 std::get<N>(t).write(std::get<N>(vals)[i]);
         }
     };
@@ -641,7 +641,7 @@ private:
     {
         static void write(const R& vals, T& t)
         {
-            for (uint i=0;i<(std::get<0>(vals)).size();i++)
+            for (unsigned int i=0;i<(std::get<0>(vals)).size();i++)
                 std::get<0>(t).write(std::get<0>(vals)[i]);
         }
     };
