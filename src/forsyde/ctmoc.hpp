@@ -267,7 +267,6 @@ protected:
  * 
  * The resulting process does not buffer anything from the signal.
  */
-template <class IOTYP>
 class delay : public sc_module
 {
 public:
@@ -308,7 +307,6 @@ private:
 /*! This class is used to build a process which shifts the shape of the
  * input signal by a given value to the right.
  */
-template <class IOTYP>
 class shift : public sc_module
 {
 public:
@@ -332,20 +330,17 @@ private:
     //! The main and only execution thread of the module
     void worker()
     {
-        SubSignal inSubSig;//, zeroSubSig;
-        //zeroSubSig = SubSignal(sc_time(0,SC_SEC),delayTime,
-        //                   [&](const sc_time& t) -> CTTYPE {return 0;});
-        //for (int i=0;i<oport.size();i++)
-        //    oport[i]->write(zeroSubSig);    // write to the output
+        SubSignal inSubSig, outSubSig;
+        WRITE_MULTIPORT(oport,SubSignal(sc_time(0,SC_SEC),delayTime,[](sc_time t){return 0;}));
         while (1)
         {
             inSubSig = iport.read();  // read from input
-            inSubSig.setRange(inSubSig.getStartT()+delayTime,
-                              inSubSig.getEndT()+delayTime);
-            inSubSig.setF([&delayTime,&inSubSig](sc_time t)->CTTYPE{
-                            return inSubSig.getF()(t-delayTime);
-                          });
-            WRITE_MULTIPORT(oport,inSubSig);    // write to the output
+            SubSignal outSubSig(inSubSig.getStartT()+delayTime,
+                                inSubSig.getEndT()+delayTime,
+                                [=](sc_time t)->CTTYPE{
+                                    return inSubSig.getF()(t-delayTime);
+                                });
+            WRITE_MULTIPORT(oport,outSubSig);    // write to the output
         }
     }
 };
