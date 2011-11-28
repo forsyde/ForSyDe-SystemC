@@ -496,7 +496,7 @@ private:
     {
         std::vector<double> num, den;
         // sizes checking
-        int nn = num_.size(), nd = den_.size();
+        int /*nn = num_.size(),*/ nd = den_.size();
         if(nn >= nd)
         {
             std::cerr << "ERROR: " << "degree(num) = " << nn
@@ -829,14 +829,13 @@ private:
     {
         SubSignal in_val;
         in_val = iport.read();
-        sc_time curTime(sc_time_stamp());
+        sc_time curTime(in_val.getStartT());
         while (1)
         {
-            curTime = sc_time_stamp();
             while (curTime > in_val.getEndT()) in_val = iport.read();
             std::cout << name() << ": value at " << curTime << " is "
                       << in_val(curTime) << std::endl;// run the function
-            wait(sampleT);
+            curTime += sampleT;
         }
     }
 
@@ -880,14 +879,13 @@ private:
         outFile << "#time " << name() << std::endl;
         SubSignal in_val;
         in_val = iport.read();
-        sc_time curTime(sc_time_stamp());
+        sc_time curTime(in_val.getStartT());
         while (1)
         {
-            curTime = sc_time_stamp();
             while (curTime > in_val.getEndT()) in_val = iport.read();
             outFile << curTime.to_seconds() << " " << in_val(curTime)
                     << std::endl;
-            wait(sampleT);
+            curTime += sampleT;
         }
         outFile.close();
     }
@@ -940,10 +938,9 @@ private:
         SubSignal in_val[iport.size()];
         for (int i=0;i<iport.size();i++)
             in_val[i] = iport[i]->read();
-        sc_time curTime(sc_time_stamp());
+        sc_time curTime(in_val[0].getStartT());
         while (1)
         {
-            curTime = sc_time_stamp();
             for (int i=0;i<iport.size();i++)
                 while (curTime > in_val[i].getEndT())
                     in_val[i] = iport[i]->read();
@@ -952,7 +949,7 @@ private:
             for (int i=0;i<iport.size();i++)
                 outFile << " " << in_val[i](curTime);
             outFile << std::endl;
-            wait(sampleT);
+            curTime += sampleT;
         }
         outFile.close();
     }
