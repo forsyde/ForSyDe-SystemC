@@ -22,7 +22,7 @@
  * files of the library are re-exported from here.
  */
 
-//include utility libraries
+// include utility libraries
 #include "forsyde/prettyprint.hpp"
 
 // include the main SystemC library
@@ -30,6 +30,7 @@
 
 // include different MoCs
 #include "forsyde/symoc.hpp"
+#include "forsyde/sylib.hpp"
 #include "forsyde/sdfmoc.hpp"
 #include "forsyde/democ.hpp"
 #include "forsyde/ctmoc.hpp"
