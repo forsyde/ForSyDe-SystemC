@@ -82,7 +82,7 @@ SC_MODULE(SY2CT)
 			{
 				CTTYPE v = currentVal - previousVal;
 
-				subSig.setF([&](sc_time t)->CTTYPE{
+				subSig.setF([=](sc_time t)->CTTYPE{
                         return (v * (t-i*sampT2)/sampT2 + previousVal);
 				});
 			}
@@ -118,57 +118,18 @@ SC_MODULE(CT2SY)
 
     void worker() 
     {
-        sc_time samplingT(0,SC_SEC);
-        for(int i=0; ;i++)
+        CT::SubSignal in_val;
+        in_val = iport.read();
+        sc_time curTime(in_val.getStartT());
+        while (1)
         {
-            if (i==0)
-                f = iport.read();
-			//~ cout << " start time: " << f.getStartT() << endl;
-			//~ cout << " end time: " << f.getEndT() << endl;
-			//~ cout << " samplingT: " << samplingT << endl;
-			//~ cout << endl;
-			
-            if( (samplingT >= f.getStartT()) && (samplingT < f.getEndT()) )
-            {
-                //~ cout << " Case 1 " << endl;
-				//~ cout << " Writing " << f.getF()(samplingT) << endl;
-				//~ cout << endl;
-                WRITE_MULTIPORT(oport,f.getF()(samplingT));
-			}
-            else if (samplingT >= f.getEndT())
-            {
-				//~ cout << " Case 2 " << endl;
-				//~ cout << endl;
-				f = iport.read();
-                if ( (samplingT >= f.getStartT()) && (samplingT < f.getEndT()) )
-                {
-                    //~ cout << " Case 3 " << endl;
-					//~ cout << " Writing " << f.getF()(samplingT) << endl;
-					//~ cout << endl;
-                    WRITE_MULTIPORT(oport,f.getF()(samplingT));
-                }
-                else
-                {
-					//~ cout << " Case 4 " << endl;
-					//~ cout << " Writing " << f.getF()(samplingT) << endl;
-					//~ cout << endl;
-                    while(samplingT >= f.getEndT())
-                        f = iport.read();
-                    WRITE_MULTIPORT(oport,f.getF()(samplingT));
-                }
-            }
-            else
-            {
-				//~ cout << " Case 5 " << endl;
-				//~ cout << endl;
-				assert(0);
-            }
-            samplingT += sampT;
+            while (curTime > in_val.getEndT()) in_val = iport.read();
+            WRITE_MULTIPORT(oport,in_val(curTime));// run the function
+            curTime += sampT;
         }
     }
 
 private:
-    CT::SubSignal f;
     sc_time sampT;
 };
 
