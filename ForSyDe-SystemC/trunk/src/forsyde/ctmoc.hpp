@@ -496,7 +496,7 @@ private:
     {
         std::vector<double> num, den;
         // sizes checking
-        int /*nn = num_.size(),*/ nd = den_.size();
+        int nn = num_.size(), nd = den_.size();
         if(nn >= nd)
         {
             std::cerr << "ERROR: " << "degree(num) = " << nn
