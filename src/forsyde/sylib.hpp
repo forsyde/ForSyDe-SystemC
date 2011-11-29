@@ -13,7 +13,7 @@
 #ifndef SYLIB_H
 #define SYLIB_H
 
-#include "symoc.h"
+#include "symoc.hpp"
 
 namespace ForSyDe
 {
