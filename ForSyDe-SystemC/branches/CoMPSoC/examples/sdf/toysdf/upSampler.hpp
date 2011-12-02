@@ -22,6 +22,7 @@ class upSampler : public comb<float,float>
 public:
     upSampler(sc_module_name _name) : comb<float,float>(_name,1,2){}
 protected:
+#pragma ForSyDe begin upSampler_func
     std::vector<float> _func(std::vector<float> a)
     {
       std::vector<float> ret(2);
@@ -29,6 +30,7 @@ protected:
       ret[1] = a[0];
       return ret;
     }
+#pragma ForSyDe end
 };
 
 #endif

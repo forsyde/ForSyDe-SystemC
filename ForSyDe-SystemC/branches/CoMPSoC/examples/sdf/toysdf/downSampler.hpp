@@ -22,6 +22,7 @@ class downSampler : public comb<float,float>
 public:
     downSampler(sc_module_name _name) : comb<float,float>(_name,3,2){}
 protected:
+#pragma ForSyDe begin downSampler_func
     std::vector<float> _func(std::vector<float> a)
     {
       std::vector<float> ret(2);
@@ -29,6 +30,7 @@ protected:
       ret[1] = a[1];
       return ret;
     }
+#pragma ForSyDe end
 };
 
 #endif
