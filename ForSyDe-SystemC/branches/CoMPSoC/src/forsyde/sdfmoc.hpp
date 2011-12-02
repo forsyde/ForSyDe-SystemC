@@ -43,6 +43,81 @@ using namespace sc_core;
     for (int i=0;i<PORT.size();i++) \
         for (unsigned int j=0;j<TOKS;j++) PORT[i]->write(VEC[j]);
 
+//! This type is used in the process base class to store structural information
+struct PortInfo
+{
+    sc_object* port;
+    unsigned toks;
+    std::vector<sc_object*> boundChans;
+};
+
+//! A helper class used to provide interface for accessing size of the signal elements
+class SDF2SDF_Size
+{
+public:
+    virtual unsigned tokenSize() = 0;
+};
+
+//! The SDF signal used to inter-connect SDF processes
+template <class T>
+class SDF2SDF: public sc_fifo<T>, public SDF2SDF_Size
+{
+public:
+    virtual unsigned tokenSize()
+    {
+        return sizeof(T);
+    }
+};
+
+//! Base class for all process constructors in the SDF MoC
+/*! It captures the requirements of a typical ForSyDe process as a
+ * sc_module.
+ */
+class process: public sc_module
+{
+public:
+    //! Token rates associated to the input ports
+    std::vector<unsigned> itoks;
+    //! Token rates associated to the output ports
+    std::vector<unsigned> otoks;
+    //! Pointers to the input ports and their bound channels
+    std::vector<PortInfo> boundInChans;
+    //! Pointers to the output ports and their bound channels
+    std::vector<PortInfo> boundOutChans;
+    
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * processes them and writes the results using the output port.
+     */
+    process(sc_module_name _name): sc_module(_name)
+    {
+        SC_THREAD(worker);
+    }
+    
+    //! The ForSyDe process type rprsented by the current module
+    virtual char* ForSyDe_kind() = 0;
+    
+protected:
+    //! The main and only execution thread of the module
+    virtual void worker() = 0;
+    
+    //! This method is called during end_of_elaboration to gather binded channels information
+    /*! This function should save the pointers to all of the channels
+     * objects bound to the input and output channels in boundInChans
+     * and boundOutChans respectively
+     */
+    virtual void bindInfo() = 0;
+
+private:
+    SC_HAS_PROCESS(process);
+    
+    void end_of_elaboration()
+    {
+        bindInfo();
+    }
+};
+
+
 //! Process constructor for a combinational process with one input and one output
 /*! This class is used to build combinational processes with one input
  * and one output. The class is parameterized for input and output
@@ -54,7 +129,7 @@ using namespace sc_core;
  * the output on each evaluation cycle.
  */
 template <class ITYP, class OTYP>
-class comb : public sc_module
+class comb : public process
 {
 public:
     sc_fifo_in<ITYP>  iport;        ///< port for the input channel
@@ -65,26 +140,45 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb(sc_module_name _name, unsigned int itoks, unsigned int otoks)
-         :sc_module(_name), citoks(itoks), cotoks(otoks)
+    comb(sc_module_name _name,
+         unsigned inToks,
+         unsigned outToks
+        ):process(_name)
     {
-        SC_THREAD(worker);
+        itoks.push_back(inToks);
+        otoks.push_back(outToks);
     }
+    
+    char* ForSyDe_kind() {return "SDF::comb";};
+    
 private:
-    unsigned int citoks, cotoks;
-    SC_HAS_PROCESS(comb);
 
     //! The main and only execution thread of the module
     void worker()
     {
-        std::vector<ITYP> in_vals(citoks);
-        std::vector<OTYP> out_vals(cotoks);
+        std::vector<ITYP> in_vals(itoks[0]);
+        std::vector<OTYP> out_vals(otoks[0]);
         while (1)
         {
-            for (unsigned int i=0;i<citoks;i++) in_vals[i] = iport.read();  // read from input
+            // read from input
+            for (unsigned i=0;i<itoks[0];i++) in_vals[i] = iport.read();
             out_vals = _func(in_vals);// do the calculation
-             WRITE_VEC_MULTIPORT(oport,out_vals,cotoks);  // write to the output
+             WRITE_VEC_MULTIPORT(oport,out_vals,otoks[0]);  // write to the output
         }
+    }
+    
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport;
+        boundInChans[0].toks = itoks[0];
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = otoks[0];
+        for (int i=0;i<iport.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 
 protected:
@@ -99,7 +193,7 @@ protected:
 /*! similar to comb with two inputs
  */
 template <class I1TYP, class I2TYP, class OTYP>
-class comb2 : public sc_module
+class comb2 : public process
 {
 public:
     sc_fifo_in<I1TYP> iport1;       ///< port for the input channel 1
@@ -111,29 +205,53 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb2(sc_module_name _name, unsigned int i1toks, unsigned int i2toks,
-             unsigned int otoks)
-         :sc_module(_name), ci1toks(i1toks), ci2toks(i2toks), cotoks(otoks)
+    comb2(sc_module_name _name,
+          unsigned in1Toks,
+          unsigned in2Toks,
+          unsigned outToks
+         ):process(_name)
     {
-        SC_THREAD(worker);
+        itoks.push_back(in1Toks);
+        itoks.push_back(in2Toks);
+        otoks.push_back(outToks);
     }
+    
+    char* ForSyDe_kind() {return "SDF::comb2";};
+    
 private:
-    unsigned int ci1toks, ci2toks, cotoks;
-    SC_HAS_PROCESS(comb2);
 
     //! The main and only execution thread of the module
     void worker()
     {
-        std::vector<I1TYP> in_vals1(ci1toks);
-        std::vector<I2TYP> in_vals2(ci2toks);
-        std::vector<OTYP> out_vals(cotoks);
+        std::vector<I1TYP> in_vals1(itoks[0]);
+        std::vector<I2TYP> in_vals2(itoks[1]);
+        std::vector<OTYP> out_vals(otoks[0]);
         while (1)
         {
-            for (unsigned int i=0;i<ci1toks;i++) in_vals1[i] = iport1.read();  // read from input
-            for (unsigned int i=0;i<ci2toks;i++) in_vals2[i] = iport2.read();  // read from input
+            // read from inputs
+            for (unsigned i=0;i<itoks[0];i++) in_vals1[i] = iport1.read();
+            for (unsigned i=0;i<itoks[1];i++) in_vals2[i] = iport2.read();
             out_vals = _func(in_vals1, in_vals2);// do the calculation
-            WRITE_VEC_MULTIPORT(oport,out_vals,cotoks);    // write to the output
+            WRITE_VEC_MULTIPORT(oport,out_vals,otoks[0]);    // write to the output
         }
+    }
+    
+    void bindInfo()
+    {
+        boundInChans.resize(2);     // two input ports
+        boundInChans[0].port = &iport1;
+        boundInChans[0].toks = itoks[0];
+        boundInChans[1].port = &iport2;
+        boundInChans[1].toks = itoks[1];
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = otoks[0];
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+        for (int i=0;i<iport2.size();i++)
+            boundInChans[1].boundChans.push_back(dynamic_cast<sc_object*>(iport2[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 
 protected:
@@ -148,7 +266,7 @@ protected:
 /*! similar to comb with three inputs
  */
 template <class I1TYP, class I2TYP, class I3TYP, class OTYP>
-class comb3 : public sc_module
+class comb3 : public process
 {
 public:
     sc_fifo_in<I1TYP> iport1;       ///< port for the input channel 1
@@ -161,31 +279,61 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb3(sc_module_name _name, unsigned int i1toks, unsigned int i2toks,
-             unsigned int i3toks, unsigned int otoks)
-         :sc_module(_name), ci1toks(i1toks), ci2toks(i2toks), ci3toks(i3toks), cotoks(otoks)
+    comb3(sc_module_name _name,
+          unsigned in1Toks,
+          unsigned in2Toks,
+          unsigned in3Toks,
+          unsigned int outToks
+         ):process(_name)
     {
-        SC_THREAD(worker);
+        itoks.push_back(in1Toks);
+        itoks.push_back(in2Toks);
+        itoks.push_back(in3Toks);
+        otoks.push_back(outToks);
     }
+    
+    char* ForSyDe_kind() {return "SDF::comb3";};
+    
 private:
-    unsigned int ci1toks, ci2toks, ci3toks, cotoks;
-    SC_HAS_PROCESS(comb3);
 
     //! The main and only execution thread of the module
     void worker()
     {
-        std::vector<I1TYP> in_vals1(ci1toks);
-        std::vector<I2TYP> in_vals2(ci2toks);
-        std::vector<I3TYP> in_vals3(ci3toks);
-        std::vector<OTYP> out_vals(cotoks);
+        std::vector<I1TYP> in_vals1(itoks[0]);
+        std::vector<I2TYP> in_vals2(itoks[1]);
+        std::vector<I3TYP> in_vals3(itoks[2]);
+        std::vector<OTYP> out_vals(otoks[3]);
         while (1)
         {
-            for (unsigned int i=0;i<ci1toks;i++) in_vals1[i] = iport1.read();  // read from input
-            for (unsigned int i=0;i<ci2toks;i++) in_vals2[i] = iport2.read();  // read from input
-            for (unsigned int i=0;i<ci3toks;i++) in_vals3[i] = iport3.read();  // read from input
+            // read from inputs
+            for (unsigned i=0;i<itoks[0];i++) in_vals1[i] = iport1.read();
+            for (unsigned i=0;i<itoks[1];i++) in_vals2[i] = iport2.read();
+            for (unsigned i=0;i<itoks[2];i++) in_vals3[i] = iport3.read();
             out_vals = _func(in_vals1, in_vals2, in_vals3);// do the calculation
-            WRITE_VEC_MULTIPORT(oport,out_vals,cotoks);    // write to the output
+            WRITE_VEC_MULTIPORT(oport,out_vals,otoks[0]);    // write to the output
         }
+    }
+    
+    void bindInfo()
+    {
+        boundInChans.resize(3);     // three input ports
+        boundInChans[0].port = &iport1;
+        boundInChans[0].toks = itoks[0];
+        boundInChans[1].port = &iport2;
+        boundInChans[1].toks = itoks[1];
+        boundInChans[2].port = &iport3;
+        boundInChans[2].toks = itoks[2];
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = otoks[0];
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+        for (int i=0;i<iport2.size();i++)
+            boundInChans[1].boundChans.push_back(dynamic_cast<sc_object*>(iport2[i]));
+        for (int i=0;i<iport3.size();i++)
+            boundInChans[2].boundChans.push_back(dynamic_cast<sc_object*>(iport3[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 
 protected:
@@ -200,7 +348,7 @@ protected:
 /*! similar to comb with three inputs
  */
 template <class I1TYP, class I2TYP, class I3TYP, class I4TYP,class OTYP>
-class comb4 : public sc_module
+class comb4 : public process
 {
 public:
     sc_fifo_in<I1TYP> iport1;       ///< port for the input channel 1
@@ -214,34 +362,69 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb4(sc_module_name _name, unsigned int i1toks, unsigned int i2toks,
-             unsigned int i3toks, unsigned int i4toks, unsigned int otoks)
-         :sc_module(_name), ci1toks(i1toks), ci2toks(i2toks), 
-         ci3toks(i3toks), ci4toks(i4toks), cotoks(otoks)
+    comb4(sc_module_name _name,
+          unsigned in1Toks,
+          unsigned in2Toks,
+          unsigned in3Toks,
+          unsigned in4Toks,
+          unsigned outToks
+         ):process(_name)
     {
-        SC_THREAD(worker);
+        itoks.push_back(in1Toks);
+        itoks.push_back(in2Toks);
+        itoks.push_back(in3Toks);
+        itoks.push_back(in4Toks);
+        otoks.push_back(outToks);
     }
+    
+    char* ForSyDe_kind() {return "SDF::comb4";};
+    
 private:
-    unsigned int ci1toks, ci2toks, ci3toks, ci4toks, cotoks;
-    SC_HAS_PROCESS(comb4);
 
     //! The main and only execution thread of the module
     void worker()
     {
-        std::vector<I1TYP> in_vals1(ci1toks);
-        std::vector<I2TYP> in_vals2(ci2toks);
-        std::vector<I3TYP> in_vals3(ci3toks);
-        std::vector<I4TYP> in_vals4(ci4toks);
-        std::vector<OTYP> out_vals(cotoks);
+        std::vector<I1TYP> in_vals1(itoks[0]);
+        std::vector<I2TYP> in_vals2(itoks[1]);
+        std::vector<I3TYP> in_vals3(itoks[2]);
+        std::vector<I4TYP> in_vals4(itoks[3]);
+        std::vector<OTYP> out_vals(otoks[0]);
         while (1)
         {
-            for (unsigned int i=0;i<ci1toks;i++) in_vals1[i] = iport1.read();  // read from input
-            for (unsigned int i=0;i<ci2toks;i++) in_vals2[i] = iport2.read();  // read from input
-            for (unsigned int i=0;i<ci3toks;i++) in_vals3[i] = iport3.read();  // read from input
-            for (unsigned int i=0;i<ci4toks;i++) in_vals4[i] = iport4.read();  // read from input
+            // read from inputs
+            for (unsigned int i=0;i<itoks[0];i++) in_vals1[i] = iport1.read();
+            for (unsigned int i=0;i<itoks[1];i++) in_vals2[i] = iport2.read();
+            for (unsigned int i=0;i<itoks[2];i++) in_vals3[i] = iport3.read();
+            for (unsigned int i=0;i<itoks[3];i++) in_vals4[i] = iport4.read();
             out_vals = _func(in_vals1, in_vals2, in_vals3, in_vals4);// do the calculation
-            WRITE_VEC_MULTIPORT(oport,out_vals,cotoks);    // write to the output
+            WRITE_VEC_MULTIPORT(oport,out_vals,otoks[0]);    // write to the output
         }
+    }
+    
+    void bindInfo()
+    {
+        boundInChans.resize(4);     // four input ports
+        boundInChans[0].port = &iport1;
+        boundInChans[0].toks = itoks[0];
+        boundInChans[1].port = &iport2;
+        boundInChans[1].toks = itoks[1];
+        boundInChans[2].port = &iport3;
+        boundInChans[2].toks = itoks[2];
+        boundInChans[3].port = &iport4;
+        boundInChans[3].toks = itoks[3];
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = otoks[0];
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+        for (int i=0;i<iport2.size();i++)
+            boundInChans[1].boundChans.push_back(dynamic_cast<sc_object*>(iport2[i]));
+        for (int i=0;i<iport3.size();i++)
+            boundInChans[2].boundChans.push_back(dynamic_cast<sc_object*>(iport3[i]));
+        for (int i=0;i<iport4.size();i++)
+            boundInChans[3].boundChans.push_back(dynamic_cast<sc_object*>(iport4[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 
 protected:
@@ -264,7 +447,7 @@ protected:
  * feedback loops since combinational loops are forbidden in ForSyDe.
  */
 template <class IOTYP>
-class delay : public sc_module
+class delay : public process
 {
 public:
     sc_fifo_in<IOTYP>  iport;        ///< port for the input channel
@@ -275,14 +458,18 @@ public:
      * data from its input port, and writes the results using the output
      * port.
      */
-    delay(sc_module_name _name, IOTYP ival)  // module name, init val
-         :sc_module(_name), init_val(ival)
+    delay(sc_module_name _name,
+          IOTYP ival
+         ):process(_name), init_val(ival)
     {
-        SC_THREAD(worker);
+        
     }
-private:
+    
+    char* ForSyDe_kind() {return "SDF::delay";};
+    
     IOTYP init_val;
-    SC_HAS_PROCESS(delay);
+    
+private:
 
     //! The main and only execution thread of the module
     void worker()
@@ -295,6 +482,20 @@ private:
             WRITE_MULTIPORT(oport,in_val);    // write to the output
         }
     }
+    
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input ports
+        boundInChans[0].port = &iport;
+        boundInChans[0].toks = 1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = 1;
+        for (int i=0;i<iport.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
 };
 
 //! Process constructor for a n-delay element
@@ -306,7 +507,7 @@ private:
  * parameterized for its input/output data-types.
  */
 template <class IOTYP>
-class delayn : public sc_module
+class delayn : public process
 {
 public:
     sc_fifo_in<IOTYP>  iport;        ///< port for the input channel
@@ -317,18 +518,21 @@ public:
      * reads data from its input port, and writes the results using the
      * output port.
      */
-    delayn(sc_module_name _name,   ///< module (process) name
-             IOTYP ival,             ///< initial value
-             unsigned int n          ///< number of delay elements
-             )  // module name, init val
-         :sc_module(_name), init_val(ival), ns(n)
+    delayn(sc_module_name _name,    ///< module (process) name
+             IOTYP ival,            ///< initial value
+             unsigned n             ///< number of delay elements
+          ):process(_name), init_val(ival), ns(n)
     {
-        SC_THREAD(worker);
+        
     }
-private:
+    
+    char* ForSyDe_kind() {return "SDF::delayn";};
+    
     IOTYP init_val;
+    
     unsigned int ns;
-    SC_HAS_PROCESS(delayn);
+    
+private:
 
     //! The main and only execution thread of the module
     void worker()
@@ -342,6 +546,20 @@ private:
             WRITE_MULTIPORT(oport,in_val);    // write to the output
         }
     }
+    
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input ports
+        boundInChans[0].port = &iport;
+        boundInChans[0].toks = 1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = 1;
+        for (int i=0;i<iport.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
 };
 
 //! Process constructor for a constant source process
@@ -351,7 +569,7 @@ private:
  * This class can directly be instantiated to build a process.
  */
 template <class OTYP>
-class constant : public sc_module
+class constant : public process
 {
 public:
     sc_fifo_out<OTYP> oport;     ///< port for the output channel
@@ -360,15 +578,18 @@ public:
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * and writes the result using the output port
      */
-    constant(sc_module_name _name, OTYP val)  // module name and const val
-         :sc_module(_name), cval(val)
+    constant(sc_module_name _name,
+             OTYP val
+            ):process(_name), cval(val)
     {
         
-        SC_THREAD(worker);
     }
-private:
+    
+    char* ForSyDe_kind() {return "SDF::constant";};
+    
     OTYP cval;
-    SC_HAS_PROCESS(constant);
+    
+private:
 
     //! The main and only execution thread of the module
     void worker()
@@ -377,6 +598,15 @@ private:
         {
             WRITE_MULTIPORT(oport,cval);    // write to the output
         }
+    }
+    
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = 1;
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 };
 
@@ -392,7 +622,7 @@ private:
  * produce an output.
  */
 template <class OTYP>
-class source : public sc_module
+class source : public process
 {
 public:
     sc_fifo_out<OTYP> oport;     ///< port for the output channel
@@ -403,14 +633,16 @@ public:
      */
     source(sc_module_name _name,   ///< The module name
              OTYP ist                ///< Initial state
-            )
-         :sc_module(_name), init_st(ist)
+          ):process(_name), init_st(ist)
     {
-        SC_THREAD(worker);
+        
     }
-private:
+    
+    char* ForSyDe_kind() {return "SDF::source";};
+    
     OTYP init_st;
-    SC_HAS_PROCESS(source);
+    
+private:
 
     //! The main and only execution thread of the module
     void worker()
@@ -422,6 +654,15 @@ private:
             st_val = _func(st_val);        // produce a new value
             WRITE_MULTIPORT(oport,st_val);    // write to the output
         }
+    }
+    
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = 1;
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 
 protected:
@@ -438,7 +679,7 @@ protected:
  * of the vector and outputs one value on each evaluation cycle.
  */
 template <class OTYP>
-class vsource : public sc_module
+class vsource : public process
 {
 public:
     sc_fifo_out<OTYP> oport;     ///< port for the output channel
@@ -449,14 +690,16 @@ public:
      */
     vsource(sc_module_name _name,           ///< The module name
             const std::vector<OTYP>& invec  ///< Initial vector
-            )
-         :sc_module(_name), in_vec(invec)
+           ):process(_name), in_vec(invec)
     {
-        SC_THREAD(worker);
+        
     }
-private:
+    
+    char* ForSyDe_kind() {return "SDF::vsource";};
+    
     std::vector<OTYP> in_vec;
-    SC_HAS_PROCESS(vsource);
+    
+private:
 
     //! The main and only execution thread of the module
     void worker()
@@ -467,6 +710,15 @@ private:
             OTYP out_val = *itr;
             WRITE_MULTIPORT(oport,out_val);    // write to the output
         }
+    }
+    
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = 1;
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 };
 
@@ -480,7 +732,7 @@ private:
  * the received input.
  */
 template <class ITYP>
-class sink : public sc_module
+class sink : public process
 {
 public:
     sc_fifo_in<ITYP> iport;         ///< port for the input channel
@@ -489,13 +741,14 @@ public:
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * in each cycle.
      */
-    sink(sc_module_name _name)  // module name
-         :sc_module(_name)
+    sink(sc_module_name _name
+        ):process(_name)
     {
-        SC_THREAD(worker);
+        
     }
+    
+    char* ForSyDe_kind() {return "SDF::sink";};
 private:
-    SC_HAS_PROCESS(sink);
 
     //! The main and only execution thread of the module
     void worker()
@@ -506,6 +759,15 @@ private:
             in_val = iport.read();
             _func(in_val);       // run the function
         }
+    }
+    
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input ports
+        boundInChans[0].port = &iport;
+        boundInChans[0].toks = 1;
+        for (int i=0;i<iport.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
     }
 
 protected:
@@ -520,7 +782,7 @@ protected:
 /*! This process "zips" the incoming signals into one signal of tuples.
  */
 template <class... ITYPs>
-class zipN : public sc_module
+class zipN : public process
 {
 public:
     std::tuple <sc_fifo_in<ITYPs>...> iport;///< tuple of ports for the input channels
@@ -533,17 +795,17 @@ public:
      * zips them together and writes the results using the output port
      */
     zipN(sc_module_name _name, ///< Module name
-         std::vector<unsigned int> itoks
-        )
-         :sc_module(_name), citoks(itoks)
+         std::vector<unsigned> inToks
+        ):process(_name)
     {
-        if (itoks.size()!=sizeof...(ITYPs))
+        if (inToks.size()!=sizeof...(ITYPs))
             SC_REPORT_ERROR(name(),"Wrong number of consumption rates provided");
-        SC_THREAD(worker);
+        itoks.assign(inToks.begin(),inToks.end());
     }
+    
+    char* ForSyDe_kind() {return "SDF::zipN";};
+    
 private:
-    std::vector<unsigned int> citoks;
-    SC_HAS_PROCESS(zipN);
 
     //! The main and only execution thread of the module
     void worker()
@@ -551,18 +813,31 @@ private:
         std::tuple<std::vector<ITYPs>...> in_vals;
         while (1)
         {
-            in_vals = sc_fifo_tuple_read<ITYPs...>(iport, citoks);
+            in_vals = sc_fifo_tuple_read<ITYPs...>(iport, itoks);
             WRITE_MULTIPORT(oport,in_vals);    // write to the output
         }
+    }
+    
+    void bindInfo()
+    {
+        //~ boundInChans.resize(sizeof...(ITYPS));
+        boundOutChans.resize(1);
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = 1;
+        //~ for (int j=0;j<sizeof...(ITYPS);j++)
+            //~ for (int i=0;i<iport.size();i++)
+                //~ boundInChans[0].push_back(dynamic_cast<sc_object*>(iport[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
     
     template<size_t N,class R, class T>
     struct fifo_read_helper
     {
-        static void read(R& ret, T& t, const std::vector<unsigned int>& citoks)
+        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
         {
-            fifo_read_helper<N-1,R,T>::read(ret,t,citoks);
-            for (unsigned int i=0;i<citoks[N];i++)
+            fifo_read_helper<N-1,R,T>::read(ret,t,itoks);
+            for (unsigned int i=0;i<itoks[N];i++)
                 std::get<N>(ret).push_back(std::get<N>(t).read());
         }
     };
@@ -570,21 +845,21 @@ private:
     template<class R, class T>
     struct fifo_read_helper<0,R,T>
     {
-        static void read(R& ret, T& t, const std::vector<unsigned int>& citoks)
+        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
         {
-            for (unsigned int i=0;i<citoks[0];i++)
+            for (unsigned int i=0;i<itoks[0];i++)
                 std::get<0>(ret).push_back(std::get<0>(t).read());
         }
     };
 
     template<class... T>
     std::tuple<std::vector<T>...> sc_fifo_tuple_read(std::tuple<sc_fifo_in<T>...>& ports,
-                                                     const std::vector<unsigned int>& citoks)
+                                                     const std::vector<unsigned int>& itoks)
     {
         std::tuple<std::vector<T>...> ret;
         fifo_read_helper<sizeof...(T)-1,
                          std::tuple<std::vector<T>...>,
-                         std::tuple<sc_fifo_in<T>...>>::read(ret,ports,citoks);
+                         std::tuple<sc_fifo_in<T>...>>::read(ret,ports,itoks);
         return ret;
     }
 
@@ -594,7 +869,7 @@ private:
 /*! This process "unzips" the incoming signal into a tuple of signals.
  */
 template <class... ITYPs>
-class unzipN : public sc_module
+class unzipN : public process
 {
 public:
     sc_fifo_in<std::tuple<
@@ -606,13 +881,15 @@ public:
     /*! It creates an SC_THREAD which reads data from its input port,
      * unzips it and writes the results using the output ports
      */
-    unzipN(sc_module_name _name)
-          :sc_module(_name)
+    unzipN(sc_module_name _name
+          ):process(_name)
     {
-        SC_THREAD(worker);
+        
     }
+    
+    char* ForSyDe_kind() {return "SDF::unzipN";};
+    
 private:
-    SC_HAS_PROCESS(unzipN);
 
     //! The main and only execution thread of the module
     void worker()
@@ -624,6 +901,16 @@ private:
             sc_fifo_tuple_write<ITYPs...>(in_vals, oport);
         }
     }
+    
+    //~ void bindInfo()
+    //~ {
+        //~ boundInChans.resize(1);     // only one input ports
+        //~ boundOutChans.resize(1);    // only one output port
+        //~ for (int i=0;i<iport.size();i++)
+            //~ boundInChans[0].push_back(dynamic_cast<sc_object*>(iport[i]));
+        //~ for (int i=0;i<oport.size();i++)
+            //~ boundOutChans[0].push_back(dynamic_cast<sc_object*>(oport[i]));
+    //~ }
     
     template<size_t N,class R,  class T>
     struct fifo_write_helper
@@ -668,7 +955,7 @@ private:
  * port of a module to the input channels of multiple processes (modules).
  */
 template <class IOTYP>
-class fanout : public sc_module
+class fanout : public process
 {
 public:
     sc_fifo_in<IOTYP> iport;        ///< port for the input channel
@@ -678,13 +965,15 @@ public:
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies and writes the results using the output port
      */
-    fanout(sc_module_name _name)  // module name
-         :sc_module(_name)
+    fanout(sc_module_name _name
+          ):process(_name)
     {
-        SC_THREAD(worker);
+        
     }
+    
+    char* ForSyDe_kind() {return "SDF::fanout";};
+    
 private:
-    SC_HAS_PROCESS(fanout);
 
     //! The main and only execution thread of the module
     void worker()
@@ -697,6 +986,20 @@ private:
             out_val = in_val;        // same output
             WRITE_MULTIPORT(oport,out_val);    // write to the output
         }
+    }
+    
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input ports
+        boundInChans[0].port = &iport;
+        boundInChans[0].toks = 1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].toks = 1;
+        for (int i=0;i<iport.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 
 };
