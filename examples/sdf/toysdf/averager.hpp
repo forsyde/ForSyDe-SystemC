@@ -22,6 +22,7 @@ class averager : public comb2<float,float,float>
 public:
     averager(sc_module_name _name) : comb2<float,float,float>(_name,3,2,2){}
 protected:
+#pragma ForSyDe begin averager_func
     std::vector<float> _func(std::vector<float> a, std::vector<float> b)
     {
       std::vector<float> ret(2);
@@ -29,6 +30,7 @@ protected:
       ret[1] = (a[1]+a[2]+b[1])/3;
       return ret;
     }
+#pragma ForSyDe end
 };
 
 #endif

@@ -25,17 +25,17 @@ SC_MODULE(compAvg)
     sc_fifo_in<float>  iport;
     sc_fifo_out<float> oport;
     
-    averager avg1;
+    averager averager1;
     delayn<float> avginit;
     
-    sc_fifo<float> din, dout;
+    SDF2SDF<float> din, dout;
     
-    SC_CTOR(compAvg): avg1("avg1"), avginit("avginit1",0,2)
+    SC_CTOR(compAvg): averager1("averager1"), avginit("avginit1",0,2)
     {
-        avg1.iport1(iport);
-        avg1.iport2(dout);
-        avg1.oport(oport);
-        avg1.oport(din);
+        averager1.iport1(iport);
+        averager1.iport2(dout);
+        averager1.oport(oport);
+        averager1.oport(din);
         
         avginit.iport(din);
         avginit.oport(dout);
