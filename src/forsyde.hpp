@@ -38,4 +38,7 @@
 
 #include "forsyde/dis.hpp"
 
+// include various back-ends
+#include "forsyde/xml.hpp"
+
 #endif
