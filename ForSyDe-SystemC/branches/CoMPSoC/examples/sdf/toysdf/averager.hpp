@@ -15,22 +15,12 @@
 
 #include <forsyde.hpp>
 
-using namespace ForSyDe::SDF;
-
-class averager : public comb2<float,float,float>
+void averager_func(std::vector<float>& out1, const std::vector<float>& inp1, const std::vector<float>& inp2)
 {
-public:
-    averager(sc_module_name _name) : comb2<float,float,float>(_name,3,2,2){}
-protected:
 #pragma ForSyDe begin averager_func
-    std::vector<float> _func(std::vector<float> a, std::vector<float> b)
-    {
-      std::vector<float> ret(2);
-      ret[0] = (a[0]+a[1]+b[0])/3;
-      ret[1] = (a[1]+a[2]+b[1])/3;
-      return ret;
-    }
+    out1[0] = (inp1[0]+inp1[1]+inp2[0])/3;
+    out1[1] = (inp1[1]+inp1[2]+inp2[1])/3;
 #pragma ForSyDe end
-};
+}
 
 #endif
