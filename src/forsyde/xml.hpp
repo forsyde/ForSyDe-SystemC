@@ -213,10 +213,10 @@ public:
         // Change the delay elements to initial tokens on arcs
         for (auto it=processes.begin();it!=processes.end();it++)
         {
-            if (!strcmp(it->second->ForSyDe_kind(), "SDF::delayn"))
+            if (!strcmp(it->second->ForSyDe_kind().c_str(), "SDF::delayn"))
             {
                 // find the incoming and outgoing channels
-                auto incoming(channels.begin()), outgoing(channels.begin());
+                decltype(channels.begin()) incoming, outgoing;
                 for (auto it2=channels.begin();it2!=channels.end();it2++)
                 {
                     if (it2->second.desActor == it->second)
@@ -237,6 +237,32 @@ public:
                 processes.erase(it);
             }
         }
+        // Merge unzip processes with their previous actors
+        // TODO : Cover other unzips
+        for (auto it=processes.begin();it!=processes.end();it++)
+        {
+            if (!strcmp(it->second->ForSyDe_kind().c_str(), "SDF::unzip"))
+            {
+                // find the incoming and outgoing channels
+                decltype(channels.begin()) zipChan;
+                std::vector<decltype(channels.begin())> unzipChans;
+                for (auto it2=channels.begin();it2!=channels.end();it2++)
+                {
+                    if (it2->second.desActor == it->second)
+                        zipChan = it2;
+                    if (it2->second.srcActor == it->second)
+                        unzipChans.push_back(it2);
+                }
+                // connect the outputs of unzip to the original actor
+                unzipChans[0]->second.srcActor = zipChan->second.srcActor;
+                //unzipChans[0]->second.srcPort = zipChan->second.srcActor;
+                unzipChans[1]->second.srcActor = zipChan->second.srcActor;
+                // remove the zipped channel
+                channels.erase(zipChan);
+                // remove the unzip process
+                processes.erase(it);
+            }
+        }
         
         // Third, write the actors and channels based on the information
         // from the previous stage
@@ -251,6 +277,8 @@ public:
             top_node->append_attribute(actorSizeAttr);
             
             // look into all channels to find ports of the current process
+            // TODO: improve this by using a better data structure for
+            //       system graph representation.
             std::vector<sc_object*> visited;
             for (auto it2=channels.begin();it2!=channels.end();it2++)
             {
@@ -311,12 +339,12 @@ public:
             }
             if (it->second.desActor)
             {
-            xml_attribute<> *desActorAttr = doc.allocate_attribute("desActor", it->second.desActor->name());
+            xml_attribute<> *desActorAttr = doc.allocate_attribute("dstActor", it->second.desActor->name());
             node->append_attribute(desActorAttr);
             }
             if (it->second.desPort)
             {
-            xml_attribute<> *desPortAttr = doc.allocate_attribute("desPort", it->second.desPort->name());
+            xml_attribute<> *desPortAttr = doc.allocate_attribute("dstPort", it->second.desPort->name());
             node->append_attribute(desPortAttr);
             }
             if (it->second.initToks != 0)
@@ -372,6 +400,42 @@ public:
                                 xml_attribute<> *fsymbolAttr = doc.allocate_attribute("symbol", ts);
                                 funcNode->append_attribute(fsymbolAttr);
                                 
+                                    xml_node<> *argMapNode = doc.allocate_node(node_element, "argumentMapping");
+                                    funcNode->append_node(argMapNode);
+                                    
+                                    // add argument mapping for the inputs
+                                    int fifoIndex=0;
+                                    for (auto it2=channels.begin();it2!=channels.end();it2++)
+                                    {
+                                        if (it2->second.desActor==it->second)
+                                        {
+                                            xml_node<> *argMapElmNode = doc.allocate_node(node_element, "argument");
+                                            argMapNode->append_node(argMapElmNode);
+                                            std::stringstream tss; tss << fifoIndex++;
+                                            char* num = doc.allocate_string(tss.str().c_str());
+                                            xml_attribute<> *argMapNumAttr = doc.allocate_attribute("number", num);
+                                            argMapElmNode->append_attribute(argMapNumAttr);
+                                            xml_attribute<> *argMapPortAttr = doc.allocate_attribute("port", it2->second.desPort->name());
+                                            argMapElmNode->append_attribute(argMapPortAttr);
+                                        }
+                                    }
+                                    
+                                    // add argument mapping for the inputs
+                                    for (auto it2=channels.begin();it2!=channels.end();it2++)
+                                    {
+                                        if (it2->second.srcActor==it->second)
+                                        {
+                                            xml_node<> *argMapElmNode = doc.allocate_node(node_element, "argument");
+                                            argMapNode->append_node(argMapElmNode);
+                                            std::stringstream tss; tss << fifoIndex++;
+                                            char* num = doc.allocate_string(tss.str().c_str());
+                                            xml_attribute<> *argMapNumAttr = doc.allocate_attribute("number", num);
+                                            argMapElmNode->append_attribute(argMapNumAttr);
+                                            xml_attribute<> *argMapPortAttr = doc.allocate_attribute("port", it2->second.srcPort->name());
+                                            argMapElmNode->append_attribute(argMapPortAttr);
+                                        }
+                                    }
+                                
                                 xml_node<> *srcFilesNode = doc.allocate_node(node_element, "sourceFiles");
                                 implNode->append_node(srcFilesNode);
                                 
@@ -390,7 +454,7 @@ public:
             {
                 xml_node<> *node = doc.allocate_node(node_element, "channelProperties");
                 csdfPropsNode->append_node(node);
-                xml_attribute<> *chanNameAttr = doc.allocate_attribute("name", (it->first).c_str());
+                xml_attribute<> *chanNameAttr = doc.allocate_attribute("channel", (it->first).c_str());
                 node->append_attribute(chanNameAttr);
                 
                 xml_node<> *childNode = doc.allocate_node(node_element, "tokenSize");
@@ -403,7 +467,11 @@ public:
             }
             
             // Graph Properties
-        
+            xml_node<> *graphPropsNode = doc.allocate_node(node_element, "graphProperties");
+            csdfPropsNode->append_node(graphPropsNode);
+            
+                xml_node<> *throughputNode = doc.allocate_node(node_element, "throughput", "0.000000001");
+                graphPropsNode->append_node(throughputNode);
     }
     
     void addProcess(sc_object* p, xml_node<>* top_node)
@@ -525,13 +593,34 @@ public:
                     )
                 );
                 
-                std::ofstream oFile(exportPath+funName.append(".cpp"));
+                std::ofstream oFile(exportPath+funName+".c");
                 if (!oFile.is_open())
                 {
-                    std::cout << "Can not create file: "<< funName << ".cpp" << std::endl;
+                    std::cout << "Can not create file: "<< funName << ".c" << std::endl;
                     continue;
                 }
                 oFile << "/* Automatically extracted by ForSyDe */" << std::endl;
+                // write the function signature
+                oFile << "void "<< funName <<"(int task_id, void *** data_in, void *** data_out, int csdf_activation){" << std::endl;
+                // write input/output adaptation interface
+                //// Deduce the process name that uses this function
+                std::string processName =
+                    funName.substr(0,funName.rfind("_func"));
+                //// write the adaptation code for input and output
+                ////// find a matching process
+                for (auto it=processes.begin();it!=processes.end();it++)
+                {
+                    if (getFuncName(it->first)==funName)
+                    {
+                        for (unsigned i=0;i<it->second->itoks.size();i++)
+                            oFile << "    inp" << i+1 << " = data_in[" 
+                                  << i << "];" << std::endl;
+                        for (unsigned i=0;i<it->second->otoks.size();i++)
+                            oFile << "    out" << i+1 << " = data_out["
+                                  << i << "];" << std::endl << std::endl;
+                        break;
+                    }
+                }
                 // iterate through until the end of section
                 while (iFile.good() && oFile.good())
                 {
@@ -539,9 +628,36 @@ public:
                     pos = line.find("#pragma ForSyDe end");
                     if (pos != line.npos)
                     {
+                        oFile << "}" << std::endl;
                         oFile.close();
                         break;
-                    } 
+                    }
+                    // pointerize input variable names
+                    size_t lookstart = 0;
+                    while (1)
+                    {
+                        size_t posi = line.find("inp", lookstart);
+                        if (posi != line.npos)
+                        {
+                            line.insert(posi, "*");
+                            lookstart = posi+4;
+                        }
+                        else
+                            break;
+                    }
+                    //pointerize output variable names
+                    lookstart = 0;
+                    while (1)
+                    {
+                        size_t posi = line.find("out", lookstart);
+                        if (posi != line.npos)
+                        {
+                            line.insert(posi, "*");
+                            lookstart = posi+4;
+                        }
+                        else
+                            break;
+                    }
                     oFile << line << std::endl;
                 }
             }
