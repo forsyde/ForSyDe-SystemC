@@ -22,6 +22,7 @@
  * computation.
  */
  
+#include <functional>
 #include <vector>
 
 namespace ForSyDe
@@ -95,7 +96,7 @@ public:
     }
     
     //! The ForSyDe process type rprsented by the current module
-    virtual char* ForSyDe_kind() = 0;
+    virtual std::string ForSyDe_kind() = 0;
     
 protected:
     //! The main and only execution thread of the module
@@ -134,6 +135,8 @@ class comb : public process
 public:
     sc_fifo_in<ITYP>  iport;        ///< port for the input channel
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    typedef std::function<void(std::vector<OTYP>&, const std::vector<ITYP>&)> functype;
 
     //! The constructor requires the module name and the number of tokens to be produced and consumed
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -141,15 +144,16 @@ public:
      * results using the output port
      */
     comb(sc_module_name _name,
+         functype _func,
          unsigned inToks,
          unsigned outToks
-        ):process(_name)
+        ):process(_name), _func(_func)
     {
         itoks.push_back(inToks);
         otoks.push_back(outToks);
     }
     
-    char* ForSyDe_kind() {return "SDF::comb";};
+    std::string ForSyDe_kind() {return "SDF::comb";};
     
 private:
 
@@ -162,8 +166,8 @@ private:
         {
             // read from input
             for (unsigned i=0;i<itoks[0];i++) in_vals[i] = iport.read();
-            out_vals = _func(in_vals);// do the calculation
-             WRITE_VEC_MULTIPORT(oport,out_vals,otoks[0]);  // write to the output
+            _func(out_vals, in_vals);// do the calculation
+            WRITE_VEC_MULTIPORT(oport,out_vals,otoks[0]);  // write to the output
         }
     }
     
@@ -180,13 +184,15 @@ private:
         for (int i=0;i<oport.size();i++)
             boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
+    
+    functype _func;
 
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual std::vector<OTYP> (_func)(std::vector<ITYP>) = 0;
+//~ protected:
+    //~ //! The main caclulation function
+    //~ /*! It is abstract and the user should provide an implementation for
+     //~ * it in the derived class.
+     //~ */
+    //~ virtual std::vector<OTYP> (_func)(std::vector<ITYP>) = 0;
 };
 
 //! Process constructor for a combinational process with two inputs and one output
@@ -199,6 +205,8 @@ public:
     sc_fifo_in<I1TYP> iport1;       ///< port for the input channel 1
     sc_fifo_in<I2TYP> iport2;       ///< port for the input channel 2
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    typedef std::function<void(std::vector<OTYP>&, const std::vector<I1TYP>&, const std::vector<I2TYP>&)> functype;
 
     //! The constructor requires the module name and the number of tokens to be produced and consumed
     /*! It creates an SC_THREAD which reads data from its input ports,
@@ -206,17 +214,18 @@ public:
      * results using the output port
      */
     comb2(sc_module_name _name,
+          functype _func,
           unsigned in1Toks,
           unsigned in2Toks,
           unsigned outToks
-         ):process(_name)
+         ):process(_name), _func(_func)
     {
         itoks.push_back(in1Toks);
         itoks.push_back(in2Toks);
         otoks.push_back(outToks);
     }
     
-    char* ForSyDe_kind() {return "SDF::comb2";};
+    std::string ForSyDe_kind() {return "SDF::comb2";};
     
 private:
 
@@ -231,7 +240,7 @@ private:
             // read from inputs
             for (unsigned i=0;i<itoks[0];i++) in_vals1[i] = iport1.read();
             for (unsigned i=0;i<itoks[1];i++) in_vals2[i] = iport2.read();
-            out_vals = _func(in_vals1, in_vals2);// do the calculation
+            _func(out_vals, in_vals1, in_vals2);// do the calculation
             WRITE_VEC_MULTIPORT(oport,out_vals,otoks[0]);    // write to the output
         }
     }
@@ -253,13 +262,15 @@ private:
         for (int i=0;i<oport.size();i++)
             boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
+    
+    functype _func;
 
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual std::vector<OTYP> (_func)(std::vector<I1TYP>, std::vector<I2TYP>) = 0;
+//~ protected:
+    //~ //! The main caclulation function
+    //~ /*! It is abstract and the user should provide an implementation for
+     //~ * it in the derived class.
+     //~ */
+    //~ virtual std::vector<OTYP> (_func)(std::vector<I1TYP>, std::vector<I2TYP>) = 0;
 };
 
 //! Process constructor for a combinational process with three inputs and one output
@@ -292,7 +303,7 @@ public:
         otoks.push_back(outToks);
     }
     
-    char* ForSyDe_kind() {return "SDF::comb3";};
+    std::string ForSyDe_kind() {return "SDF::comb3";};
     
 private:
 
@@ -377,7 +388,7 @@ public:
         otoks.push_back(outToks);
     }
     
-    char* ForSyDe_kind() {return "SDF::comb4";};
+    std::string ForSyDe_kind() {return "SDF::comb4";};
     
 private:
 
@@ -465,7 +476,7 @@ public:
         
     }
     
-    char* ForSyDe_kind() {return "SDF::delay";};
+    std::string ForSyDe_kind() {return "SDF::delay";};
     
     IOTYP init_val;
     
@@ -526,7 +537,7 @@ public:
         
     }
     
-    char* ForSyDe_kind() {return "SDF::delayn";};
+    std::string ForSyDe_kind() {return "SDF::delayn";};
     
     IOTYP init_val;
     
@@ -585,7 +596,7 @@ public:
         
     }
     
-    char* ForSyDe_kind() {return "SDF::constant";};
+    std::string ForSyDe_kind() {return "SDF::constant";};
     
     OTYP cval;
     
@@ -638,7 +649,7 @@ public:
         
     }
     
-    char* ForSyDe_kind() {return "SDF::source";};
+    std::string ForSyDe_kind() {return "SDF::source";};
     
     OTYP init_st;
     
@@ -647,12 +658,13 @@ private:
     //! The main and only execution thread of the module
     void worker()
     {
-        OTYP st_val = init_st;
-        WRITE_MULTIPORT(oport,st_val);    // write the initial state
+        OTYP curst_val = init_st, nxst_val;
+        WRITE_MULTIPORT(oport,curst_val);      // write the initial state
         while (1)
         {
-            st_val = _func(st_val);        // produce a new value
-            WRITE_MULTIPORT(oport,st_val);    // write to the output
+            _func(nxst_val, curst_val);        // produce a new value
+            curst_val = nxst_val;
+            WRITE_MULTIPORT(oport,curst_val);  // write to the output
         }
     }
     
@@ -670,7 +682,7 @@ protected:
     /*! It is abstract and the user should provide an implementation for
      * it in the derived class.
      */
-    virtual OTYP (_func)(OTYP) = 0;
+    virtual void (_func)(OTYP&, const OTYP&) = 0;
 };
 
 //! Process constructor for a source process with vector input
@@ -695,7 +707,7 @@ public:
         
     }
     
-    char* ForSyDe_kind() {return "SDF::vsource";};
+    std::string ForSyDe_kind() {return "SDF::vsource";};
     
     std::vector<OTYP> in_vec;
     
@@ -747,7 +759,7 @@ public:
         
     }
     
-    char* ForSyDe_kind() {return "SDF::sink";};
+    std::string ForSyDe_kind() {return "SDF::sink";};
 private:
 
     //! The main and only execution thread of the module
@@ -803,7 +815,7 @@ public:
         itoks.assign(inToks.begin(),inToks.end());
     }
     
-    char* ForSyDe_kind() {return "SDF::zipN";};
+    std::string ForSyDe_kind() {return "SDF::zipN";};
     
 private:
 
@@ -865,6 +877,72 @@ private:
 
 };
 
+//! The unzip process with one input and two outputs
+/*! This process "unzips" a signal of tuples into two separate signals
+ */
+template <class OTYP1, class OTYP2>
+class unzip : public process
+{
+public:
+    sc_fifo_in<std::tuple<
+                          std::vector<OTYP1>,std::vector<OTYP2>
+                          >> iport;         ///< port for the input channel
+    sc_fifo_out<OTYP1> oport1; ///< port for the output channel 1
+    sc_fifo_out<OTYP2> oport2; ///< port for the output channel 2
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * unzips them and writes the results using the output ports
+     */
+    unzip(sc_module_name _name,
+          unsigned out1Toks,
+          unsigned out2Toks
+         ):process(_name)
+    {
+        itoks.push_back(1);
+        otoks.push_back(out1Toks);
+        otoks.push_back(out2Toks);
+    }
+    
+    std::string ForSyDe_kind() {return "SDF::unzip";};
+    
+private:
+
+    //! The main and only execution thread of the module
+    void worker()
+    {
+        std::tuple<std::vector<OTYP1>,std::vector<OTYP2>> in_val;
+        std::vector<OTYP1> out_val1;
+        std::vector<OTYP2> out_val2;
+        while (1)
+        {
+            in_val = iport.read();  // read from input
+            std::tie(out_val1,out_val2) = in_val;
+            WRITE_VEC_MULTIPORT(oport1,out_val1,otoks[0]);// write to the output
+            WRITE_VEC_MULTIPORT(oport2,out_val2,otoks[1]);// write to the output
+        }
+    }
+    
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport;
+        boundInChans[0].toks = itoks[0];
+        boundOutChans.resize(2);    // two output ports
+        boundOutChans[0].port = &oport1;
+        boundOutChans[0].toks = otoks[0];
+        boundOutChans[1].port = &oport2;
+        boundOutChans[1].toks = otoks[1];
+        for (int i=0;i<iport.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
+        for (int i=0;i<oport1.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport1[i]));
+        for (int i=0;i<oport2.size();i++)
+            boundOutChans[1].boundChans.push_back(dynamic_cast<sc_object*>(oport2[i]));
+    }
+
+};
+
 //! The unzip process with one input and variable number of outputs
 /*! This process "unzips" the incoming signal into a tuple of signals.
  */
@@ -887,7 +965,7 @@ public:
         
     }
     
-    char* ForSyDe_kind() {return "SDF::unzipN";};
+    std::string ForSyDe_kind() {return "SDF::unzipN";};
     
 private:
 
@@ -971,7 +1049,7 @@ public:
         
     }
     
-    char* ForSyDe_kind() {return "SDF::fanout";};
+    std::string ForSyDe_kind() {return "SDF::fanout";};
     
 private:
 
