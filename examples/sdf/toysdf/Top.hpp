@@ -48,14 +48,15 @@ SC_MODULE(Top)
     SDF2SDF<float> src, upsrc, res, downres;
     
     stimuli stimuli1;
-    upSampler upSampler1;
-    downSampler downSampler1;
+    comb<float,float> upSampler1;
+    comb<float,float> downSampler1;
     compAvg compAvg1;
     report report1;
     
-    SC_CTOR(Top): stimuli1("stimuli1"), upSampler1("upSampler1"),
-                  downSampler1("downSampler1"), compAvg1("compAvg1"),
-                  report1("report1")
+    SC_CTOR(Top): stimuli1("stimuli1"),
+                  upSampler1("upSampler1", upSampler_func,1,2),
+                  downSampler1("downSampler1", downSampler_func,3,2), 
+                  compAvg1("compAvg1"), report1("report1")
     {
         stimuli1.oport(src);
       
