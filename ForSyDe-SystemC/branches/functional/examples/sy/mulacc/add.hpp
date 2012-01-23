@@ -18,15 +18,9 @@
 
 using namespace ForSyDe::SY;
 
-class add : public comb2<int,int,int>
+int add_func(const int& a, const int& b)
 {
-public:
-    add(sc_module_name _name) : comb2<int,int,int>(_name){}
-protected:
-    int _func(int a, int b)
-    {
-        return a+b;
-    }
-};
+    return a+b;
+}
 
 #endif

@@ -19,19 +19,13 @@
 
 using namespace ForSyDe::SY;
 
-class decoder : public comb3<bool,bool,bool,int>
+int decoder_func(bool in0, bool in1, bool in2)
 {
-public:
-    decoder(sc_module_name _name) : comb3<bool,bool,bool,int>(_name){}
-protected:
-    int _func(bool in0, bool in1, bool in2)
-    {
-        int res = 0;
-        if (in0 && !in2) res = 0;
-        else if (!in0 && in1) res = 1;
-             else if (!in1 && in2) res = 2;
-        return res;
-    }
-};
+    int res = 0;
+    if (in0 && !in2) res = 0;
+    else if (!in0 && in1) res = 1;
+         else if (!in1 && in2) res = 2;
+    return res;
+}
 
 #endif

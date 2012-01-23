@@ -18,22 +18,15 @@
 
 using namespace ForSyDe::SY;
 
-class mux : public comb4<int,int,int,int,int>
+int mux_func(int sel, int a, int b, int c)
 {
-public:
-    mux(sc_module_name _name) : comb4<int,int,int,int,int>(_name){}
-protected:
-    int _func(int sel, int a, int b, int c)
+    switch (sel)
     {
-        switch (sel)
-        {
-            case 0: return a;
-            case 1: return b;
-            case 2: return c;
-            default: return a;
-        }
+        case 0: return a;
+        case 1: return b;
+        case 2: return c;
+        default: return a;
     }
-    
-};
+}
 
 #endif

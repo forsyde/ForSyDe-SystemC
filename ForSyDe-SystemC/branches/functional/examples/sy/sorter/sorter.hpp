@@ -27,17 +27,20 @@ SC_MODULE(sorter)
     sc_fifo_in<int>  a, b, c;
     sc_fifo_out<int> biggest;
     
-    comparator comp1, comp2, comp3;
-    decoder decoder1;
-    mux mux1;
+    comb2<int,int,bool> comp1, comp2, comp3;
+    comb3<bool,bool,bool,int> decoder1;
+    comb4<int,int,int,int,int> mux1;
     fanout<int> foa, fob, foc;
     
     sc_fifo<int> c11, c12, c21, c22, c31, c32,
                  m1, m2, m3, m4;
     sc_fifo<bool> dec1, dec2, dec3;
     
-    SC_CTOR(sorter): comp1("comp1"), comp2("comp2"), comp3("comp3"),
-                     decoder1("decoder1"), mux1("mux1"),
+    SC_CTOR(sorter): comp1("comp1", comparator_func),
+                     comp2("comp2", comparator_func),
+                     comp3("comp3", comparator_func),
+                     decoder1("decoder1",decoder_func),
+                     mux1("mux1", mux_func),
                      foa("foa"), fob("fob"), foc("foc")
     {
         foa.iport(a);

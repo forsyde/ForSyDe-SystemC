@@ -18,15 +18,10 @@
 
 using namespace ForSyDe::SY;
 
-class comparator : public comb2<int,int,bool>
+
+bool comparator_func(int a, int b)
 {
-public:
-    comparator(sc_module_name _name) : comb2<int,int,bool>(_name){}
-protected:
-    bool _func(int a, int b)
-    {
-        return a>b ? true : false;
-    }
-};
+    return a>b ? true : false;
+}
 
 #endif

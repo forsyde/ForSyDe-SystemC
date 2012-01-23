@@ -16,17 +16,10 @@
 
 using namespace ForSyDe::SY;
 
-class report : public sink<int>
+void report_func(int inp)
 {
-public:
-    report(sc_module_name _name) : sink<int>(_name){}
-protected:
-    void _func(int inp)
-    {
-        std::cout << "output value: " << inp << std::endl;
-    }
-    
-};
+    std::cout << "output value: " << inp << std::endl;
+}
 
 SC_MODULE(Top)
 {
@@ -34,10 +27,10 @@ SC_MODULE(Top)
     
     constant<int> const1, const2, const3;
     sorter sorter1;
-    report report1;
+    sink<int> report1;
     
     SC_CTOR(Top): const1("const1",5), const2("const2",7), const3("const3",3),
-                  sorter1("sorter1"), report1("report1")
+                  sorter1("sorter1"), report1("report1",report_func)
     {
         const1.oport(srca);
         const2.oport(srcb);

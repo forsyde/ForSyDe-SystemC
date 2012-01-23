@@ -18,15 +18,9 @@
 
 using namespace ForSyDe::SY;
 
-class mul : public comb2<int,int,int>
+int mul_func(int a, int b)
 {
-public:
-    mul(sc_module_name _name) : comb2<int,int,int>(_name){}
-protected:
-    int _func(int a, int b)
-    {
-        return a*b;
-    }
-};
+    return a*b;
+}
 
 #endif

@@ -15,41 +15,28 @@
 
 using namespace ForSyDe::SY;
 
-class siggen : public source<int>
-{
-public:
-    siggen(sc_module_name _name) : source<int>(_name, 1, 10){}
-protected:
-    int _func(int inp)
-    {
-        return -inp;
-    }
-    
-};
 
-class report : public sink<int>
+int siggen_func(int inp)
 {
-public:
-    report(sc_module_name _name) : sink<int>(_name){}
-protected:
-    void _func(int inp)
-    {
-        std::cout << "output value: " << inp << std::endl;
-    }
-    
-};
+    return -inp;
+}
+
+void report_func(int inp)
+{
+    std::cout << "output value: " << inp << std::endl;
+}
 
 SC_MODULE(Top)
 {
     sc_fifo<int> srca, srcb, result;
     
     constant<int> const1;
-    siggen siggen1;
+    source<int> siggen1;
     mulacc mulacc1;
-    report report1;
+    sink<int> report1;
     
-    SC_CTOR(Top): const1("const1",3), siggen1("siggen1"),
-                  mulacc1("mulacc1"), report1("report1")
+    SC_CTOR(Top): const1("const1",3), siggen1("siggen1", siggen_func, 1, 10),
+                  mulacc1("mulacc1"), report1("report1", report_func)
     {
         const1.oport(srca);
         siggen1.oport(srcb);

@@ -21,6 +21,7 @@
  * facilities used for modeling in the synchronous model of computation.
  */
 
+#include <functional>
 #include <tuple>
 
 //! The namespace for ForSyDe
@@ -115,14 +116,18 @@ class comb : public sc_module
 public:
     sc_fifo_in<ITYP>  iport;        ///< port for the input channel
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<OTYP(const ITYP&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented function to it and writes the
      * results using the output port
      */
-    comb(sc_module_name _name)  // module name
-         :sc_module(_name)
+    comb(sc_module_name _name,      ///< process name
+         functype _func             ///< function to be passed
+        ) : sc_module(_name), _func(_func)
     {
         SC_THREAD(worker);
     }
@@ -141,13 +146,9 @@ private:
             WRITE_MULTIPORT(oport,out_val);    // write to the output
         }
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(ITYP) = 0;
+    
+    //! The function passed to the process constructor
+    functype _func;
 };
 
 //! Process constructor for a combinational process with two inputs and one output
@@ -160,14 +161,18 @@ public:
     sc_fifo_in<I1TYP> iport1;       ///< port for the input channel 1
     sc_fifo_in<I2TYP> iport2;       ///< port for the input channel 2
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
-
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<OTYP(const I1TYP&, const I2TYP&)> functype;
+        
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb2(sc_module_name _name)  // module name
-         :sc_module(_name)
+    comb2(sc_module_name _name,     ///< process name
+          functype _func            ///< function to be passed
+         ):sc_module(_name), _func(_func)
     {
         SC_THREAD(worker);
     }
@@ -188,13 +193,9 @@ private:
             WRITE_MULTIPORT(oport,out_val);     // write to the output
         }
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(I1TYP, I2TYP) = 0;
+    
+    //! The function passed to the process constructor
+    functype _func;
 };
 
 //! Process constructor for a combinational process with three inputs and one output
@@ -208,14 +209,19 @@ public:
     sc_fifo_in<I2TYP> iport2;       ///< port for the input channel 2
     sc_fifo_in<I3TYP> iport3;       ///< port for the input channel 3
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<OTYP(const I1TYP&, const I2TYP&,
+                               const I3TYP&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb3(sc_module_name _name)  // module name
-         :sc_module(_name)
+    comb3(sc_module_name _name,     ///< process name
+         functype _func             ///< function to be passed
+        ) : sc_module(_name), _func(_func)
     {
         SC_THREAD(worker);
     }
@@ -238,13 +244,9 @@ private:
             WRITE_MULTIPORT(oport,out_val);     // write to the output
         }
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(I1TYP, I2TYP, I3TYP) = 0;
+    
+    //! The function passed to the process constructor
+    functype _func;
 };
 
 //! Process constructor for a combinational process with three inputs and one output
@@ -259,14 +261,19 @@ public:
     sc_fifo_in<I3TYP> iport3;       ///< port for the input channel 3
     sc_fifo_in<I4TYP> iport4;       ///< port for the input channel 4
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<OTYP(const I1TYP&, const I2TYP&,
+                               const I3TYP&, const I4TYP&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb4(sc_module_name _name)  // module name
-         :sc_module(_name)
+    comb4(sc_module_name _name,     ///< process name
+          functype _func            ///< function to be passed
+         ) : sc_module(_name), _func(_func)
     {
         SC_THREAD(worker);
     }
@@ -291,13 +298,9 @@ private:
             WRITE_MULTIPORT(oport,out_val);     // write to the output
         }
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(I1TYP, I2TYP, I3TYP, I4TYP) = 0;
+    
+    //! The function passed to the process constructor
+    functype _func;
 };
 
 //! Process constructor for a delay element
@@ -408,16 +411,22 @@ class moore : public sc_module
 public:
     sc_fifo_in<ITYP>  iport;        ///< port for the input channel
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    //! Type of the functions to be passed to the process constructor
+    typedef std::function<STYP(const STYP&, const ITYP&)> nsfunctype;
+    typedef std::function<OTYP(const STYP&)> odfunctype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented functions to the input and current
      * state and writes the results using the output port
      */
-    moore(sc_module_name _name,   ///< The module name
-            STYP ist                ///< Initial state
-            )
-         :sc_module(_name), init_st(ist)
+    moore(sc_module_name _name,     ///< The module name
+          nsfunctype _ns_func,      ///< Next state function to be passed
+          nsfunctype _od_func,      ///< Output decoding function to be passed
+          STYP ist                ///< Initial state
+         ):sc_module(_name), init_st(ist),
+           _ns_func(_ns_func), _od_func(_od_func)
     {
         SC_THREAD(worker);
     }
@@ -440,19 +449,10 @@ private:
             st_val = ns_val;                    // update the state
         }
     }
-
-protected:
-    //! The next-state caclulation function
-    /*! It is pure and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual STYP (_ns_func)(STYP, ITYP) = 0;
     
-    //! The output-decoding caclulation function
-    /*! It is pure and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_od_func)(STYP) = 0;
+    //! The functions passed to the process constructor
+    nsfunctype _ns_func;
+    odfunctype _od_func;
 };
 
 //! Process constructor for a Mealy machine
@@ -470,16 +470,22 @@ class mealy : public sc_module
 public:
     sc_fifo_in<ITYP>  iport;        ///< port for the input channel
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    //! Type of the functions to be passed to the process constructor
+    typedef std::function<STYP(const STYP&, const ITYP&)> nsfunctype;
+    typedef std::function<OTYP(const STYP&, const ITYP&)> odfunctype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented functions to the input and current
      * state and writes the results using the output port
      */
-    mealy(sc_module_name _name,   ///< The module name
-            STYP ist                ///< Initial state
-            )
-         :sc_module(_name), init_st(ist)
+    mealy(sc_module_name _name,     ///< The module name
+          nsfunctype _ns_func,      ///< Next state function to be passed
+          nsfunctype _od_func,      ///< Output decoding function to be passed
+          STYP ist                ///< Initial state
+         ):sc_module(_name), init_st(ist),
+           _ns_func(_ns_func), _od_func(_od_func)
     {
         SC_THREAD(worker);
     }
@@ -502,19 +508,10 @@ private:
             st_val = ns_val;                    // update the state
         }
     }
-
-protected:
-    //! The next-state caclulation function
-    /*! It is pure and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual STYP (_ns_func)(STYP, ITYP) = 0;
     
-    //! The output-decoding caclulation function
-    /*! It is pure and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_od_func)(STYP, ITYP) = 0;
+    //! The functions passed to the process constructor
+    nsfunctype _ns_func;
+    odfunctype _od_func;
 };
 
 //! Process constructor for a two input Mealy machine
@@ -532,17 +529,25 @@ class mealy2 : public sc_module
 public:
     sc_fifo_in<ITYP1>  iport1;       ///< port for the input channel
     sc_fifo_in<ITYP2>  iport2;       ///< port for the input channel
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    sc_fifo_out<OTYP> oport;         ///< port for the output channel
+    
+    //! Type of the functions to be passed to the process constructor
+    typedef std::function<STYP(const STYP&,
+                               const ITYP1&, const ITYP2&)> nsfunctype;
+    typedef std::function<OTYP(const STYP&,
+                               const ITYP1&, const ITYP2&)> odfunctype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented functions to the input and current
      * state and writes the results using the output port
      */
-    mealy2(sc_module_name _name,   ///< The module name
-            STYP ist                ///< Initial state
-            )
-         :sc_module(_name), init_st(ist)
+    mealy2(sc_module_name _name,     ///< The module name
+          nsfunctype _ns_func,       ///< Next state function to be passed
+          nsfunctype _od_func,       ///< Output decoding function to be passed
+          STYP ist                   ///< Initial state
+         ):sc_module(_name), init_st(ist),
+           _ns_func(_ns_func), _od_func(_od_func)
     {
         SC_THREAD(worker);
     }
@@ -567,19 +572,10 @@ private:
             st_val = ns_val;                    // update the state
         }
     }
-
-protected:
-    //! The next-state caclulation function
-    /*! It is pure and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual STYP (_ns_func)(STYP, ITYP1, ITYP2) = 0;
     
-    //! The output-decoding caclulation function
-    /*! It is pure and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_od_func)(STYP, ITYP1, ITYP2) = 0;
+    //! The functions passed to the process constructor
+    nsfunctype _ns_func;
+    odfunctype _od_func;
 };
 
 //! Process constructor for a fill process
@@ -724,17 +720,20 @@ template <class OTYP>
 class source : public sc_module
 {
 public:
-    sc_fifo_out<OTYP> oport;     ///< port for the output channel
+    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<OTYP(const OTYP&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * and writes the result using the output port
      */
     source(sc_module_name _name,   ///< The module name
-             OTYP ist,             ///< Initial state
-             unsigned long long take=0 ///< number of tokens produced (0 for infinite)
-            )
-         :sc_module(_name), init_st(ist), take(take)
+           functype _func,         ///< function to be passed
+           OTYP ist,               ///< Initial state
+           unsigned long long take=0 ///< number of tokens produced (0 for infinite)
+          ) : sc_module(_name), init_st(ist), take(take), _func(_func)
     {
         SC_THREAD(worker);
     }
@@ -754,13 +753,9 @@ private:
             WRITE_MULTIPORT(oport,st_val);    // write to the output
         }
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(OTYP) = 0;
+    
+    //! The function passed to the process constructor
+    functype _func;
 };
 
 //! Process constructor for a source process with vector input
@@ -815,13 +810,17 @@ class sink : public sc_module
 {
 public:
     sc_fifo_in<ITYP> iport;         ///< port for the input channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(const ITYP&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * in each cycle.
      */
-    sink(sc_module_name _name)  // module name
-         :sc_module(_name)
+    sink(sc_module_name _name,      ///< process name
+         functype _func             ///< function to be passed
+        ) : sc_module(_name), _func(_func)
     {
         SC_THREAD(worker);
     }
@@ -838,13 +837,9 @@ private:
             _func(in_val);       // run the function
         }
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual void (_func)(ITYP) = 0;
+    
+    //! The function passed to the process constructor
+    functype _func;
 };
 
 //! Process constructor for a multi-input print process
@@ -1239,6 +1234,70 @@ private:
 
 };
 
+//~ //! Helper function to construct a comb process
+//~ /*! This function is used to construct a process (SystemC module) and
+ //~ * connect its output and output signals.
+ //~ * It provides a more functional style definition of a ForSyDe process.
+ //~ * It also removes bilerplate code by using type-inference feature of
+ //~ * C++ and automatic binding to the input and output FIFOs.
+ //~ */
+//~ template <class ITYP, class OTYP>
+//~ comb<ITYP,OTYP>& make_comb(char* pName,
+                           //~ std::function<OTYP(const ITYP&)> _func,
+                           //~ const sc_fifo<ITYP>& inpS,
+                           //~ const sc_fifo<OTYP>& outS)
+//~ {
+    //~ comb<ITYP,OTYP> p = new comb<ITYP,OTYP>(pName, _func);
+    //~ 
+    //~ p.iport(inpS);
+    //~ p.oport(outS);
+    //~ 
+    //~ return p;
+//~ }
+//~ 
+//~ //! Helper function to construct a comb process
+//~ /*! This function is used to construct a process (SystemC module) and
+ //~ * connect its output and output signals.
+ //~ * It provides a more functional style definition of a ForSyDe process.
+ //~ * It also removes bilerplate code by using type-inference feature of
+ //~ * C++ and automatic binding to the input and output FIFOs.
+ //~ */
+//~ template <class I1TYP, class I2TYP, class OTYP>
+//~ comb2<I1TYP,I2TYP,OTYP> make_comb2(std::string pName,
+                                   //~ std::function<OTYP(const I1TYP&,const I2TYP&)> _func,
+                                   //~ sc_fifo<I1TYP>& inp1S,
+                                   //~ sc_fifo<I2TYP>& inp2S,
+                                   //~ sc_fifo<OTYP>& outS)
+//~ {
+    //~ comb2<I1TYP,I2TYP,OTYP> ret = *(new comb2<I1TYP,I2TYP,OTYP>(pName.c_str(), _func));
+    //~ 
+    //~ ret.iport1(inp1S);
+    //~ ret.iport2(inp2S);
+    //~ ret.oport(outS);
+    //~ 
+    //~ return ret;
+//~ }
+//~ 
+//~ //! Helper function to construct a delay process
+//~ /*! This function is used to construct a process (SystemC module) and
+ //~ * connect its output and output signals.
+ //~ * It provides a more functional style definition of a ForSyDe process.
+ //~ * It also removes bilerplate code by using type-inference feature of
+ //~ * C++ and automatic binding to the input and output FIFOs.
+ //~ */
+//~ template <class TYP>
+//~ delay<TYP> make_delay(std::string pName,
+                       //~ TYP initval,
+                       //~ sc_fifo<TYP>& inpS,
+                       //~ sc_fifo<TYP>& outS)
+//~ {
+    //~ delay<TYP> p = *(new delay<TYP>(pName.c_str(), initval));
+    //~ 
+    //~ p.iport(inpS);
+    //~ p.oport(outS);
+    //~ 
+    //~ return p;
+//~ }
 
 }
 }
