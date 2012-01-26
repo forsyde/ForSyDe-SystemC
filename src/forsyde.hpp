@@ -38,4 +38,6 @@
 
 #include "forsyde/dis.hpp"
 
+#include "forsyde/adaptivity.hpp"
+
 #endif

@@ -19,6 +19,7 @@
 #include <utility>
 #include <tuple>
 #include <iterator>
+#include <functional>
 
 
 namespace std
@@ -400,6 +401,14 @@ namespace std
     }
 } // namespace std
 
+namespace std
+{
+    template<typename TChar, typename TCharTraits, typename _Res, typename... _ArgTypes>
+    inline basic_ostream<TChar, TCharTraits> & operator<<(basic_ostream<TChar, TCharTraits> & stream, class function<_Res(_ArgTypes...)> func)
+    {
+        return stream;
+    }
+} // namespace std
 
 // A wrapper for raw C-style arrays. Usage: int arr[] = { 1, 2, 4, 8, 16 };  std::cout << wrap_array(arr) << ...
 
