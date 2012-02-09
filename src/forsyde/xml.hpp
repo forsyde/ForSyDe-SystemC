@@ -237,7 +237,8 @@ public:
                 processes.erase(it);
             }
         }
-        // Merge unzip processes with their previous actors
+        // Merge unzip processes with their previous actor and zip
+        // processes with their next actor.
         // TODO : Cover other unzips
         for (auto it=processes.begin();it!=processes.end();it++)
         {
@@ -260,6 +261,46 @@ public:
                 // remove the zipped channel
                 channels.erase(zipChan);
                 // remove the unzip process
+                processes.erase(it);
+            }
+            if (!strcmp(it->second->ForSyDe_kind().c_str(), "SDF::unzipN"))
+            {
+                // find the incoming and outgoing channels
+                decltype(channels.begin()) zipChan;
+                std::vector<decltype(channels.begin())> unzipChans;
+                for (auto it2=channels.begin();it2!=channels.end();it2++)
+                {
+                    if (it2->second.desActor == it->second)
+                        zipChan = it2;
+                    if (it2->second.srcActor == it->second)
+                        unzipChans.push_back(it2);
+                }
+                // connect the outputs of unzip to the original actor
+                for (auto it3=unzipChans.begin();it3!=unzipChans.end();it3++)
+                    (*it3)->second.srcActor = zipChan->second.srcActor;
+                // remove the zipped channel
+                channels.erase(zipChan);
+                // remove the unzip process
+                processes.erase(it);
+            }
+            if (!strcmp(it->second->ForSyDe_kind().c_str(), "SDF::zipN"))
+            {
+                // find the incoming and outgoing channels
+                decltype(channels.begin()) zipChan;
+                std::vector<decltype(channels.begin())> unzipChans;
+                for (auto it2=channels.begin();it2!=channels.end();it2++)
+                {
+                    if (it2->second.desActor == it->second)
+                        unzipChans.push_back(it2);
+                    if (it2->second.srcActor == it->second)
+                        zipChan = it2;
+                }
+                // connect the inputs of zip to the original actor
+                for (auto it3=unzipChans.begin();it3!=unzipChans.end();it3++)
+                    (*it3)->second.desActor = zipChan->second.desActor;
+                // remove the zipped channel
+                channels.erase(zipChan);
+                // remove the zip process
                 processes.erase(it);
             }
         }
