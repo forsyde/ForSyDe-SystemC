@@ -64,6 +64,8 @@ template <class T>
 class SDF2SDF: public sc_fifo<T>, public SDF2SDF_Size
 {
 public:
+    SDF2SDF() : sc_fifo<T>() {}
+    SDF2SDF(sc_module_name name, unsigned size) : sc_fifo<T>(name, size) {}
     virtual unsigned tokenSize()
     {
         return sizeof(T);
@@ -136,7 +138,9 @@ public:
     sc_fifo_in<ITYP>  iport;        ///< port for the input channel
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
     
-    typedef std::function<void(std::vector<OTYP>&, const std::vector<ITYP>&)> functype;
+    typedef std::function<void(std::vector<OTYP>&,
+                                const std::vector<ITYP>&
+                                )> functype;
 
     //! The constructor requires the module name and the number of tokens to be produced and consumed
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -206,7 +210,10 @@ public:
     sc_fifo_in<I2TYP> iport2;       ///< port for the input channel 2
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
     
-    typedef std::function<void(std::vector<OTYP>&, const std::vector<I1TYP>&, const std::vector<I2TYP>&)> functype;
+    typedef std::function<void(std::vector<OTYP>&,
+                                const std::vector<I1TYP>&,
+                                const std::vector<I2TYP>&
+                                )> functype;
 
     //! The constructor requires the module name and the number of tokens to be produced and consumed
     /*! It creates an SC_THREAD which reads data from its input ports,
@@ -265,12 +272,7 @@ private:
     
     functype _func;
 
-//~ protected:
-    //~ //! The main caclulation function
-    //~ /*! It is abstract and the user should provide an implementation for
-     //~ * it in the derived class.
-     //~ */
-    //~ virtual std::vector<OTYP> (_func)(std::vector<I1TYP>, std::vector<I2TYP>) = 0;
+
 };
 
 //! Process constructor for a combinational process with three inputs and one output
@@ -284,6 +286,12 @@ public:
     sc_fifo_in<I2TYP> iport2;       ///< port for the input channel 2
     sc_fifo_in<I3TYP> iport3;       ///< port for the input channel 3
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    typedef std::function<void(std::vector<OTYP>&,
+                                std::vector<I1TYP>&,
+                                std::vector<I2TYP>&,
+                                std::vector<I3TYP>&
+                                )> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
@@ -291,11 +299,12 @@ public:
      * results using the output port
      */
     comb3(sc_module_name _name,
+          functype _func,
           unsigned in1Toks,
           unsigned in2Toks,
           unsigned in3Toks,
           unsigned int outToks
-         ):process(_name)
+         ):process(_name), _func(_func)
     {
         itoks.push_back(in1Toks);
         itoks.push_back(in2Toks);
@@ -313,14 +322,14 @@ private:
         std::vector<I1TYP> in_vals1(itoks[0]);
         std::vector<I2TYP> in_vals2(itoks[1]);
         std::vector<I3TYP> in_vals3(itoks[2]);
-        std::vector<OTYP> out_vals(otoks[3]);
+        std::vector<OTYP> out_vals(otoks[0]);
         while (1)
         {
             // read from inputs
             for (unsigned i=0;i<itoks[0];i++) in_vals1[i] = iport1.read();
             for (unsigned i=0;i<itoks[1];i++) in_vals2[i] = iport2.read();
             for (unsigned i=0;i<itoks[2];i++) in_vals3[i] = iport3.read();
-            out_vals = _func(in_vals1, in_vals2, in_vals3);// do the calculation
+            _func(out_vals, in_vals1, in_vals2, in_vals3);// do the calculation
             WRITE_VEC_MULTIPORT(oport,out_vals,otoks[0]);    // write to the output
         }
     }
@@ -346,13 +355,8 @@ private:
         for (int i=0;i<oport.size();i++)
             boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual std::vector<OTYP> (_func)(std::vector<I1TYP>, std::vector<I2TYP>, std::vector<I3TYP>) = 0;
+    
+    functype _func;
 };
 
 //! Process constructor for a combinational process with four inputs and one output
@@ -367,6 +371,13 @@ public:
     sc_fifo_in<I3TYP> iport3;       ///< port for the input channel 3
     sc_fifo_in<I4TYP> iport4;       ///< port for the input channel 4
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    typedef std::function<void(std::vector<OTYP>&,
+                                std::vector<I1TYP>&,
+                                std::vector<I2TYP>&,
+                                std::vector<I3TYP>&,
+                                std::vector<I4TYP>&
+                                )> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
@@ -374,12 +385,13 @@ public:
      * results using the output port
      */
     comb4(sc_module_name _name,
+          functype _func,
           unsigned in1Toks,
           unsigned in2Toks,
           unsigned in3Toks,
           unsigned in4Toks,
           unsigned outToks
-         ):process(_name)
+         ):process(_name), _func(_func)
     {
         itoks.push_back(in1Toks);
         itoks.push_back(in2Toks);
@@ -407,7 +419,7 @@ private:
             for (unsigned int i=0;i<itoks[1];i++) in_vals2[i] = iport2.read();
             for (unsigned int i=0;i<itoks[2];i++) in_vals3[i] = iport3.read();
             for (unsigned int i=0;i<itoks[3];i++) in_vals4[i] = iport4.read();
-            out_vals = _func(in_vals1, in_vals2, in_vals3, in_vals4);// do the calculation
+            _func(out_vals, in_vals1, in_vals2, in_vals3, in_vals4);// do the calculation
             WRITE_VEC_MULTIPORT(oport,out_vals,otoks[0]);    // write to the output
         }
     }
@@ -437,13 +449,8 @@ private:
         for (int i=0;i<oport.size();i++)
             boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual std::vector<OTYP> (_func)(std::vector<I1TYP>, std::vector<I2TYP>, std::vector<I3TYP>, std::vector<I4TYP>) = 0;
+    
+    functype _func;
 };
 
 //! Process constructor for a delay element (initial token)
@@ -812,7 +819,8 @@ public:
     {
         if (inToks.size()!=sizeof...(ITYPs))
             SC_REPORT_ERROR(name(),"Wrong number of consumption rates provided");
-        itoks.assign(inToks.begin(),inToks.end());
+        itoks = inToks;
+        otoks.push_back(1);
     }
     
     std::string ForSyDe_kind() {return "SDF::zipN";};
@@ -832,17 +840,16 @@ private:
     
     void bindInfo()
     {
-        //~ boundInChans.resize(sizeof...(ITYPS));
+        boundInChans.resize(sizeof...(ITYPs));
         boundOutChans.resize(1);
         boundOutChans[0].port = &oport;
-        boundOutChans[0].toks = 1;
-        //~ for (int j=0;j<sizeof...(ITYPS);j++)
-            //~ for (int i=0;i<iport.size();i++)
-                //~ boundInChans[0].push_back(dynamic_cast<sc_object*>(iport[i]));
+        boundOutChans[0].toks = otoks[0];
+        populateIPorts<ITYPs...>(boundInChans, itoks, iport);
         for (int i=0;i<oport.size();i++)
             boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
     
+    // Begin of some TMP magic //
     template<size_t N,class R, class T>
     struct fifo_read_helper
     {
@@ -874,7 +881,48 @@ private:
                          std::tuple<sc_fifo_in<T>...>>::read(ret,ports,itoks);
         return ret;
     }
+    // End of TMP magic //
+    // Begin of some TMP magic //
+    template<size_t N, class T>
+    struct populateIPorts_helper
+    {
+        static void populate(std::vector<PortInfo>& boundInChans,
+                             const std::vector<unsigned>& itoks, T& ports)
+        {
+            populateIPorts_helper<N-1,T>::populate(boundInChans,itoks,ports);
+            boundInChans[N].port = &std::get<N>(ports);
+            boundInChans[N].toks = itoks[N];
+            for (int i=0;i<std::get<N>(ports).size();i++)
+                boundInChans[N].boundChans.push_back(
+                    dynamic_cast<sc_object*>(std::get<N>(ports)[i])
+                );
+        }
+    };
 
+    template<class T>
+    struct populateIPorts_helper<0,T>
+    {
+        static void populate(std::vector<PortInfo>& boundInChans,
+                             const std::vector<unsigned>& itoks, T& ports)
+        {
+            boundInChans[0].port = &std::get<0>(ports);
+            boundInChans[0].toks = itoks[0];
+            for (int i=0;i<std::get<0>(ports).size();i++)
+                boundInChans[0].boundChans.push_back(
+                    dynamic_cast<sc_object*>(std::get<0>(ports)[i])
+                );
+        }
+    };
+
+    template<class... T>
+    void populateIPorts(std::vector<PortInfo>& boundInChans,
+                        const std::vector<unsigned>& itoks,
+                        std::tuple<sc_fifo_in<T>...>& ports)
+    {
+        populateIPorts_helper<sizeof...(T)-1,
+            std::tuple<sc_fifo_in<T>...>>::populate(boundInChans, itoks, ports);
+    }
+    // End of TMP magic //
 };
 
 //! The unzip process with one input and two outputs
@@ -959,10 +1007,14 @@ public:
     /*! It creates an SC_THREAD which reads data from its input port,
      * unzips it and writes the results using the output ports
      */
-    unzipN(sc_module_name _name
+    unzipN(sc_module_name _name,
+           std::vector<unsigned> outToks
           ):process(_name)
     {
-        
+        if (outToks.size()!=sizeof...(ITYPs))
+            SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
+        itoks.push_back(1);
+        otoks = outToks;
     }
     
     std::string ForSyDe_kind() {return "SDF::unzipN";};
@@ -980,16 +1032,18 @@ private:
         }
     }
     
-    //~ void bindInfo()
-    //~ {
-        //~ boundInChans.resize(1);     // only one input ports
-        //~ boundOutChans.resize(1);    // only one output port
-        //~ for (int i=0;i<iport.size();i++)
-            //~ boundInChans[0].push_back(dynamic_cast<sc_object*>(iport[i]));
-        //~ for (int i=0;i<oport.size();i++)
-            //~ boundOutChans[0].push_back(dynamic_cast<sc_object*>(oport[i]));
-    //~ }
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport;
+        boundInChans[0].toks = itoks[0];
+        boundOutChans.resize(sizeof...(ITYPs));    // output ports
+        for (int i=0;i<iport.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
+        populateOPorts<ITYPs...>(boundOutChans, otoks, oport);
+    }
     
+    // Begin of some TMP magic //
     template<size_t N,class R,  class T>
     struct fifo_write_helper
     {
@@ -1019,7 +1073,48 @@ private:
                           std::tuple<std::vector<T>...>,
                           std::tuple<sc_fifo_out<T>...>>::write(vals,ports);
     }
+    // End of TMP magic //
+    // Begin of some TMP magic //
+    template<size_t N, class T>
+    struct populateOPorts_helper
+    {
+        static void populate(std::vector<PortInfo>& boundOutChans,
+                             const std::vector<unsigned>& otoks, T& ports)
+        {
+            populateOPorts_helper<N-1,T>::populate(boundOutChans,otoks,ports);
+            boundOutChans[N].port = &std::get<N>(ports);
+            boundOutChans[N].toks = otoks[N];
+            for (int i=0;i<std::get<N>(ports).size();i++)
+                boundOutChans[N].boundChans.push_back(
+                    dynamic_cast<sc_object*>(std::get<N>(ports)[i])
+                );
+        }
+    };
 
+    template<class T>
+    struct populateOPorts_helper<0,T>
+    {
+        static void populate(std::vector<PortInfo>& boundOutChans,
+                             const std::vector<unsigned>& otoks, T& ports)
+        {
+            boundOutChans[0].port = &std::get<0>(ports);
+            boundOutChans[0].toks = otoks[0];
+            for (int i=0;i<std::get<0>(ports).size();i++)
+                boundOutChans[0].boundChans.push_back(
+                    dynamic_cast<sc_object*>(std::get<0>(ports)[i])
+                );
+        }
+    };
+
+    template<class... T>
+    void populateOPorts(std::vector<PortInfo>& boundOutChans,
+                        const std::vector<unsigned>& otoks,
+                        std::tuple<sc_fifo_out<T>...>& ports)
+    {
+        populateOPorts_helper<sizeof...(T)-1,
+            std::tuple<sc_fifo_out<T>...>>::populate(boundOutChans, otoks, ports);
+    }
+    // End of TMP magic //
 };
 
 //! Process constructor for a fan-out process with one input and one output
