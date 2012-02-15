@@ -27,6 +27,7 @@
 #include <map>
 #include <iostream>
 #include <dirent.h>
+#include <algorithm>
 #include "rapidxml_print.hpp"
 
 using namespace rapidxml;
@@ -263,7 +264,7 @@ public:
                 // remove the unzip process
                 processes.erase(it);
             }
-            if (!strcmp(it->second->ForSyDe_kind().c_str(), "SDF::unzipN"))
+            else if (!strcmp(it->second->ForSyDe_kind().c_str(), "SDF::unzipN"))
             {
                 // find the incoming and outgoing channels
                 decltype(channels.begin()) zipChan;
@@ -283,7 +284,7 @@ public:
                 // remove the unzip process
                 processes.erase(it);
             }
-            if (!strcmp(it->second->ForSyDe_kind().c_str(), "SDF::zipN"))
+            else if (!strcmp(it->second->ForSyDe_kind().c_str(), "SDF::zipN"))
             {
                 // find the incoming and outgoing channels
                 decltype(channels.begin()) zipChan;
@@ -654,10 +655,12 @@ public:
                     if (getFuncName(it->first)==funName)
                     {
                         for (unsigned i=0;i<it->second->itoks.size();i++)
-                            oFile << "    inp" << i+1 << " = data_in[" 
+                            oFile << "    " << "void" << "** inp" << i+1
+                                  << " = data_in[" 
                                   << i << "];" << std::endl;
                         for (unsigned i=0;i<it->second->otoks.size();i++)
-                            oFile << "    out" << i+1 << " = data_out["
+                            oFile << "    " << "void" << "** out" << i+1
+                                  << " = data_out["
                                   << i << "];" << std::endl << std::endl;
                         break;
                     }
