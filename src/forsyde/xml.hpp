@@ -259,6 +259,10 @@ public:
                 unzipChans[0]->second.srcActor = zipChan->second.srcActor;
                 //unzipChans[0]->second.srcPort = zipChan->second.srcActor;
                 unzipChans[1]->second.srcActor = zipChan->second.srcActor;
+                // port info propagation
+                dynamic_cast<SDF::process*>(zipChan->second.srcActor)->boundOutChans = 
+                    it->second->boundOutChans;
+                //TODO: What else??
                 // remove the zipped channel
                 channels.erase(zipChan);
                 // remove the unzip process
@@ -279,6 +283,9 @@ public:
                 // connect the outputs of unzip to the original actor
                 for (auto it3=unzipChans.begin();it3!=unzipChans.end();it3++)
                     (*it3)->second.srcActor = zipChan->second.srcActor;
+                dynamic_cast<SDF::process*>(zipChan->second.srcActor)->boundOutChans = 
+                    it->second->boundOutChans;
+                //TODO: What else??
                 // remove the zipped channel
                 channels.erase(zipChan);
                 // remove the unzip process
@@ -299,6 +306,8 @@ public:
                 // connect the inputs of zip to the original actor
                 for (auto it3=unzipChans.begin();it3!=unzipChans.end();it3++)
                     (*it3)->second.desActor = zipChan->second.desActor;
+                dynamic_cast<SDF::process*>(zipChan->second.desActor)->boundInChans = 
+                    it->second->boundInChans;
                 // remove the zipped channel
                 channels.erase(zipChan);
                 // remove the zip process
@@ -483,7 +492,7 @@ public:
                                 
                                     xml_node<> *fileNode = doc.allocate_node(node_element, "file");
                                     srcFilesNode->append_node(fileNode);
-                                    char* ts2 = doc.allocate_string(getFuncName(it->first).append(".cpp").c_str());
+                                    char* ts2 = doc.allocate_string(getFuncName(it->first).append(".c").c_str());
                                     xml_attribute<> *fNameAttr = doc.allocate_attribute("file", ts2);
                                     fileNode->append_attribute(fNameAttr);
                     
@@ -597,7 +606,7 @@ public:
     /*! It looks for all .hpp files in the provided path, and extracts
      * all of the code sections enclosed by "#pragma ForSyDe begin process.fname"
      * and "#pragma ForSyDe end process.fname" and generates separate
-     * "process.fname.cpp" files for each pair.
+     * "process.fname.c" files for each pair.
      */
     void printSrc(const char* projectPath, const char* exportPath)
     {
@@ -654,14 +663,15 @@ public:
                 {
                     if (getFuncName(it->first)==funName)
                     {
-                        for (unsigned i=0;i<it->second->itoks.size();i++)
-                            oFile << "    " << "void" << "** inp" << i+1
+                        for (unsigned i=0;i<it->second->boundInChans.size();i++)
+                            oFile << "    " << it->second->boundInChans[i].portType << "** inp" << i+1
                                   << " = data_in[" 
                                   << i << "];" << std::endl;
-                        for (unsigned i=0;i<it->second->otoks.size();i++)
-                            oFile << "    " << "void" << "** out" << i+1
+                        for (unsigned i=0;i<it->second->boundOutChans.size();i++)
+                            oFile << "    " << it->second->boundOutChans[i].portType << "** out" << i+1
                                   << " = data_out["
-                                  << i << "];" << std::endl << std::endl;
+                                  << i << "];" << std::endl;
+                        oFile << std::endl;
                         break;
                     }
                 }
