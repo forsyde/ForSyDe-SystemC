@@ -50,6 +50,7 @@ struct PortInfo
     sc_object* port;
     unsigned toks;
     std::vector<sc_object*> boundChans;
+    std::string portType;
 };
 
 //! A helper class used to provide interface for accessing size of the signal elements
@@ -180,9 +181,11 @@ private:
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport;
         boundInChans[0].toks = itoks[0];
+        boundInChans[0].portType = typeid(ITYP).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = otoks[0];
+        boundOutChans[0].portType = typeid(OTYP).name();
         for (int i=0;i<iport.size();i++)
             boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
         for (int i=0;i<oport.size();i++)
@@ -257,11 +260,14 @@ private:
         boundInChans.resize(2);     // two input ports
         boundInChans[0].port = &iport1;
         boundInChans[0].toks = itoks[0];
+        boundInChans[0].portType = typeid(I1TYP).name();
         boundInChans[1].port = &iport2;
         boundInChans[1].toks = itoks[1];
+        boundInChans[1].portType = typeid(I2TYP).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = otoks[0];
+        boundOutChans[0].portType = typeid(OTYP).name();
         for (int i=0;i<iport1.size();i++)
             boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
         for (int i=0;i<iport2.size();i++)
@@ -339,13 +345,17 @@ private:
         boundInChans.resize(3);     // three input ports
         boundInChans[0].port = &iport1;
         boundInChans[0].toks = itoks[0];
+        boundInChans[0].portType = typeid(I1TYP).name();
         boundInChans[1].port = &iport2;
         boundInChans[1].toks = itoks[1];
+        boundInChans[1].portType = typeid(I2TYP).name();
         boundInChans[2].port = &iport3;
         boundInChans[2].toks = itoks[2];
+        boundInChans[2].portType = typeid(I3TYP).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = otoks[0];
+        boundOutChans[0].portType = typeid(OTYP).name();
         for (int i=0;i<iport1.size();i++)
             boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
         for (int i=0;i<iport2.size();i++)
@@ -429,15 +439,20 @@ private:
         boundInChans.resize(4);     // four input ports
         boundInChans[0].port = &iport1;
         boundInChans[0].toks = itoks[0];
+        boundInChans[0].portType = typeid(I1TYP).name();
         boundInChans[1].port = &iport2;
         boundInChans[1].toks = itoks[1];
+        boundInChans[1].portType = typeid(I2TYP).name();
         boundInChans[2].port = &iport3;
         boundInChans[2].toks = itoks[2];
+        boundInChans[2].portType = typeid(I3TYP).name();
         boundInChans[3].port = &iport4;
         boundInChans[3].toks = itoks[3];
+        boundInChans[3].portType = typeid(I4TYP).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = otoks[0];
+        boundOutChans[0].portType = typeid(OTYP).name();
         for (int i=0;i<iport1.size();i++)
             boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
         for (int i=0;i<iport2.size();i++)
@@ -506,9 +521,11 @@ private:
         boundInChans.resize(1);     // only one input ports
         boundInChans[0].port = &iport;
         boundInChans[0].toks = 1;
+        boundInChans[0].portType = typeid(IOTYP).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = 1;
+        boundOutChans[0].portType = typeid(IOTYP).name();
         for (int i=0;i<iport.size();i++)
             boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
         for (int i=0;i<oport.size();i++)
@@ -570,9 +587,11 @@ private:
         boundInChans.resize(1);     // only one input ports
         boundInChans[0].port = &iport;
         boundInChans[0].toks = 1;
+        boundInChans[0].portType = typeid(IOTYP).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = 1;
+        boundOutChans[0].portType = typeid(IOTYP).name();
         for (int i=0;i<iport.size();i++)
             boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
         for (int i=0;i<oport.size();i++)
@@ -623,6 +642,7 @@ private:
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = 1;
+        boundOutChans[0].portType = typeid(OTYP).name();
         for (int i=0;i<oport.size();i++)
             boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
@@ -680,6 +700,7 @@ private:
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = 1;
+        boundOutChans[0].portType = typeid(OTYP).name();
         for (int i=0;i<oport.size();i++)
             boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
@@ -736,6 +757,7 @@ private:
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = 1;
+        boundOutChans[0].portType = typeid(OTYP).name();
         for (int i=0;i<oport.size();i++)
             boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
@@ -785,6 +807,7 @@ private:
         boundInChans.resize(1);     // only one input ports
         boundInChans[0].port = &iport;
         boundInChans[0].toks = 1;
+        boundInChans[0].portType = typeid(ITYP).name();
         for (int i=0;i<iport.size();i++)
             boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
     }
@@ -844,6 +867,7 @@ private:
         boundOutChans.resize(1);
         boundOutChans[0].port = &oport;
         boundOutChans[0].toks = otoks[0];
+        boundOutChans[0].portType = typeid(std::tuple<std::vector<ITYPs>...>).name();
         populateIPorts<ITYPs...>(boundInChans, itoks, iport);
         for (int i=0;i<oport.size();i++)
             boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
@@ -892,6 +916,7 @@ private:
             populateIPorts_helper<N-1,T>::populate(boundInChans,itoks,ports);
             boundInChans[N].port = &std::get<N>(ports);
             boundInChans[N].toks = itoks[N];
+            //~ boundInChans[N].portType = typeid(*std::get<N>(ports).data_type).name();
             for (int i=0;i<std::get<N>(ports).size();i++)
                 boundInChans[N].boundChans.push_back(
                     dynamic_cast<sc_object*>(std::get<N>(ports)[i])
@@ -907,6 +932,7 @@ private:
         {
             boundInChans[0].port = &std::get<0>(ports);
             boundInChans[0].toks = itoks[0];
+            //~ boundInChans[0].portType = typeid(*std::get<0>(ports).data_type).name();
             for (int i=0;i<std::get<0>(ports).size();i++)
                 boundInChans[0].boundChans.push_back(
                     dynamic_cast<sc_object*>(std::get<0>(ports)[i])
@@ -976,11 +1002,15 @@ private:
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport;
         boundInChans[0].toks = itoks[0];
+        boundInChans[0].portType = typeid(std::tuple<std::vector<OTYP1>,
+                                                     std::vector<OTYP2>>).name();
         boundOutChans.resize(2);    // two output ports
         boundOutChans[0].port = &oport1;
         boundOutChans[0].toks = otoks[0];
+        boundOutChans[0].portType = typeid(OTYP1).name();
         boundOutChans[1].port = &oport2;
         boundOutChans[1].toks = otoks[1];
+        boundOutChans[1].portType = typeid(OTYP2).name();
         for (int i=0;i<iport.size();i++)
             boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport[i]));
         for (int i=0;i<oport1.size();i++)
