@@ -456,35 +456,29 @@ public:
                                     
                                     // add argument mapping for the inputs
                                     int fifoIndex=0;
-                                    for (auto it2=channels.begin();it2!=channels.end();it2++)
+                                    for (auto it2=it->second->boundInChans.begin();it2!=it->second->boundInChans.end();it2++)
                                     {
-                                        if (it2->second.desActor==it->second)
-                                        {
-                                            xml_node<> *argMapElmNode = doc.allocate_node(node_element, "argument");
-                                            argMapNode->append_node(argMapElmNode);
-                                            std::stringstream tss; tss << fifoIndex++;
-                                            char* num = doc.allocate_string(tss.str().c_str());
-                                            xml_attribute<> *argMapNumAttr = doc.allocate_attribute("number", num);
-                                            argMapElmNode->append_attribute(argMapNumAttr);
-                                            xml_attribute<> *argMapPortAttr = doc.allocate_attribute("port", it2->second.desPort->name());
-                                            argMapElmNode->append_attribute(argMapPortAttr);
-                                        }
+                                        xml_node<> *argMapElmNode = doc.allocate_node(node_element, "argument");
+                                        argMapNode->append_node(argMapElmNode);
+                                        std::stringstream tss; tss << fifoIndex++;
+                                        char* num = doc.allocate_string(tss.str().c_str());
+                                        xml_attribute<> *argMapNumAttr = doc.allocate_attribute("number", num);
+                                        argMapElmNode->append_attribute(argMapNumAttr);
+                                        xml_attribute<> *argMapPortAttr = doc.allocate_attribute("port", (*it2).port->name());
+                                        argMapElmNode->append_attribute(argMapPortAttr);
                                     }
                                     
-                                    // add argument mapping for the inputs
-                                    for (auto it2=channels.begin();it2!=channels.end();it2++)
+                                    // add argument mapping for the outputs
+                                    for (auto it2=it->second->boundOutChans.begin();it2!=it->second->boundOutChans.end();it2++)
                                     {
-                                        if (it2->second.srcActor==it->second)
-                                        {
-                                            xml_node<> *argMapElmNode = doc.allocate_node(node_element, "argument");
-                                            argMapNode->append_node(argMapElmNode);
-                                            std::stringstream tss; tss << fifoIndex++;
-                                            char* num = doc.allocate_string(tss.str().c_str());
-                                            xml_attribute<> *argMapNumAttr = doc.allocate_attribute("number", num);
-                                            argMapElmNode->append_attribute(argMapNumAttr);
-                                            xml_attribute<> *argMapPortAttr = doc.allocate_attribute("port", it2->second.srcPort->name());
-                                            argMapElmNode->append_attribute(argMapPortAttr);
-                                        }
+                                        xml_node<> *argMapElmNode = doc.allocate_node(node_element, "argument");
+                                        argMapNode->append_node(argMapElmNode);
+                                        std::stringstream tss; tss << fifoIndex++;
+                                        char* num = doc.allocate_string(tss.str().c_str());
+                                        xml_attribute<> *argMapNumAttr = doc.allocate_attribute("number", num);
+                                        argMapElmNode->append_attribute(argMapNumAttr);
+                                        xml_attribute<> *argMapPortAttr = doc.allocate_attribute("port", (*it2).port->name());
+                                        argMapElmNode->append_attribute(argMapPortAttr);
                                     }
                                 
                                 xml_node<> *srcFilesNode = doc.allocate_node(node_element, "sourceFiles");
