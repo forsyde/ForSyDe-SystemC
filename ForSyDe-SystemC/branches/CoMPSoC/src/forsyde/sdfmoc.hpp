@@ -294,9 +294,9 @@ public:
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
     
     typedef std::function<void(std::vector<OTYP>&,
-                                std::vector<I1TYP>&,
-                                std::vector<I2TYP>&,
-                                std::vector<I3TYP>&
+                                const std::vector<I1TYP>&,
+                                const std::vector<I2TYP>&,
+                                const std::vector<I3TYP>&
                                 )> functype;
 
     //! The constructor requires the module name
@@ -383,10 +383,10 @@ public:
     sc_fifo_out<OTYP> oport;        ///< port for the output channel
     
     typedef std::function<void(std::vector<OTYP>&,
-                                std::vector<I1TYP>&,
-                                std::vector<I2TYP>&,
-                                std::vector<I3TYP>&,
-                                std::vector<I4TYP>&
+                                const std::vector<I1TYP>&,
+                                const std::vector<I2TYP>&,
+                                const std::vector<I3TYP>&,
+                                const std::vector<I4TYP>&
                                 )> functype;
 
     //! The constructor requires the module name
@@ -916,7 +916,8 @@ private:
             populateIPorts_helper<N-1,T>::populate(boundInChans,itoks,ports);
             boundInChans[N].port = &std::get<N>(ports);
             boundInChans[N].toks = itoks[N];
-            //~ boundInChans[N].portType = typeid(*std::get<N>(ports).data_type).name();
+            decltype(std::get<N>(ports).read()) tempT;      // ugly hack
+            boundInChans[N].portType = typeid(tempT).name();// ugly hack
             for (int i=0;i<std::get<N>(ports).size();i++)
                 boundInChans[N].boundChans.push_back(
                     dynamic_cast<sc_object*>(std::get<N>(ports)[i])
@@ -932,7 +933,8 @@ private:
         {
             boundInChans[0].port = &std::get<0>(ports);
             boundInChans[0].toks = itoks[0];
-            //~ boundInChans[0].portType = typeid(*std::get<0>(ports).data_type).name();
+            decltype(std::get<0>(ports).read()) tempT;
+            boundInChans[0].portType = typeid(tempT).name();
             for (int i=0;i<std::get<0>(ports).size();i++)
                 boundInChans[0].boundChans.push_back(
                     dynamic_cast<sc_object*>(std::get<0>(ports)[i])
@@ -1114,6 +1116,7 @@ private:
             populateOPorts_helper<N-1,T>::populate(boundOutChans,otoks,ports);
             boundOutChans[N].port = &std::get<N>(ports);
             boundOutChans[N].toks = otoks[N];
+            boundOutChans[N].portType = typeid(std::get<N>(ports)).name();
             for (int i=0;i<std::get<N>(ports).size();i++)
                 boundOutChans[N].boundChans.push_back(
                     dynamic_cast<sc_object*>(std::get<N>(ports)[i])
@@ -1129,6 +1132,7 @@ private:
         {
             boundOutChans[0].port = &std::get<0>(ports);
             boundOutChans[0].toks = otoks[0];
+            boundOutChans[0].portType = typeid(std::get<0>(ports)).name();
             for (int i=0;i<std::get<0>(ports).size();i++)
                 boundOutChans[0].boundChans.push_back(
                     dynamic_cast<sc_object*>(std::get<0>(ports)[i])
