@@ -13,23 +13,32 @@
 #include "include/MP3_Huffman_Table.h"
 #include "include/MP3_Huffman_Table.c"
 
+#ifdef FORSYDE
 
+#define SRC FILE
+
+#else
+
+#include "include/input.h"
+#define SRC unsigned char
+
+#endif
 
 /* Function Declaration*/
 char file_name[256];
-STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp);
-UINT32 MPG_Get_Filepos (FILE* fp);
-STATUS MPG_Read_Header (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp);
-UINT32 MPG_Get_Byte (FILE* fp);
+STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, SRC*& fp);
+UINT32 MPG_Get_Filepos (SRC*& fp);
+STATUS MPG_Read_Header (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, SRC*& fp);
+UINT32 MPG_Get_Byte (SRC*& fp);
 void MPG_Decode_L3_Init_Song ();
-STATUS MPG_Read_CRC (FILE* fp);
-STATUS MPG_Read_Audio_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp);
-static void MPG_Get_Sideinfo (UINT32 sideinfo_size, FILE* fp);
-STATUS MPG_Get_Bytes (UINT32 no_of_bytes, UINT32 data_vec[], FILE* fp);
+STATUS MPG_Read_CRC (SRC*& fp);
+STATUS MPG_Read_Audio_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, SRC*& fp);
+static void MPG_Get_Sideinfo (UINT32 sideinfo_size, SRC*& fp);
+STATUS MPG_Get_Bytes (UINT32 no_of_bytes, UINT32 data_vec[], SRC*& fp);
 UINT32 MPG_Get_Side_Bits (UINT32 number_of_bits);
-STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp);
+STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, SRC*& fp);
 UINT32 MPG_Get_Main_Bits (UINT32 number_of_bits);
-static STATUS MPG_Get_Main_Data (UINT32 main_data_size, UINT32 main_data_begin, FILE* fp);
+static STATUS MPG_Get_Main_Data (UINT32 main_data_size, UINT32 main_data_begin, SRC*& fp);
 UINT32 MPG_Get_Main_Pos ();
 static STATUS MPG_Huffman_Decode (UINT32 table_num, INT32 *x, INT32 *y, INT32 *v, INT32 *w);
 void MPG_Read_Huffman (UINT32 part_2_start, UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data);
@@ -51,7 +60,7 @@ UINT32 *g_main_data_ptr;	/* Pointer into the reservoir */
 UINT32  g_main_data_idx;	/* Index into the current byte (0-7) */
 UINT32  g_main_data_top = 0;/* Number of bytes in reservoir (0-1024) */
 
-static FILE *fp = (FILE *) NULL;
+static SRC *fp = (SRC *) NULL;
 
 static UINT32 hsynth_init = 1;
 static UINT32 synth_init = 1;
@@ -92,33 +101,37 @@ static UINT32  side_info_vec[32+4];
 static UINT32 *side_info_ptr;	/* Pointer into the reservoir */
 static UINT32  side_info_idx;	/* Index into the current byte (0-7) */
 
-FILE *pfile;
+SRC *pfile;
 
 
 bool readBitstreamAndExtractFrames(char *file_name, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, FrameMainData *frameMainData){
 
-	/* File open? */
-	      if (fp == (FILE *) NULL) {
-	        if ((fp = fopen (file_name, "r")) == (FILE *) NULL) {
-	          printf ("Cannot open mp3 file \"%s\"\n", file_name);
-	          exit (0);
-	        }
-	      }
+  /* File open? */
+  if (fp == (SRC *) NULL) {
+  #ifdef FORSYDE
+    if ((fp = fopen (file_name, "r")) == (SRC *) NULL) {
+      printf ("Cannot open mp3 file \"%s\"\n", file_name);
+      exit (0);
+    }
+  #else
+    fp = instream;
+  #endif
+  }
 
-	    if (MPG_Get_Filepos (fp) != C_MPG_EOF) {
-	     MPG_Read_Frame(frameHeader, frameSideInfo, frameMainData, fp);
-	    }
-	    else{
-	      //fclose(fw);
-	      //exit (0);
-		  return false;
-	    }
+    if (MPG_Get_Filepos (fp) != C_MPG_EOF) {
+     MPG_Read_Frame(frameHeader, frameSideInfo, frameMainData, fp);
+    }
+    else{
+      //fclose(fw);
+      //exit (0);
+      return false;
+    }
 
 
-		return true;
-	}
+    return true;
+}
 
-STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp)
+STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, SRC*& fp)
 {
     UINT32 first = 0;
 
@@ -168,23 +181,29 @@ STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, 
 
 }
 
-UINT32 MPG_Get_Filepos (FILE* fp)
+UINT32 MPG_Get_Filepos (SRC*& fp)
 {
 
     /* File open? */
-    if (fp == (FILE *) NULL) {
+    if (fp == (SRC *) NULL) {
         return (0);
     }
-
+#ifdef FORSYDE
     if (feof (fp)) {
         return (C_MPG_EOF);
     } else {
         return ((UINT32) ftell (fp));
     }
-
+#else
+    if (fp-instream >= instream_size) {
+        return (C_MPG_EOF);
+    } else {
+        return ((UINT32) (fp-instream));
+    }
+#endif
 }
 
-STATUS MPG_Read_Header (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp)
+STATUS MPG_Read_Header (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, SRC*& fp)
 {
     UINT32 b1, b2, b3, b4, header;
 
@@ -301,7 +320,7 @@ void MPG_Decode_L3_Init_Song ()
 }
 
 
-STATUS MPG_Read_CRC (FILE* fp)
+STATUS MPG_Read_CRC (SRC*& fp)
 {
     UINT32 b1, b2;
 
@@ -320,11 +339,11 @@ STATUS MPG_Read_CRC (FILE* fp)
 }
 
 
-UINT32 MPG_Get_Byte (FILE* fp)
+UINT32 MPG_Get_Byte (SRC*& fp)
 {
 	 UINT32 val;
 
-
+#ifdef FORSYDE
 
 	    /* Get byte */
 	    val = fgetc (fp) & 0xff;
@@ -333,13 +352,21 @@ UINT32 MPG_Get_Byte (FILE* fp)
 	    if (feof (fp)) {
 	        val = C_MPG_EOF;
 	    }
+#else
+        /* Get byte */
+	    val = (*(fp++)) & 0xff;
 
+	    /* EOF? */
+	    if (fp-instream >= instream_size) {
+	        val = C_MPG_EOF;
+	    }
+#endif
 	    /* Done */
 	    return (val);
 
 }
 
-STATUS MPG_Read_Audio_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp)
+STATUS MPG_Read_Audio_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, SRC*& fp)
 {
 	UINT32 framesize, sideinfo_size, main_data_size;
     UINT32 nch, ch, gr, scfsi_band, region, window;
@@ -465,7 +492,7 @@ UINT32 MPG_Get_Side_Bits (UINT32 number_of_bits)
     return (tmp);
 }
 
-static void MPG_Get_Sideinfo (UINT32 sideinfo_size,FILE* fp)
+static void MPG_Get_Sideinfo (UINT32 sideinfo_size,SRC*& fp)
 {
     if (MPG_Get_Bytes (sideinfo_size, side_info_vec, fp) != OK) {
         ERR ("\nCouldn't read sideinfo %d bytes at pos %d\n", sideinfo_size, MPG_Get_Filepos (fp));
@@ -477,7 +504,7 @@ static void MPG_Get_Sideinfo (UINT32 sideinfo_size,FILE* fp)
 
 }
 
-STATUS MPG_Get_Bytes (UINT32 no_of_bytes, UINT32 data_vec[], FILE* fp)
+STATUS MPG_Get_Bytes (UINT32 no_of_bytes, UINT32 data_vec[], SRC*& fp)
 {
     int i;
     UINT32 val;
@@ -497,7 +524,7 @@ STATUS MPG_Get_Bytes (UINT32 no_of_bytes, UINT32 data_vec[], FILE* fp)
 
 }
 
-STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp)
+STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, SRC*& fp)
 {
 
     UINT32 framesize, sideinfo_size, main_data_size;
@@ -642,7 +669,7 @@ STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info
 
 }
 
-static STATUS MPG_Get_Main_Data (UINT32 main_data_size, UINT32 main_data_begin, FILE* fp)
+static STATUS MPG_Get_Main_Data (UINT32 main_data_size, UINT32 main_data_begin, SRC*& fp)
 {
     int i, start_pos;
 
@@ -820,17 +847,17 @@ void MPG_Read_Huffman (UINT32 part_2_start, UINT32 gr, UINT32 ch, FrameHeader* g
 
 }
 
-void MPG_Set_Filepos (UINT32 position, FILE* fp)
-{
-
-    /* File open? */
-    if (fp == (FILE *) NULL) {
-        return;
-    }
-
-    fseek (fp, (long) position, SEEK_SET);
-
-}
+//~ void MPG_Set_Filepos (UINT32 position, SRC* fp)
+//~ {
+//~ 
+    //~ /* File open? */
+    //~ if (fp == (SRC *) NULL) {
+        //~ return;
+    //~ }
+//~ 
+    //~ fseek (fp, (long) position, SEEK_SET);
+//~ 
+//~ }
 
 static STATUS MPG_Huffman_Decode (UINT32 table_num, INT32 *x, INT32 *y, INT32 *v, INT32 *w)
 {
