@@ -41,7 +41,7 @@ typedef comb<float,InputType> ReadBitstreamAndExtractFrames;
 typedef comb3<FrameHeader,FrameSideInfo,ChanuleData,
               ChanuleSamples> ProcessChanule;
 
-typedef comb4<FrameHeader,FrameSideInfo,GranuleData,t_sf_band_indices*,
+typedef comb3<FrameHeader,FrameSideInfo,GranuleData,
     tuple<
         vector<FrameHeader>,
         vector<FrameSideInfo>,
@@ -67,11 +67,9 @@ typedef unzipN<
         FrameHeader,
         FrameSideInfo,
         GranuleData,
-        t_sf_band_indices*,
         FrameHeader,
         FrameSideInfo,
-        GranuleData,
-        t_sf_band_indices*
+        GranuleData
     > InputUnzipper;
 
 typedef zipN<
@@ -110,8 +108,6 @@ public:
     SDF2SDF<FrameSideInfo> *sideInfoGranule1;
     SDF2SDF<GranuleData> *granuleData0;
     SDF2SDF<GranuleData> *granuleData1;
-    SDF2SDF<t_sf_band_indices*> *bandIndicesGranule0;
-    SDF2SDF<t_sf_band_indices*> *bandIndicesGranule1;
     SDF2SDF<GranuleType> *zippedGranuel0Out;
     SDF2SDF<GranuleType> *zippedGranuel1Out;
     SDF2SDF<FrameHeader> *headerMerge;
@@ -146,8 +142,6 @@ public:
         sideInfoGranule1 = new SDF2SDF<FrameSideInfo>("sideInfoGranule1",1);
         granuleData0 = new SDF2SDF<GranuleData>("granuleData0",1);
         granuleData1 = new SDF2SDF<GranuleData>("granuleData1",1);
-        bandIndicesGranule0 = new SDF2SDF<t_sf_band_indices*>("bandIndicesGranule0",1);
-        bandIndicesGranule1 = new SDF2SDF<t_sf_band_indices*>("bandIndicesGranule1",1);
         zippedGranuel0Out = new SDF2SDF<GranuleType>("zippedGranuel0Out",1);
         zippedGranuel1Out = new SDF2SDF<GranuleType>("zippedGranuel1Out",1);;
         headerMerge = new SDF2SDF<FrameHeader>("headerMerge",1);
@@ -173,7 +167,7 @@ public:
         a_ReadBitstreamAndExtractFrames->iport(*dummyloopo);
         a_ReadBitstreamAndExtractFrames->oport(*zippedInput);
         //
-        vector<unsigned> inputUnzipperRates = {1,1,1,1,1,1,1,1,1,1,1};
+        vector<unsigned> inputUnzipperRates = {1,1,1,1,1,1,1,1,1};
         a_InputUnzipper = new InputUnzipper("InputUnzipper",inputUnzipperRates);
         a_InputUnzipper->iport(*zippedInput);
         get<0>(a_InputUnzipper->oport)(*dummyloopi);
@@ -182,11 +176,9 @@ public:
         get<3>(a_InputUnzipper->oport)(*headerGranule0);
         get<4>(a_InputUnzipper->oport)(*sideInfoGranule0);
         get<5>(a_InputUnzipper->oport)(*granuleData0);
-        get<6>(a_InputUnzipper->oport)(*bandIndicesGranule0);
-        get<7>(a_InputUnzipper->oport)(*headerGranule1);
-        get<8>(a_InputUnzipper->oport)(*sideInfoGranule1);
-        get<9>(a_InputUnzipper->oport)(*granuleData1);
-        get<10>(a_InputUnzipper->oport)(*bandIndicesGranule1);
+        get<6>(a_InputUnzipper->oport)(*headerGranule1);
+        get<7>(a_InputUnzipper->oport)(*sideInfoGranule1);
+        get<8>(a_InputUnzipper->oport)(*granuleData1);
         //
         a_DummyLoopDelay = new delayn<float>("DummyLoopDelay",1,1);
         a_DummyLoopDelay->iport(*dummyloopi);
@@ -211,11 +203,10 @@ public:
         a_Merge = new Merge("Merge");
         a_Merge->iport(*zippedMerge);
         
-        a_ProcessGranule0 = new ProcessGranule("ProcessGranuleZero0",ProcessGranuleZero_func,1,1,1,1,1);
+        a_ProcessGranule0 = new ProcessGranule("ProcessGranuleZero0",ProcessGranuleZero_func,1,1,1,1);
         a_ProcessGranule0->iport1(*headerGranule0);
         a_ProcessGranule0->iport2(*sideInfoGranule0);
         a_ProcessGranule0->iport3(*granuleData0);
-        a_ProcessGranule0->iport4(*bandIndicesGranule0);
         a_ProcessGranule0->oport(*zippedGranuel0Out);
         //
         vector<unsigned> granuelUnzipperRates = {1,1,1,1,1,1};
@@ -228,11 +219,10 @@ public:
         get<4>(a_Granuel0Unzipper->oport)(*sideInfoChanule0Right);
         get<5>(a_Granuel0Unzipper->oport)(*chanuleData0Right);
 
-        a_ProcessGranule1 = new ProcessGranule("ProcessGranuleOne",ProcessGranuleOne_func,1,1,1,1,1);
+        a_ProcessGranule1 = new ProcessGranule("ProcessGranuleOne0",ProcessGranuleOne_func,1,1,1,1);
         a_ProcessGranule1->iport1(*headerGranule1);
         a_ProcessGranule1->iport2(*sideInfoGranule1);
         a_ProcessGranule1->iport3(*granuleData1);
-        a_ProcessGranule1->iport4(*bandIndicesGranule1);
         a_ProcessGranule1->oport(*zippedGranuel1Out);
         //
         a_Granuel1Unzipper = new GranuelUnzipper("GranuelUnzipper1",granuelUnzipperRates);

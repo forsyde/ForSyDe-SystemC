@@ -16,19 +16,19 @@
 #err "Must define one of POW34_TABLE and POW34_ITERATE!"
 #endif
 
-static void MPG_L3_Requantize (UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices);
+static void MPG_L3_Requantize (UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData);
 static void MPG_Requantize_Process_Long (UINT32 gr, UINT32 ch, UINT32 is_pos, UINT32 sfb, FrameSideInfo* g_side_info, GranuleData* granuleData);
 static void MPG_Requantize_Process_Short (UINT32 gr, UINT32 ch, UINT32 is_pos, UINT32 sfb, UINT32 win, FrameSideInfo* g_side_info, GranuleData* granuleData);
-static void MPG_L3_Reorder (UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices);
-static void MPG_L3_Stereo (UINT32 gr, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices);
-static void MPG_Stereo_Process_Intensity_Long (UINT32 gr, UINT32 sfb, FrameHeader* g_frame_header, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices);
-static void MPG_Stereo_Process_Intensity_Short (UINT32 gr, UINT32 sfb, FrameHeader* g_frame_header, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices);
+static void MPG_L3_Reorder (UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData);
+static void MPG_L3_Stereo (UINT32 gr, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData);
+static void MPG_Stereo_Process_Intensity_Long (UINT32 gr, UINT32 sfb, FrameHeader* g_frame_header, GranuleData* granuleData);
+static void MPG_Stereo_Process_Intensity_Short (UINT32 gr, UINT32 sfb, FrameHeader* g_frame_header, GranuleData* granuleData);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 /* Main actor function */
-void processGranule(const UINT32 gr, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, GranuleData *frameInMainData, t_sf_band_indices* bandIndices, GranuleData *frameOutMainData)
+void processGranule(const UINT32 gr, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, GranuleData *frameInMainData, GranuleData *frameOutMainData)
 {
   UINT32 ch, nch;
    /* Sampling frequencies in hertz (valid for all layers) */
@@ -46,13 +46,13 @@ void processGranule(const UINT32 gr, FrameHeader *frameHeader, FrameSideInfo *fr
 
     for (ch = 0; ch<nch; ch++) {
         /* Requantize samples */
-        MPG_L3_Requantize (gr, ch, frameHeader, frameSideInfo, frameOutMainData, bandIndices);
+        MPG_L3_Requantize (gr, ch, frameHeader, frameSideInfo, frameOutMainData);
 
         /* Reorder short blocks */
-        MPG_L3_Reorder (gr, ch, frameHeader, frameSideInfo, frameOutMainData, bandIndices);
+        MPG_L3_Reorder (gr, ch, frameHeader, frameSideInfo, frameOutMainData);
     }
     /* Stereo processing */
-    MPG_L3_Stereo (gr, frameHeader, frameSideInfo, frameOutMainData, bandIndices);
+    MPG_L3_Stereo (gr, frameHeader, frameSideInfo, frameOutMainData);
 
 }
 
@@ -61,7 +61,7 @@ void processGranule(const UINT32 gr, FrameHeader *frameHeader, FrameSideInfo *fr
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static void
-MPG_L3_Requantize (UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices)
+MPG_L3_Requantize (UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData)
 {
     UINT32 sfb /* scalefac band index */;
     UINT32 next_sfb /* frequency of next sfb */;
@@ -318,7 +318,7 @@ static void MPG_Requantize_Process_Short (UINT32 gr, UINT32 ch, UINT32 is_pos,
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static void
-MPG_L3_Reorder (UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices)
+MPG_L3_Reorder (UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData)
 {
     UINT32 sfreq, i, j, next_sfb, sfb, win_len, win;
     FLOAT32 re[576];
@@ -411,7 +411,7 @@ MPG_L3_Reorder (UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static void
-MPG_L3_Stereo (UINT32 gr, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices)
+MPG_L3_Stereo (UINT32 gr, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, GranuleData* granuleData)
 {
     UINT32 max_pos, i;
     FLOAT32 left, right;
@@ -475,7 +475,7 @@ MPG_L3_Stereo (UINT32 gr, FrameHeader* g_frame_header, FrameSideInfo* g_side_inf
 
                     /* Is this scale factor band above count1 for the right channel? */
                     if (g_sf_band_indices[sfreq].l[sfb] >= (*g_side_info).count1[gr][1]) {
-                        MPG_Stereo_Process_Intensity_Long (gr, sfb, g_frame_header, granuleData, g_sf_band_indices);
+                        MPG_Stereo_Process_Intensity_Long (gr, sfb, g_frame_header, granuleData);
                     }
 
                 } /* end if (sfb... */
@@ -489,7 +489,7 @@ MPG_L3_Stereo (UINT32 gr, FrameHeader* g_frame_header, FrameSideInfo* g_side_inf
                     if (g_sf_band_indices[sfreq].s[sfb]*3 >= (*g_side_info).count1[gr][1]) {
 
                         /* Perform the intensity stereo processing */
-                        MPG_Stereo_Process_Intensity_Short (gr, sfb, g_frame_header, granuleData, g_sf_band_indices);
+                        MPG_Stereo_Process_Intensity_Short (gr, sfb, g_frame_header, granuleData);
                     }
                 }
 
@@ -501,7 +501,7 @@ MPG_L3_Stereo (UINT32 gr, FrameHeader* g_frame_header, FrameSideInfo* g_side_inf
                     if (g_sf_band_indices[sfreq].s[sfb]*3 >= (*g_side_info).count1[gr][1]) {
 
                         /* Perform the intensity stereo processing */
-                        MPG_Stereo_Process_Intensity_Short (gr, sfb, g_frame_header, granuleData, g_sf_band_indices);
+                        MPG_Stereo_Process_Intensity_Short (gr, sfb, g_frame_header, granuleData);
                     }
                 }
 
@@ -515,7 +515,7 @@ MPG_L3_Stereo (UINT32 gr, FrameHeader* g_frame_header, FrameSideInfo* g_side_inf
                 if (g_sf_band_indices[sfreq].l[sfb] >= (*g_side_info).count1[gr][1]) {
 
                     /* Perform the intensity stereo processing */
-                    MPG_Stereo_Process_Intensity_Long (gr, sfb, g_frame_header, granuleData, g_sf_band_indices);
+                    MPG_Stereo_Process_Intensity_Long (gr, sfb, g_frame_header, granuleData);
                 }
             }
 
@@ -530,7 +530,7 @@ MPG_L3_Stereo (UINT32 gr, FrameHeader* g_frame_header, FrameSideInfo* g_side_inf
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static void
-MPG_Stereo_Process_Intensity_Long (UINT32 gr, UINT32 sfb, FrameHeader* g_frame_header, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices)
+MPG_Stereo_Process_Intensity_Long (UINT32 gr, UINT32 sfb, FrameHeader* g_frame_header, GranuleData* granuleData)
 {
     static int init = 0;
     static FLOAT32 is_ratios[6];
@@ -587,7 +587,7 @@ MPG_Stereo_Process_Intensity_Long (UINT32 gr, UINT32 sfb, FrameHeader* g_frame_h
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 static void
-MPG_Stereo_Process_Intensity_Short (UINT32 gr, UINT32 sfb, FrameHeader* g_frame_header, GranuleData* granuleData, t_sf_band_indices* g_sf_band_indices)
+MPG_Stereo_Process_Intensity_Short (UINT32 gr, UINT32 sfb, FrameHeader* g_frame_header, GranuleData* granuleData)
 {
     UINT32 i;
     FLOAT32 left, right;

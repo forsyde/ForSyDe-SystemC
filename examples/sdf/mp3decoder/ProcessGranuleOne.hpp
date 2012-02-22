@@ -20,8 +20,7 @@ void ProcessGranuleOne_func(
     vector<GranuleType>&              outs,
     const vector<FrameHeader>&        inp1, // headerGranule
     const vector<FrameSideInfo>&      inp2, // sideInfoGranule
-    const vector<GranuleData>&        inp3, // granuleData
-    const vector<t_sf_band_indices*>& inp4  // bandIndicesGranule
+    const vector<GranuleData>&        inp3  // granuleData
 )
 {
     vector<FrameHeader>         out1(1);    // headerChanuleLeft
@@ -37,7 +36,7 @@ void ProcessGranuleOne_func(
     GranuleData processedMainData;
     
     /* Main actor code */
-    processGranule(1, &inp1[0], &inp2[0], &inp3[0], inp4[0], &processedMainData);
+    processGranule(1, &inp1[0], &inp2[0], &inp3[0], &processedMainData);
 
     out1[0] = inp1[0];
     out2[0] = inp2[0];

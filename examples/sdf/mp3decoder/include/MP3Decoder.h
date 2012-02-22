@@ -172,16 +172,33 @@ typedef struct  {
   UINT32 s[14];
 } t_sf_band_indices;
 
-//t_sf_band_indices  g_sf_band_indices[3];
-
+static const t_sf_band_indices g_sf_band_indices[3 /* Sampling freq. */] =
+  {
+    {
+      { 0, 4, 8, 12, 16, 20, 24, 30, 36, 44, 52, 62, 74, 90, 110, 134, 162,
+	196, 238, 288, 342, 418, 576 },
+      { 0, 4, 8, 12, 16, 22, 30, 40, 52, 66, 84, 106, 136, 192 }
+    },
+    {
+      { 0, 4, 8, 12, 16, 20, 24, 30, 36, 42, 50, 60, 72, 88, 106, 128, 156,
+	190, 230, 276, 330, 384, 576 },
+      { 0, 4, 8, 12, 16, 22, 28, 38, 50, 64, 80, 100, 126, 192 }
+    },
+    {
+      { 0, 4, 8, 12, 16, 20, 24, 30, 36, 44, 54, 66, 82, 102, 126, 156, 194,
+	240, 296, 364, 448, 550, 576 },
+      { 0, 4, 8, 12, 16, 22, 30, 42, 58, 78, 104, 138, 180, 192 }
+    }
+  };
+  
 /* MP3 Decoder function definitions */
 
 
 /// ReadBitstreamAndExtractFrames.c
-bool readBitstreamAndExtractFrames(char *file_name, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, FrameMainData *frameMainData, t_sf_band_indices* g_sf_band_indices);
+bool readBitstreamAndExtractFrames(char *file_name, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, FrameMainData *frameMainData);
 
 ///ProcessGranule.c
-void processGranule(const UINT32 gr, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, GranuleData *frameInMainData, t_sf_band_indices* bandIndices, GranuleData *frameOutMainData);
+void processGranule(const UINT32 gr, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, GranuleData *frameInMainData, GranuleData *frameOutMainData);
 
 ///ProcessChanule.c
 void processChanule(const INT32 granuleId, const INT32 channelId, ChanuleSamples *channelSample, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, ChanuleData *frameMainData);
