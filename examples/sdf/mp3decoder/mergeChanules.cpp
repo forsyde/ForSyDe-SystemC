@@ -57,9 +57,9 @@ void audio_write_raw (FrameHeader* g_frame_header, UINT32 *samples, UINT32 nsamp
         init = 1;
 
         sprintf (fname, "%s.raw", filename);
-
+#ifdef FORSYDE
         fd = open (fname, O_WRONLY | O_CREAT, 0666);
-
+#endif
         if (fd == -1) {
             perror (fname);
             exit (-1);
@@ -80,13 +80,16 @@ void audio_write_raw (FrameHeader* g_frame_header, UINT32 *samples, UINT32 nsamp
         }
 
     }
-
+#ifdef FORSYDE
     if (write (fd, (char *) s, nsamples * 2 * nch) != nsamples * 2 * nch) {
         fprintf (stderr, "Unable to write raw data\n");
         perror (fname);
         exit (-1);
     }
-
+#else
+    for (i=0;i<nsamples * 2 * nch;i++)
+        mon_debug_info(((char *) s)[i]);
+#endif
     return;
 
 } /* audio_write_raw() */
