@@ -17,22 +17,22 @@
 
 /* Function Declaration*/
 char file_name[256];
-STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, t_sf_band_indices* g_sf_band_indices, FILE* fp);
+STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp);
 UINT32 MPG_Get_Filepos (FILE* fp);
 STATUS MPG_Read_Header (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp);
 UINT32 MPG_Get_Byte (FILE* fp);
 void MPG_Decode_L3_Init_Song ();
 STATUS MPG_Read_CRC (FILE* fp);
-STATUS MPG_Read_Audio_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, t_sf_band_indices* g_sf_band_indices, FILE* fp);
+STATUS MPG_Read_Audio_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp);
 static void MPG_Get_Sideinfo (UINT32 sideinfo_size, FILE* fp);
 STATUS MPG_Get_Bytes (UINT32 no_of_bytes, UINT32 data_vec[], FILE* fp);
 UINT32 MPG_Get_Side_Bits (UINT32 number_of_bits);
-STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, t_sf_band_indices* g_sf_band_indices, FILE* fp);
+STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp);
 UINT32 MPG_Get_Main_Bits (UINT32 number_of_bits);
 static STATUS MPG_Get_Main_Data (UINT32 main_data_size, UINT32 main_data_begin, FILE* fp);
 UINT32 MPG_Get_Main_Pos ();
 static STATUS MPG_Huffman_Decode (UINT32 table_num, INT32 *x, INT32 *y, INT32 *v, INT32 *w);
-void MPG_Read_Huffman (UINT32 part_2_start, UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, t_sf_band_indices* g_sf_band_indices);
+void MPG_Read_Huffman (UINT32 part_2_start, UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data);
 UINT32 MPG_Get_Main_Bit ();
 STATUS MPG_Set_Main_Pos (UINT32 bit_pos);
 
@@ -79,25 +79,6 @@ UINT32 g_sampling_frequency[3] = {
   32000 * Hz
 };
 
-t_sf_band_indices g_sf_band_indices[3 /* Sampling freq. */] =
-  {
-    {
-      { 0, 4, 8, 12, 16, 20, 24, 30, 36, 44, 52, 62, 74, 90, 110, 134, 162,
-	196, 238, 288, 342, 418, 576 },
-      { 0, 4, 8, 12, 16, 22, 30, 40, 52, 66, 84, 106, 136, 192 }
-    },
-    {
-      { 0, 4, 8, 12, 16, 20, 24, 30, 36, 42, 50, 60, 72, 88, 106, 128, 156,
-	190, 230, 276, 330, 384, 576 },
-      { 0, 4, 8, 12, 16, 22, 28, 38, 50, 64, 80, 100, 126, 192 }
-    },
-    {
-      { 0, 4, 8, 12, 16, 20, 24, 30, 36, 44, 54, 66, 82, 102, 126, 156, 194,
-	240, 296, 364, 448, 550, 576 },
-      { 0, 4, 8, 12, 16, 22, 30, 42, 58, 78, 104, 138, 180, 192 }
-    }
-  };
-
 static UINT32 mpeg1_scalefac_sizes[16][2 /* slen1, slen2 */] = {
   { 0, 0 }, { 0, 1 }, { 0, 2 }, { 0, 3 },
   { 3, 0 }, { 1, 1 }, { 1, 2 }, { 1, 3 },
@@ -114,7 +95,7 @@ static UINT32  side_info_idx;	/* Index into the current byte (0-7) */
 FILE *pfile;
 
 
-bool readBitstreamAndExtractFrames(char *file_name, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, FrameMainData *frameMainData, t_sf_band_indices* g_sf_band_indices){
+bool readBitstreamAndExtractFrames(char *file_name, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, FrameMainData *frameMainData){
 
 	/* File open? */
 	      if (fp == (FILE *) NULL) {
@@ -125,7 +106,7 @@ bool readBitstreamAndExtractFrames(char *file_name, FrameHeader *frameHeader, Fr
 	      }
 
 	    if (MPG_Get_Filepos (fp) != C_MPG_EOF) {
-	     MPG_Read_Frame(frameHeader, frameSideInfo, frameMainData, g_sf_band_indices,fp);
+	     MPG_Read_Frame(frameHeader, frameSideInfo, frameMainData, fp);
 	    }
 	    else{
 	      //fclose(fw);
@@ -137,7 +118,7 @@ bool readBitstreamAndExtractFrames(char *file_name, FrameHeader *frameHeader, Fr
 		return true;
 	}
 
-STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, t_sf_band_indices* g_sf_band_indices, FILE* fp)
+STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp)
 {
     UINT32 first = 0;
 
@@ -168,13 +149,13 @@ STATUS MPG_Read_Frame (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, 
     if ((*g_frame_header).layer == 3) {
 
         /* Get side info */
-        MPG_Read_Audio_L3 (g_frame_header, g_side_info, g_main_data, g_sf_band_indices, fp);
+        MPG_Read_Audio_L3 (g_frame_header, g_side_info, g_main_data, fp);
 
 
         /* If there's not enough main data in the bit reservoir, signal to calling function so that decoding isn't done!*/
 
         /* Get main data (scalefactors and Huffman coded frequency data) */
-        if (MPG_Read_Main_L3 (g_frame_header, g_side_info, g_main_data, g_sf_band_indices, fp) != OK) {
+        if (MPG_Read_Main_L3 (g_frame_header, g_side_info, g_main_data, fp) != OK) {
             return (ERROR);
         }
 
@@ -358,7 +339,7 @@ UINT32 MPG_Get_Byte (FILE* fp)
 
 }
 
-STATUS MPG_Read_Audio_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, t_sf_band_indices* g_sf_band_indices, FILE* fp)
+STATUS MPG_Read_Audio_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp)
 {
 	UINT32 framesize, sideinfo_size, main_data_size;
     UINT32 nch, ch, gr, scfsi_band, region, window;
@@ -516,7 +497,7 @@ STATUS MPG_Get_Bytes (UINT32 no_of_bytes, UINT32 data_vec[], FILE* fp)
 
 }
 
-STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, t_sf_band_indices* g_sf_band_indices, FILE* fp)
+STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, FILE* fp)
 {
 
     UINT32 framesize, sideinfo_size, main_data_size;
@@ -650,7 +631,7 @@ STATUS MPG_Read_Main_L3 (FrameHeader* g_frame_header, FrameSideInfo* g_side_info
             }
 
             /* Read Huffman coded data. Skip stuffing bits. */
-            MPG_Read_Huffman (part_2_start, gr, ch, g_frame_header, g_side_info, g_main_data, g_sf_band_indices);
+            MPG_Read_Huffman (part_2_start, gr, ch, g_frame_header, g_side_info, g_main_data);
 
         } /* end for (gr... */
     } /* end for (ch... */
@@ -744,7 +725,7 @@ UINT32 MPG_Get_Main_Pos ()
 
 }
 
-void MPG_Read_Huffman (UINT32 part_2_start, UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data, t_sf_band_indices* g_sf_band_indices)
+void MPG_Read_Huffman (UINT32 part_2_start, UINT32 gr, UINT32 ch, FrameHeader* g_frame_header, FrameSideInfo* g_side_info, FrameMainData* g_main_data)
 {
     INT32 x, y, v, w;
     UINT32 table_num, is_pos, bit_pos_end, sfreq;
