@@ -14,7 +14,7 @@ void ProcessChanuleOneRight_func(
     const vector<ChanuleData>&        inp3  // chanuleData
 )
 {
-#pragma ForSyDe begin ProcessChanule_func
+#pragma ForSyDe begin ProcessChanuleOneRight_func
 
     /* User-defined local variables */
     GranuleData processedMainData;

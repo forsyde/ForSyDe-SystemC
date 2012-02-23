@@ -30,7 +30,7 @@ void ProcessGranuleOne_func(
     vector<FrameSideInfo>       out5(1);    // sideInfoChanuleRight
     vector<ChanuleData>         out6(1);    // chanuleDataRight
     
-#pragma ForSyDe begin ProcessGranule_func
+#pragma ForSyDe begin ProcessGranuleOne_func
 
     /* User-defined local variables */
     GranuleData processedMainData;
