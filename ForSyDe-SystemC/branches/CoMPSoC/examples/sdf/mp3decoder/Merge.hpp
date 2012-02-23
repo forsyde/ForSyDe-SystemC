@@ -36,8 +36,6 @@ protected:
         /* Main actor code */
         mergeChanules(&inp4[0], &inp1[0], &inp2[0], &inp5[0], &inp6[0], "output");
         
-        //~ std::cout << "output value: " << inp << std::endl;
-        // mon_debug_info(inp1[0]);
 #pragma ForSyDe end
         if (inp3[0]) sc_stop();
     }
