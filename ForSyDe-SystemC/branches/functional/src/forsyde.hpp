@@ -24,6 +24,7 @@
 
 // include utility libraries
 #include "forsyde/prettyprint.hpp"
+#include "forsyde/Typelist.h"
 
 // include the main SystemC library
 #include <systemc>

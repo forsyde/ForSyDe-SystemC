@@ -100,6 +100,14 @@ private:
     TYP value;
 };
 
+//! The SY signal used to inter-connect SY processes
+template <class T>
+class SY2SY: public sc_fifo<T>
+{
+public:
+    typedef T type;
+};
+
 //! Process constructor for a combinational process with one input and one output
 /*! This class is used to build combinational processes with one input
  * and one output. The class is parameterized for input and output
@@ -303,6 +311,62 @@ private:
     functype _func;
 };
 
+//! Process constructor for a combinational process with variable inputs outputs
+/*! similar to comb with variable inputs and outputs.
+ * The template parameters are Loki typelists and ports have a tuple-like
+ * interface.
+ */
+template <class ITL, class OTL>
+class combN : public sc_module
+{
+public:
+    sc_fifo_in<I1TYP> iport1;       ///< port for the input channel 1
+    sc_fifo_in<I2TYP> iport2;       ///< port for the input channel 2
+    sc_fifo_in<I3TYP> iport3;       ///< port for the input channel 3
+    sc_fifo_in<I4TYP> iport4;       ///< port for the input channel 4
+    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<OTYP(const I1TYP&, const I2TYP&,
+                               const I3TYP&, const I4TYP&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output port
+     */
+    combN(sc_module_name _name,     ///< process name
+          functype _func            ///< function to be passed
+         ) : sc_module(_name), _func(_func)
+    {
+        SC_THREAD(worker);
+    }
+private:
+    SC_HAS_PROCESS(combN);
+
+    //! The main and only execution thread of the module
+    void worker()
+    {
+        I1TYP in_val1;
+        I2TYP in_val2;
+        I3TYP in_val3;
+        I4TYP in_val4;
+        OTYP out_val;
+        while (1)
+        {
+            in_val1 = iport1.read();  // read from input
+            in_val2 = iport2.read();  // read from input
+            in_val3 = iport3.read();  // read from input
+            in_val4 = iport4.read();  // read from input
+            out_val = _func(in_val1, in_val2, in_val3, in_val4); // do the calculation
+            WRITE_MULTIPORT(oport,out_val);     // write to the output
+        }
+    }
+    
+    //! The function passed to the process constructor
+    functype _func;
+};
+
 //! Process constructor for a delay element
 /*! This class is used to build the most basic sequential process which
  * is a delay element. Given an initial value, it inserts this value at
@@ -330,6 +394,7 @@ public:
     {
         SC_THREAD(worker);
     }
+    
 private:
     IOTYP init_val;
     SC_HAS_PROCESS(delay);
@@ -1234,70 +1299,73 @@ private:
 
 };
 
-//~ //! Helper function to construct a comb process
-//~ /*! This function is used to construct a process (SystemC module) and
- //~ * connect its output and output signals.
- //~ * It provides a more functional style definition of a ForSyDe process.
- //~ * It also removes bilerplate code by using type-inference feature of
- //~ * C++ and automatic binding to the input and output FIFOs.
- //~ */
-//~ template <class ITYP, class OTYP>
-//~ comb<ITYP,OTYP>& make_comb(char* pName,
-                           //~ std::function<OTYP(const ITYP&)> _func,
-                           //~ const sc_fifo<ITYP>& inpS,
-                           //~ const sc_fifo<OTYP>& outS)
-//~ {
-    //~ comb<ITYP,OTYP> p = new comb<ITYP,OTYP>(pName, _func);
-    //~ 
-    //~ p.iport(inpS);
-    //~ p.oport(outS);
-    //~ 
-    //~ return p;
-//~ }
-//~ 
-//~ //! Helper function to construct a comb process
-//~ /*! This function is used to construct a process (SystemC module) and
- //~ * connect its output and output signals.
- //~ * It provides a more functional style definition of a ForSyDe process.
- //~ * It also removes bilerplate code by using type-inference feature of
- //~ * C++ and automatic binding to the input and output FIFOs.
- //~ */
-//~ template <class I1TYP, class I2TYP, class OTYP>
-//~ comb2<I1TYP,I2TYP,OTYP> make_comb2(std::string pName,
-                                   //~ std::function<OTYP(const I1TYP&,const I2TYP&)> _func,
-                                   //~ sc_fifo<I1TYP>& inp1S,
-                                   //~ sc_fifo<I2TYP>& inp2S,
-                                   //~ sc_fifo<OTYP>& outS)
-//~ {
-    //~ comb2<I1TYP,I2TYP,OTYP> ret = *(new comb2<I1TYP,I2TYP,OTYP>(pName.c_str(), _func));
-    //~ 
-    //~ ret.iport1(inp1S);
-    //~ ret.iport2(inp2S);
-    //~ ret.oport(outS);
-    //~ 
-    //~ return ret;
-//~ }
-//~ 
-//~ //! Helper function to construct a delay process
-//~ /*! This function is used to construct a process (SystemC module) and
- //~ * connect its output and output signals.
- //~ * It provides a more functional style definition of a ForSyDe process.
- //~ * It also removes bilerplate code by using type-inference feature of
- //~ * C++ and automatic binding to the input and output FIFOs.
- //~ */
-//~ template <class TYP>
-//~ delay<TYP> make_delay(std::string pName,
-                       //~ TYP initval,
-                       //~ sc_fifo<TYP>& inpS,
-                       //~ sc_fifo<TYP>& outS)
-//~ {
-    //~ delay<TYP> p = *(new delay<TYP>(pName.c_str(), initval));
-    //~ 
-    //~ p.iport(inpS);
-    //~ p.oport(outS);
-    //~ 
-    //~ return p;
-//~ }
+//! Helper function to construct a comb process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class ITYP, template <class> class IIf,
+          class OTYP, template <class> class OIf>
+inline comb<ITYP,OTYP>* make_comb(std::string pName,
+    typename comb<ITYP,OTYP>::functype _func,
+    const IIf<ITYP>& inpS,
+    const OIf<OTYP>& outS)
+{
+    auto p = new comb<ITYP,OTYP>(pName.c_str(), _func);
+    
+    (*p).iport(inpS);
+    (*p).oport(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a comb process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class I1TYP, template <class> class I1If,
+          class I2TYP, template <class> class I2If,
+          class OTYP, template <class> class OIf>
+inline comb2<I1TYP,I2TYP,OTYP>* make_comb2(std::string pName,
+    typename comb2<I1TYP,I2TYP,OTYP>::functype _func,
+    I1If<I1TYP>& inp1S,
+    I2If<I2TYP>& inp2S,
+    OIf<OTYP>& outS)
+{
+    auto p = new comb2<I1TYP,I2TYP,OTYP>(pName.c_str(), _func);
+    
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
+    (*p).oport(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a delay process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class TYP>
+inline delay<TYP>* make_delay(std::string pName,
+    TYP initval,
+    sc_fifo_in_if<TYP>& inpS,
+    sc_fifo_out_if<TYP>& outS)
+{
+    auto p = new delay<TYP>(pName.c_str(), initval);
+    
+    (*p).iport(inpS);
+    (*p).oport(outS);
+    
+    return p;
+}
 
 }
 }
