@@ -36,12 +36,17 @@ ostream& operator <<(ostream &os,const FrameHeader &obj)
       //~ os<<obj.strVal;
       return os;
 }
+ostream& operator <<(ostream &os,const VecType &obj)
+{
+      //~ os<<obj.strVal;
+      return os;
+}
 typedef comb<float,InputType> ReadBitstreamAndExtractFrames;
 
-typedef comb4<FrameHeader,FrameSideInfo,ChanuleData,float,
+typedef comb4<FrameHeader,FrameSideInfo,ChanuleData,VecType,
     tuple<
         vector<ChanuleSamples>,
-        vector<float>
+        vector<VecType>
     >> ProcessChanule;
 
 typedef comb3<FrameHeader,FrameSideInfo,GranuleData,
@@ -65,7 +70,7 @@ typedef unzipN<
 
 typedef unzipN<
         ChanuleSamples,
-        float
+        VecType
     > ChanuleUnzipper;
 
 typedef unzipN<
@@ -106,7 +111,7 @@ public:
     ProcessChanule *a_ProcessChanule1Left;
     ChanuleUnzipper *a_Chanule0LUnzipper, *a_Chanule0RUnzipper,
                     *a_Chanule1LUnzipper, *a_Chanule1RUnzipper;
-    delayn<float> *a_ch_1r_0r, *a_ch_1l_0l;
+    delayn<VecType> *a_ch_1r_0r, *a_ch_1l_0l;
 
     /* Channels */
     SDF2SDF<float> *dummyloopi;
@@ -142,10 +147,10 @@ public:
     SDF2SDF<ChanuleSamples> *samples_0_Right;
     SDF2SDF<ChanuleSamples> *samples_1_Left;
     SDF2SDF<ChanuleSamples> *samples_1_Right;
-    SDF2SDF<float> *sync_0l_1l;
-    SDF2SDF<float> *sync_0r_1r;
-    SDF2SDF<float> *sync_1r_0r_predel, *sync_1r_0r_aftdel;
-    SDF2SDF<float> *sync_1l_0l_predel, *sync_1l_0l_aftdel;
+    SDF2SDF<VecType> *sync_0l_1l;
+    SDF2SDF<VecType> *sync_0r_1r;
+    SDF2SDF<VecType> *sync_1r_0r_predel, *sync_1r_0r_aftdel;
+    SDF2SDF<VecType> *sync_1l_0l_predel, *sync_1l_0l_aftdel;
     SDF2SDF<MergeType> *zippedMerge;
 
     SC_CTOR(Top)
@@ -184,12 +189,12 @@ public:
         samples_0_Right = new SDF2SDF<ChanuleSamples>("samples_0_Right",1);
         samples_1_Left = new SDF2SDF<ChanuleSamples>("samples_1_Left",1);
         samples_1_Right = new SDF2SDF<ChanuleSamples>("samples_1_Right",1);
-        sync_0l_1l = new SDF2SDF<float>("sync_0l_1l",1);
-        sync_0r_1r = new SDF2SDF<float>("sync_0r_1r",1);
-        sync_1r_0r_predel = new SDF2SDF<float>("sync_1r_0r_predel",1);
-        sync_1r_0r_aftdel = new SDF2SDF<float>("sync_1r_0r_aftdel",1);
-        sync_1l_0l_predel = new SDF2SDF<float>("sync_1l_0l_predel",1);
-        sync_1l_0l_aftdel = new SDF2SDF<float>("sync_1l_0l_aftdel",1);
+        sync_0l_1l = new SDF2SDF<VecType>("sync_0l_1l",1);
+        sync_0r_1r = new SDF2SDF<VecType>("sync_0r_1r",1);
+        sync_1r_0r_predel = new SDF2SDF<VecType>("sync_1r_0r_predel",1);
+        sync_1r_0r_aftdel = new SDF2SDF<VecType>("sync_1r_0r_aftdel",1);
+        sync_1l_0l_predel = new SDF2SDF<VecType>("sync_1l_0l_predel",1);
+        sync_1l_0l_aftdel = new SDF2SDF<VecType>("sync_1l_0l_aftdel",1);
         zippedMerge = new SDF2SDF<MergeType>("zippedMerge",1);
 
         a_ReadBitstreamAndExtractFrames = new ReadBitstreamAndExtractFrames("ReadBitstreamAndExtractFrames",ReadBitstreamAndExtractFrames_func,1,1);
@@ -306,11 +311,11 @@ public:
         get<0>(a_Chanule1LUnzipper->oport)(*samples_1_Left);
         get<1>(a_Chanule1LUnzipper->oport)(*sync_1l_0l_predel);
         
-        a_ch_1r_0r = new delayn<float>("ch_1r_0r",1,1);
+        a_ch_1r_0r = new delayn<VecType>("ch_1r_0r",zeroVec,1);
         a_ch_1r_0r->iport(*sync_1r_0r_predel);
         a_ch_1r_0r->oport(*sync_1r_0r_aftdel);
         
-        a_ch_1l_0l = new delayn<float>("ch_1l_0l",1,1);
+        a_ch_1l_0l = new delayn<VecType>("ch_1l_0l",zeroVec,1);
         a_ch_1l_0l->iport(*sync_1l_0l_predel);
         a_ch_1l_0l->oport(*sync_1l_0l_aftdel);
     }
