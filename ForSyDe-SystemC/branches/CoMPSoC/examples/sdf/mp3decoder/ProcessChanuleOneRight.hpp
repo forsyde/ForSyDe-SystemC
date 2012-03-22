@@ -7,13 +7,21 @@
 
 using namespace std;
 
+typedef tuple<
+        vector<ChanuleSamples>,
+        vector<float>
+    > ChanuleType;
+
 void ProcessChanuleOneRight_func(
-    vector<ChanuleSamples>&           out1, // headerChanuleLeft
+    vector<ChanuleType>&              outs, // headerChanuleLeft
     const vector<FrameHeader>&        inp1, // headerGranule
     const vector<FrameSideInfo>&      inp2, // sideInfoGranule
-    const vector<ChanuleData>&        inp3  // chanuleData
+    const vector<ChanuleData>&        inp3, // chanuleData
+    const vector<float>&              inp4  // sync
 )
 {
+    vector<ChanuleSamples>         out1(1);
+    vector<float>                  out2(1);
 #pragma ForSyDe begin ProcessChanuleOneRight_func
 
     /* User-defined local variables */
