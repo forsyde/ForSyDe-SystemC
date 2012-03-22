@@ -190,7 +190,13 @@ static const t_sf_band_indices g_sf_band_indices[3 /* Sampling freq. */] =
       { 0, 4, 8, 12, 16, 22, 30, 42, 58, 78, 104, 138, 180, 192 }
     }
   };
-  
+
+typedef struct {
+    FLOAT32 v_vec[1024];
+} VecType;
+
+static VecType zeroVec = {{0}};
+
 /* MP3 Decoder function definitions */
 
 
@@ -201,7 +207,7 @@ bool readBitstreamAndExtractFrames(char *file_name, FrameHeader *frameHeader, Fr
 void processGranule(const UINT32 gr, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, GranuleData *frameInMainData, GranuleData *frameOutMainData);
 
 ///ProcessChanule.c
-void processChanule(const INT32 granuleId, const INT32 channelId, ChanuleSamples *channelSample, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, ChanuleData *frameMainData);
+void processChanule(const INT32 granuleId, const INT32 channelId, ChanuleSamples *channelSample, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, ChanuleData *frameMainData, FLOAT32 *v_vec);
 
 ///Merge.c
 void mergeChanules(FrameHeader *frameHeader, ChanuleSamples *channelSample0Left, ChanuleSamples *channelSample0Right, ChanuleSamples *channelSample1Left, ChanuleSamples *channelSample1Right, char *filename);

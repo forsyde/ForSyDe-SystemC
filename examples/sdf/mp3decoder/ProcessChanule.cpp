@@ -28,7 +28,7 @@ static void MPG_IMDCT_4pt (FLOAT32 in[4], FLOAT32 out[4]);
 static void MPG_IMDCT_5pt (FLOAT32 in[5], FLOAT32 out[5]);
 static void MPG_IMDCT_9pt (FLOAT32 invec[9], FLOAT32 outvec[9]);
 static void MPG_L3_Frequency_Inversion (UINT32 gr, UINT32 ch, ChanuleData* chanuleData);
-static void MPG_L3_Subband_Synthesis (UINT32 gr, UINT32 ch, ChanuleSamples *outdata, FrameHeader* g_frame_header, ChanuleData* chanuleData);
+static void MPG_L3_Subband_Synthesis (UINT32 gr, UINT32 ch, ChanuleSamples *outdata, FrameHeader* g_frame_header, ChanuleData* chanuleData, FLOAT32 *v_vec);
 static void MPG_Polyphase_Matrixing (FLOAT32 invec[32], FLOAT32 outvec[64]);
 static void MPG_DCT (FLOAT32 in[], FLOAT32 out[], int N);
 static void MPG_DCT_2pt (FLOAT32 in[2], FLOAT32 out[2]);
@@ -37,7 +37,7 @@ static UINT32 hsynth_init = 1;
 static UINT32 synth_init = 1;
 
 /* Main actor function*/
-void processChanule(const INT32 granuleId, const INT32 channelId, ChanuleSamples *channelSample, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, ChanuleData *frameMainData) {
+void processChanule(const INT32 granuleId, const INT32 channelId, ChanuleSamples *channelSample, FrameHeader *frameHeader, FrameSideInfo *frameSideInfo, ChanuleData *frameMainData, FLOAT32 *v_vec) {
     /* Antialias */
     MPG_L3_Antialias(granuleId, channelId, frameSideInfo, frameMainData);
 
@@ -48,7 +48,7 @@ void processChanule(const INT32 granuleId, const INT32 channelId, ChanuleSamples
     MPG_L3_Frequency_Inversion(granuleId, channelId, frameMainData);
 
     /* Polyphase subband synthesis */
-    MPG_L3_Subband_Synthesis(granuleId, channelId,  channelSample, frameHeader, frameMainData);
+    MPG_L3_Subband_Synthesis(granuleId, channelId,  channelSample, frameHeader, frameMainData, v_vec);
 
 }
 
@@ -529,7 +529,7 @@ MPG_L3_Frequency_Inversion (UINT32 gr, UINT32 ch, ChanuleData* chanuleData)
 }
 
 static void
-MPG_L3_Subband_Synthesis (UINT32 gr, UINT32 ch, ChanuleSamples *outdata, FrameHeader* g_frame_header, ChanuleData* chanuleData)
+MPG_L3_Subband_Synthesis (UINT32 gr, UINT32 ch, ChanuleSamples *outdata, FrameHeader* g_frame_header, ChanuleData* chanuleData, FLOAT32 *v_vec)
 {
     FLOAT32 g_synth_dtbl[512] = {
         0.000000000, -0.000015259, -0.000015259, -0.000015259,
@@ -668,39 +668,39 @@ MPG_L3_Subband_Synthesis (UINT32 gr, UINT32 ch, ChanuleSamples *outdata, FrameHe
     static UINT32 init = 1;
     UINT32 i, j;
     UINT32 nch;
-    static FLOAT32 v_vec[2 /* ch */][1024];
+    //~ static FLOAT32 v_vec[2 /* ch */][1024];
 
 
     /* Number of channels (1 for mono and 2 for stereo) */
     nch = ((*g_frame_header).mode == mpeg1_mode_single_channel ? 1 : 2);
 
 
-    /* Setup the n_win windowing vector and the v_vec intermediate vector */
-    if (init) {
-
-        synth_init = 1;
-
-        init = 0;
-    } /* end if (init) */
-
-    if (synth_init) {
-
-        /* Setup the v_vec intermediate vector */
-        for (i = 0; i < 2; i++) {
-            for (j = 0; j < 1024; j++) {
-                v_vec[i][j] = 0.0;
-            }
-        }
-
-        synth_init = 0;
-    } /* end if (synth_init) */
+    //~ /* Setup the n_win windowing vector and the v_vec intermediate vector */
+    //~ if (init) {
+//~ 
+        //~ synth_init = 1;
+//~ 
+        //~ init = 0;
+    //~ } /* end if (init) */
+//~ 
+    //~ if (synth_init) {
+//~ 
+        //~ /* Setup the v_vec intermediate vector */
+        //~ for (i = 0; i < 2; i++) {
+            //~ for (j = 0; j < 1024; j++) {
+                //~ v_vec[i][j] = 0.0;
+            //~ }
+        //~ }
+//~ 
+        //~ synth_init = 0;
+    //~ } /* end if (synth_init) */
 
     /* Loop through the 18 samples in each of the 32 subbands */
     for (ss = 0; ss < 18; ss++) {
 
         /* Shift up the V vector */
         for (i = 1023; i > 63; i--) {
-            v_vec[ch][i] = v_vec[ch][i-64];
+            v_vec[i] = v_vec[i-64];
         }
 
         /* Copy the next 32 time samples to a temp vector */
@@ -709,13 +709,13 @@ MPG_L3_Subband_Synthesis (UINT32 gr, UINT32 ch, ChanuleSamples *outdata, FrameHe
         }
 
         /* Perform the matrixing operation on the input vector */
-        MPG_Polyphase_Matrixing (s_vec, v_vec[ch]);
+        MPG_Polyphase_Matrixing (s_vec, v_vec);
 
         /* Build the U vector */
         for (i = 0; i < 8; i++) {
             for (j = 0; j < 32; j++) {
-                u_vec[i*64 + j]      = v_vec[ch][i*128 + j];
-                u_vec[i*64 + j + 32] = v_vec[ch][i*128 + j + 96];
+                u_vec[i*64 + j]      = v_vec[i*128 + j];
+                u_vec[i*64 + j + 32] = v_vec[i*128 + j + 96];
             }
         } /* end for (i... */
 

@@ -9,7 +9,7 @@ using namespace std;
 
 typedef tuple<
         vector<ChanuleSamples>,
-        vector<float>
+        vector<VecType>
     > ChanuleType;
 
 void ProcessChanuleOneRight_func(
@@ -17,20 +17,22 @@ void ProcessChanuleOneRight_func(
     const vector<FrameHeader>&        inp1, // headerGranule
     const vector<FrameSideInfo>&      inp2, // sideInfoGranule
     const vector<ChanuleData>&        inp3, // chanuleData
-    const vector<float>&              inp4  // sync
+    const vector<VecType>&            inp4  // sync
 )
 {
     vector<ChanuleSamples>         out1(1);
-    vector<float>                  out2(1);
+    vector<VecType>                out2(1);
 #pragma ForSyDe begin ProcessChanuleOneRight_func
 
     /* User-defined local variables */
     GranuleData processedMainData;
     
     /* Main actor code */
-    processChanule(1, 1, &out1[0], &inp1[0], &inp2[0], &inp3[0]);
+    out2[0] = inp4[0];
+    processChanule(1, 1, &out1[0], &inp1[0], &inp2[0], &inp3[0], out2[0].v_vec);
             
 #pragma ForSyDe end
+    outs[0] = make_tuple(out1,out2);
 }
 
 #endif
