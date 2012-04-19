@@ -21,12 +21,9 @@
  * facilities used for modeling in the synchronous model of computation.
  */
 
+#include <functional>
 #include <tuple>
 
-//! The namespace for ForSyDe
-/*! General namespace that includes everything provided by the SFF.
- * Each MoC has its own sub-namespace.
- */
 namespace ForSyDe
 {
 //! The namespace for synchronous MoC
@@ -40,37 +37,38 @@ using namespace sc_core;
 
 // Auxilliary Macro definitions
 #define WRITE_MULTIPORT(PORT,VAL) \
-    for (int i=0;i<PORT.size();i++) PORT[i]->write(VAL);
+    for (int port_index=0;port_index<PORT.size();port_index++) \
+        PORT[port_index]->write(VAL);
 
 //! Absent-extended data types
 /*! This template class extends a type TYP to its absent-extended version.
  * Values of this type could be either absent, or present with a specific
  * value.
  */
-template <class TYP>
+template <typename T>
 class AbstExt
 {
 public:
     //! The constructor with a present value
-    AbstExt(const TYP& val) : present(true), value(val) {}
+    AbstExt(const T& val) : present(true), value(val) {}
     
     //! The constructor with an absent value
     AbstExt() : present(false) {}
     
     //! Converts a value from an extended value, returning a default value if absent
-    TYP fromAbstExt (const TYP& defval) const
+    T fromAbstExt (const T& defval) const
     {
         if (present) return value; else return defval;
     }
     
     //! Unsafely converts a value from an extended value assuming it is present
-    TYP unsafeFromAbstExt () const {return value;}
+    T unsafeFromAbstExt () const {return value;}
     
     //! Sets absent
     void setAbst() {present=false;}
     
     //! Sets the value
-    void setVal(const TYP& val) {present=true;value=val;}
+    void setVal(const T& val) {present=true;value=val;}
     
     //! Checks for the absence of a value
     bool isAbsent() const {return !present;}
@@ -78,6 +76,7 @@ public:
     //! Checks for the presence of a value
     bool isPresent() const {return present;}
     
+    //! Checks for the equivalence of two absent-extended values
     bool operator== (const AbstExt& rs) const
     {
         if (isAbsent() || rs.isAbsent())
@@ -86,6 +85,7 @@ public:
             return unsafeFromAbstExt() == rs.unsafeFromAbstExt();
     }
     
+    //! Overload the streaming operator to enable SystemC communiation
     friend std::ostream& operator<< (std::ostream& os, const AbstExt &abstExt)
     {
         if (abstExt.isPresent())
@@ -96,208 +96,440 @@ public:
     }
 private:
     bool present;
-    TYP value;
+    T value;
 };
+
+//! The SY2SY signal used to inter-connect SY processes
+template <typename T>
+class SY2SY: public sc_fifo<AbstExt<T>>, public ForSyDe::channel_size
+{
+public:
+    typedef T type;
+    
+    //! Returns only the size of the actual type (not AbstExt version)
+    virtual unsigned token_size()
+    {
+        return sizeof(T);
+    }
+};
+
+//! The SY_in port is used for input ports of SY processes
+template <typename T>
+class SY_in: public sc_fifo_in<AbstExt<T>>
+{
+public:
+    typedef T type;
+};
+
+//! The SY_out port is used for output ports of SY processes
+template <typename T>
+class SY_out: public sc_fifo_out<AbstExt<T>>
+{
+public:
+    typedef T type;
+};
+
+//! Information of port types in the SY MoC
+struct SY_PortInfo
+{
+    sc_object* port;
+    std::vector<sc_object*> boundChans;
+    std::string portType;
+};
+
+//! Abstract semantics of a process in the SY MoC
+typedef ForSyDe::process<SY_PortInfo> SY_process;
 
 //! Process constructor for a combinational process with one input and one output
 /*! This class is used to build combinational processes with one input
  * and one output. The class is parameterized for input and output
  * data-types.
- * 
- * Note that this is an abstract class and can not be directly
- * instantiated. The designer should derive from this class and
- * implement the _func function which is applied on the input to obtain
- * the output on each evaluation cycle.
  */
-template <class ITYP, class OTYP>
-class comb : public sc_module
+template <typename T0, typename T1>
+class comb : public SY_process
 {
 public:
-    sc_fifo_in<ITYP>  iport;        ///< port for the input channel
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    SY_in<T1>  iport1;       ///< port for the input channel
+    SY_out<T0> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(AbstExt<T0>&,const AbstExt<T1>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented function to it and writes the
      * results using the output port
      */
-    comb(sc_module_name _name)  // module name
-         :sc_module(_name)
+    comb(sc_module_name _name,      ///< process name
+         functype _func             ///< function to be passed
+         ) : SY_process(_name), _func(_func) {}
+    
+    //! The desctuctor runs the cleaning stage
+    ~comb()
     {
-        SC_THREAD(worker);
+        clean();
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string ForSyDe_kind() {return "SY::comb";}
+
 private:
-    SC_HAS_PROCESS(comb);
-
-    //! The main and only execution thread of the module
-    void worker()
+    // Inputs and output variables
+    AbstExt<T0>* oval;
+    AbstExt<T1>* ival1;
+    
+    //! The function passed to the process constructor
+    functype _func;
+    
+    //Implementing the abstract semantics
+    void init()
     {
-        ITYP in_val;
-        OTYP out_val;
-        while (1)
-        {
-            in_val = iport.read();  // read from input
-            out_val = _func(in_val);// do the calculation
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
-        }
+        oval = new AbstExt<T0>;
+        ival1 = new AbstExt<T1>;
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(ITYP) = 0;
+    
+    void prep()
+    {
+        *ival1 = iport1.read();
+    }
+    
+    void exec()
+    {
+        _func(*oval, *ival1);
+    }
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport, oval);
+    }
+    
+    void clean()
+    {
+        delete ival1;
+        delete oval;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(T1).name();
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].portType = typeid(T0).name();
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
+#endif
 };
 
 //! Process constructor for a combinational process with two inputs and one output
 /*! similar to comb with two inputs
  */
-template <class I1TYP, class I2TYP, class OTYP>
-class comb2 : public sc_module
+template <typename T0, typename T1, typename T2>
+class comb2 : public SY_process
 {
 public:
-    sc_fifo_in<I1TYP> iport1;       ///< port for the input channel 1
-    sc_fifo_in<I2TYP> iport2;       ///< port for the input channel 2
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    SY_in<T1> iport1;        ///< port for the input channel 1
+    SY_in<T2> iport2;        ///< port for the input channel 2
+    SY_out<T0> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(AbstExt<T0>&, const AbstExt<T1>&,
+                                             const AbstExt<T2>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb2(sc_module_name _name)  // module name
-         :sc_module(_name)
+    comb2(sc_module_name _name,      ///< process name
+          functype _func             ///< function to be passed
+          ) : SY_process(_name), _func(_func) {}
+    
+    //! The desctuctor runs the cleaning stage
+    ~comb2()
     {
-        SC_THREAD(worker);
+        clean();
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string ForSyDe_kind() {return "SY::comb2";}
 private:
-    SC_HAS_PROCESS(comb2);
+    // Inputs and output variables
+    AbstExt<T0>* oval;
+    AbstExt<T1>* ival1;
+    AbstExt<T2>* ival2;
+    
+    //! The function passed to the process constructor
+    functype _func;
 
-    //! The main and only execution thread of the module
-    void worker()
+    //Implementing the abstract semantics
+    void init()
     {
-        I1TYP in_val1;
-        I2TYP in_val2;
-        OTYP out_val;
-        while (1)
-        {
-            in_val1 = iport1.read();  // read from input
-            in_val2 = iport2.read();  // read from input
-            out_val = _func(in_val1, in_val2); // do the calculation
-            WRITE_MULTIPORT(oport,out_val);     // write to the output
-        }
+        oval = new AbstExt<T0>;
+        ival1 = new AbstExt<T1>;
+        ival2 = new AbstExt<T2>;
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(I1TYP, I2TYP) = 0;
+    
+    void prep()
+    {
+        *ival1 = iport1.read();
+        *ival2 = iport2.read();
+    }
+    
+    void exec()
+    {
+        _func(*oval, *ival1, *ival2);
+    }
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport, *oval);
+    }
+    
+    void clean()
+    {
+        delete ival2;
+        delete ival1;
+        delete oval;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(2);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(T1).name();
+        boundInChans[1].port = &iport2;
+        boundInChans[1].portType = typeid(T2).name();
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].portType = typeid(T0).name();
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+        for (int i=0;i<iport2.size();i++)
+            boundInChans[1].boundChans.push_back(dynamic_cast<sc_object*>(iport2[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
+#endif
 };
 
 //! Process constructor for a combinational process with three inputs and one output
 /*! similar to comb with three inputs
  */
-template <class I1TYP, class I2TYP, class I3TYP, class OTYP>
-class comb3 : public sc_module
+template <typename T0, typename T1, typename T2, typename T3>
+class comb3 : public SY_process
 {
 public:
-    sc_fifo_in<I1TYP> iport1;       ///< port for the input channel 1
-    sc_fifo_in<I2TYP> iport2;       ///< port for the input channel 2
-    sc_fifo_in<I3TYP> iport3;       ///< port for the input channel 3
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    SY_in<T1> iport1;        ///< port for the input channel 1
+    SY_in<T2> iport2;        ///< port for the input channel 2
+    SY_in<T3> iport3;        ///< port for the input channel 3
+    SY_out<T0> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(AbstExt<T0>&, const AbstExt<T1>&,
+                                             const AbstExt<T2>&,
+                                             const AbstExt<T3>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb3(sc_module_name _name)  // module name
-         :sc_module(_name)
+    comb3(sc_module_name _name,      ///< process name
+          functype _func             ///< function to be passed
+          ) : SY_process(_name), _func(_func) {}
+    
+    //! The desctuctor runs the cleaning stage
+    ~comb3()
     {
-        SC_THREAD(worker);
+        clean();
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string ForSyDe_kind() {return "SY::comb3";}
+    
 private:
-    SC_HAS_PROCESS(comb3);
+    // Inputs and output variables
+    AbstExt<T0>* oval;
+    AbstExt<T1>* ival1;
+    AbstExt<T2>* ival2;
+    AbstExt<T3>* ival3;
 
-    //! The main and only execution thread of the module
-    void worker()
+    //! The function passed to the process constructor
+    functype _func;
+    
+    //Implementing the abstract semantics
+    void init()
     {
-        I1TYP in_val1;
-        I2TYP in_val2;
-        I3TYP in_val3;
-        OTYP out_val;
-        while (1)
-        {
-            in_val1 = iport1.read();  // read from input
-            in_val2 = iport2.read();  // read from input
-            in_val3 = iport3.read();  // read from input
-            out_val = _func(in_val1, in_val2, in_val3); // do the calculation
-            WRITE_MULTIPORT(oport,out_val);     // write to the output
-        }
+        oval = new AbstExt<T0>;
+        ival1 = new AbstExt<T1>;
+        ival2 = new AbstExt<T2>;
+        ival3 = new AbstExt<T3>;
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(I1TYP, I2TYP, I3TYP) = 0;
+    
+    void prep()
+    {
+        *ival1 = iport1.read();
+        *ival2 = iport2.read();
+        *ival3 = iport3.read();
+    }
+    
+    void exec()
+    {
+        _func(*oval, *ival1, *ival2, *ival3);
+    }
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport, *oval);
+    }
+    
+    void clean()
+    {
+        delete ival3;
+        delete ival2;
+        delete ival1;
+        delete oval;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(3);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(T1).name();
+        boundInChans[1].port = &iport2;
+        boundInChans[1].portType = typeid(T2).name();
+        boundInChans[2].port = &iport3;
+        boundInChans[2].portType = typeid(T3).name();
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].portType = typeid(T0).name();
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+        for (int i=0;i<iport2.size();i++)
+            boundInChans[1].boundChans.push_back(dynamic_cast<sc_object*>(iport2[i]));
+        for (int i=0;i<iport3.size();i++)
+            boundInChans[2].boundChans.push_back(dynamic_cast<sc_object*>(iport3[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
+#endif
 };
 
-//! Process constructor for a combinational process with three inputs and one output
+//! Process constructor for a combinational process with four inputs and one output
 /*! similar to comb with four inputs
  */
-template <class I1TYP, class I2TYP, class I3TYP, class I4TYP, class OTYP>
-class comb4 : public sc_module
+template <typename T0, typename T1, typename T2, typename T3, typename T4>
+class comb4 : public SY_process
 {
 public:
-    sc_fifo_in<I1TYP> iport1;       ///< port for the input channel 1
-    sc_fifo_in<I2TYP> iport2;       ///< port for the input channel 2
-    sc_fifo_in<I3TYP> iport3;       ///< port for the input channel 3
-    sc_fifo_in<I4TYP> iport4;       ///< port for the input channel 4
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    SY_in<T1> iport1;       ///< port for the input channel 1
+    SY_in<T2> iport2;       ///< port for the input channel 2
+    SY_in<T3> iport3;       ///< port for the input channel 3
+    SY_in<T4> iport4;       ///< port for the input channel 4
+    SY_out<T0> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(AbstExt<T0>, const AbstExt<T1>&,
+                                            const AbstExt<T2>&,
+                                            const AbstExt<T3>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb4(sc_module_name _name)  // module name
-         :sc_module(_name)
+    comb4(sc_module_name _name,      ///< process name
+          functype _func             ///< function to be passed
+          ) : SY_process(_name), _func(_func) {}
+    
+    //! The desctuctor runs the cleaning stage
+    ~comb4()
     {
-        SC_THREAD(worker);
+        clean();
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string ForSyDe_kind() {return "SY::comb4";}
+    
 private:
-    SC_HAS_PROCESS(comb4);
+    // Inputs and output variables
+    AbstExt<T0>* oval;
+    AbstExt<T1>* ival1;
+    AbstExt<T2>* ival2;
+    AbstExt<T3>* ival3;
+    
+    //! The function passed to the process constructor
+    functype _func;
 
-    //! The main and only execution thread of the module
-    void worker()
+    //Implementing the abstract semantics
+    void init()
     {
-        I1TYP in_val1;
-        I2TYP in_val2;
-        I3TYP in_val3;
-        I4TYP in_val4;
-        OTYP out_val;
-        while (1)
-        {
-            in_val1 = iport1.read();  // read from input
-            in_val2 = iport2.read();  // read from input
-            in_val3 = iport3.read();  // read from input
-            in_val4 = iport4.read();  // read from input
-            out_val = _func(in_val1, in_val2, in_val3, in_val4); // do the calculation
-            WRITE_MULTIPORT(oport,out_val);     // write to the output
-        }
+        oval = new AbstExt<T0>;
+        ival1 = new AbstExt<T1>;
+        ival2 = new AbstExt<T2>;
+        ival3 = new AbstExt<T3>;
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(I1TYP, I2TYP, I3TYP, I4TYP) = 0;
+    
+    void prep()
+    {
+        *ival1 = iport1.read();
+        *ival2 = iport2.read();
+        *ival3 = iport3.read();
+    }
+    
+    void exec()
+    {
+        _func(oval, *ival1, *ival2, *ival3);
+    }
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport, *oval);
+    }
+    
+    void clean()
+    {
+        delete ival3;
+        delete ival2;
+        delete ival1;
+        delete oval;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(4);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(T1).name();
+        boundInChans[1].port = &iport2;
+        boundInChans[1].portType = typeid(T2).name();
+        boundInChans[2].port = &iport3;
+        boundInChans[2].portType = typeid(T3).name();
+        boundInChans[3].port = &iport4;
+        boundInChans[3].portType = typeid(T4).name();
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].portType = typeid(T0).name();
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+        for (int i=0;i<iport2.size();i++)
+            boundInChans[1].boundChans.push_back(dynamic_cast<sc_object*>(iport2[i]));
+        for (int i=0;i<iport3.size();i++)
+            boundInChans[2].boundChans.push_back(dynamic_cast<sc_object*>(iport3[i]));
+        for (int i=0;i<iport4.size();i++)
+            boundInChans[3].boundChans.push_back(dynamic_cast<sc_object*>(iport4[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
+#endif
 };
 
 //! Process constructor for a delay element
@@ -307,42 +539,79 @@ protected:
  * its output untouched. The class is parameterized for its input/output
  * data-type.
  * 
- * It is mandatory to include at least one delay element in the feedback
+ * It is mandatory to include at least one delay element in all feedback
  * loops since combinational loops are forbidden in ForSyDe.
  */
-template <class IOTYP>
-class delay : public sc_module
+template <class T>
+class delay : public SY_process
 {
 public:
-    sc_fifo_in<IOTYP>  iport;        ///< port for the input channel
-    sc_fifo_out<IOTYP> oport;        ///< port for the output channel
+    SY_in<T>  iport1;       ///< port for the input channel
+    SY_out<T> oport;        ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which inserts the initial element, reads
      * data from its input port, and writes the results using the output
      * port.
      */
-    delay(sc_module_name _name, IOTYP ival)  // module name, init val
-         :sc_module(_name), init_val(ival)
+    delay(sc_module_name _name,     ///< process name
+          AbstExt<T> ival           ///< initial value
+          ) : SY_process(_name), init_val(ival) {}
+    
+    //! The desctuctor runs the cleaning stage
+    ~delay()
     {
-        SC_THREAD(worker);
+        clean();
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string ForSyDe_kind() {return "SY::delay";}
+    
 private:
-    IOTYP init_val;
-    SC_HAS_PROCESS(delay);
-
-    //! The main and only execution thread of the module
-    void worker()
+    // Initial value
+    AbstExt<T> init_val;
+    
+    // Inputs and output variables
+    AbstExt<T>* val;
+    
+    //Implementing the abstract semantics
+    void init()
     {
-        IOTYP in_val;
-        for (int i=0;i<oport.size();i++)
-            oport[i]->write(init_val);    // write the initial value
-        while (1)
-        {
-            in_val = iport.read();  // read from input
-            WRITE_MULTIPORT(oport,in_val);    // write to the output
-        }
+        val = new AbstExt<T>;
+        WRITE_MULTIPORT(oport, init_val);
     }
+    
+    void prep()
+    {
+        *val = iport1.read();
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport, *val);
+    }
+    
+    void clean()
+    {
+        delete val;
+    }
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(T).name();
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].portType = typeid(T).name();
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
+#endif
 };
 
 //! Process constructor for a n-delay element
@@ -353,44 +622,79 @@ private:
  * passes the rest of the inputs to its output untouched. The class is
  * parameterized for its input/output data-type.
  */
-template <class IOTYP>
-class delayn : public sc_module
+template <class T>
+class delayn : public SY_process
 {
 public:
-    sc_fifo_in<IOTYP>  iport;        ///< port for the input channel
-    sc_fifo_out<IOTYP> oport;        ///< port for the output channel
+    SY_in<T>  iport1;       ///< port for the input channel
+    SY_out<T> oport;        ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which inserts the initial elements,
      * reads data from its input port, and writes the results using the
      * output port.
      */
-    delayn(sc_module_name _name,   ///< module (process) name
-             IOTYP ival,             ///< initial value
-             unsigned int n          ///< number of delay elements
-             )  // module name, init val
-         :sc_module(_name), init_val(ival), ns(n)
+    delayn(sc_module_name _name,     ///< process name
+           AbstExt<T> ival,          ///< initial value
+           unsigned int n            ///< number of delay elements
+          ) : SY_process(_name), init_val(ival), ns(n) {}
+    
+    //! The desctuctor runs the cleaning stage
+    ~delayn()
     {
-        SC_THREAD(worker);
+        clean();
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string ForSyDe_kind() {return "SY::delayn";}
+    
 private:
-    IOTYP init_val;
+    // Initial value
+    AbstExt<T> init_val;
     unsigned int ns;
-    SC_HAS_PROCESS(delayn);
-
-    //! The main and only execution thread of the module
-    void worker()
+    
+    // Inputs and output variables
+    AbstExt<T>* val;
+    
+    //Implementing the abstract semantics
+    void init()
     {
-        IOTYP in_val;
-        for (int j=0;j<ns;j++)
-            for (int i=0;i<oport.size();i++)
-                oport[i]->write(init_val);    // write the initial value
-        while (1)
-        {
-            in_val = iport.read();  // read from input
-            WRITE_MULTIPORT(oport,in_val);    // write to the output
-        }
+        val = new AbstExt<T>;
+        for (int i=0; i<ns; i++)
+            WRITE_MULTIPORT(oport, init_val);
     }
+    
+    void prep()
+    {
+        *val = iport1.read();
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport, *val);
+    }
+    
+    void clean()
+    {
+        delete val;
+    }
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(T).name();
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].portType = typeid(T).name();
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
+#endif
 };
 
 //! Process constructor for a Moore machine
@@ -724,17 +1028,20 @@ template <class OTYP>
 class source : public sc_module
 {
 public:
-    sc_fifo_out<OTYP> oport;     ///< port for the output channel
+    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<OTYP(const OTYP&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * and writes the result using the output port
      */
     source(sc_module_name _name,   ///< The module name
-             OTYP ist,             ///< Initial state
-             unsigned long long take=0 ///< number of tokens produced (0 for infinite)
-            )
-         :sc_module(_name), init_st(ist), take(take)
+           functype _func,         ///< function to be passed
+           OTYP ist,               ///< Initial state
+           unsigned long long take=0 ///< number of tokens produced (0 for infinite)
+          ) : sc_module(_name), init_st(ist), take(take), _func(_func)
     {
         SC_THREAD(worker);
     }
@@ -754,13 +1061,9 @@ private:
             WRITE_MULTIPORT(oport,st_val);    // write to the output
         }
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual OTYP (_func)(OTYP) = 0;
+    
+    //! The function passed to the process constructor
+    functype _func;
 };
 
 //! Process constructor for a source process with vector input
@@ -815,13 +1118,17 @@ class sink : public sc_module
 {
 public:
     sc_fifo_in<ITYP> iport;         ///< port for the input channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(const ITYP&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * in each cycle.
      */
-    sink(sc_module_name _name)  // module name
-         :sc_module(_name)
+    sink(sc_module_name _name,      ///< process name
+         functype _func             ///< function to be passed
+        ) : sc_module(_name), _func(_func)
     {
         SC_THREAD(worker);
     }
@@ -838,13 +1145,9 @@ private:
             _func(in_val);       // run the function
         }
     }
-
-protected:
-    //! The main caclulation function
-    /*! It is abstract and the user should provide an implementation for
-     * it in the derived class.
-     */
-    virtual void (_func)(ITYP) = 0;
+    
+    //! The function passed to the process constructor
+    functype _func;
 };
 
 //! Process constructor for a multi-input print process
@@ -1238,6 +1541,55 @@ private:
     }
 
 };
+
+
+//! Helper function to construct a comb2 process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class T0, template <class> class OIf,
+          class T1, template <class> class I1If,
+          class T2, template <class> class I2If>
+inline comb2<T0,T1,T2>* make_comb2(std::string pName,
+    typename comb2<T0,T1,T2>::functype _func,
+    OIf<T0>& outS,
+    I1If<T1>& inp1S,
+    I2If<T2>& inp2S
+    )
+{
+    auto p = new comb2<T0,T1,T2>(pName.c_str(), _func);
+    
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
+    (*p).oport(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a delay process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename T>
+inline delay<T>* make_delay(std::string pName,
+    AbstExt<T> initval,
+    sc_fifo_out_if<AbstExt<T>>& outS,
+    sc_fifo_in_if<AbstExt<T>>& inpS
+    )
+{
+    auto p = new delay<T>(pName.c_str(), initval);
+    
+    (*p).iport1(inpS);
+    (*p).oport(outS);
+    
+    return p;
+}
 
 
 }

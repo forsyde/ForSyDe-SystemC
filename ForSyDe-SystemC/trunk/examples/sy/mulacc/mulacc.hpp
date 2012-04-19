@@ -22,28 +22,19 @@ using namespace ForSyDe::SY;
 
 SC_MODULE(mulacc)
 {
-    sc_fifo_in<int>  a, b;
-    sc_fifo_out<int> result;
+    SY_in<int>  a, b;
+    SY_out<int> result;
     
-    mul mul1;
-    add add1;
-    delay<int> accum;
+    SY2SY<int> addi1, addi2, acci;
     
-    sc_fifo<int> addi1, addi2, acci;
-    
-    SC_CTOR(mulacc): mul1("mul1"), add1("add1"), accum("accum",0)
+    SC_CTOR(mulacc)
     {
-        mul1.iport1(a);
-        mul1.iport2(b);
-        mul1.oport(addi1);
+        make_comb2("mul1", mul_func, addi1, a, b);
+
+        auto add1 = make_comb2("add1", add_func, acci, addi1, addi2);
+        add1->oport(result);
         
-        add1.iport1(addi1);
-        add1.iport2(addi2);
-        add1.oport(result);
-        add1.oport(acci);
-        
-        accum.iport(acci);
-        accum.oport(addi2);
+        make_delay("accum", AbstExt<int>(0), addi2, acci);
     }
 };
 

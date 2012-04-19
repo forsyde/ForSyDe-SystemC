@@ -69,9 +69,12 @@
 // include the main SystemC library
 #include <systemc>
 
+// include the abstract semantics
+#include "forsyde/abssemantics.hpp"
+
 // include different MoCs
 #include "forsyde/symoc.hpp"
-#include "forsyde/sylib.hpp"
+//~ #include "forsyde/sylib.hpp"
 #include "forsyde/sdfmoc.hpp"
 #include "forsyde/democ.hpp"
 #include "forsyde/ctmoc.hpp"

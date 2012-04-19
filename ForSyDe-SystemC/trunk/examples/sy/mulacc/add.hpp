@@ -18,15 +18,15 @@
 
 using namespace ForSyDe::SY;
 
-class add : public comb2<int,int,int>
+void add_func(AbstExt<int>& out1,
+              const AbstExt<int>& a, const AbstExt<int>& b)
 {
-public:
-    add(sc_module_name _name) : comb2<int,int,int>(_name){}
-protected:
-    int _func(int a, int b)
-    {
-        return a+b;
-    }
-};
+    int inp1 = a.fromAbstExt(0);
+    int inp2 = b.fromAbstExt(0);
+
+#pragma ForSyDe begin add_func 
+    out1 = inp1 + inp2;
+#pragma ForSyDe end
+}
 
 #endif
