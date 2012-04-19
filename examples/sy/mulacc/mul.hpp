@@ -18,15 +18,15 @@
 
 using namespace ForSyDe::SY;
 
-class mul : public comb2<int,int,int>
+void mul_func(AbstExt<int>& out1,
+              const AbstExt<int>& a, const AbstExt<int>& b)
 {
-public:
-    mul(sc_module_name _name) : comb2<int,int,int>(_name){}
-protected:
-    int _func(int a, int b)
-    {
-        return a*b;
-    }
-};
+    int inp1 = a.fromAbstExt(0);
+    int inp2 = b.fromAbstExt(0);
+
+#pragma ForSyDe begin mul_func  
+    out1 = inp1 * inp2;
+#pragma ForSyDe end
+}
 
 #endif
