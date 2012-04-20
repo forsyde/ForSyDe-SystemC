@@ -164,12 +164,6 @@ public:
          functype _func             ///< function to be passed
          ) : SY_process(_name), _func(_func) {}
     
-    //! The desctuctor runs the cleaning stage
-    ~comb()
-    {
-        clean();
-    }
-    
     //! Specifying from which process constructor is the module built
     std::string ForSyDe_kind() {return "SY::comb";}
 
@@ -200,7 +194,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport, oval);
+        WRITE_MULTIPORT(oport, *oval);
     }
     
     void clean()
@@ -249,12 +243,6 @@ public:
     comb2(sc_module_name _name,      ///< process name
           functype _func             ///< function to be passed
           ) : SY_process(_name), _func(_func) {}
-    
-    //! The desctuctor runs the cleaning stage
-    ~comb2()
-    {
-        clean();
-    }
     
     //! Specifying from which process constructor is the module built
     std::string ForSyDe_kind() {return "SY::comb2";}
@@ -344,12 +332,6 @@ public:
     comb3(sc_module_name _name,      ///< process name
           functype _func             ///< function to be passed
           ) : SY_process(_name), _func(_func) {}
-    
-    //! The desctuctor runs the cleaning stage
-    ~comb3()
-    {
-        clean();
-    }
     
     //! Specifying from which process constructor is the module built
     std::string ForSyDe_kind() {return "SY::comb3";}
@@ -449,12 +431,6 @@ public:
     comb4(sc_module_name _name,      ///< process name
           functype _func             ///< function to be passed
           ) : SY_process(_name), _func(_func) {}
-    
-    //! The desctuctor runs the cleaning stage
-    ~comb4()
-    {
-        clean();
-    }
     
     //! Specifying from which process constructor is the module built
     std::string ForSyDe_kind() {return "SY::comb4";}
@@ -558,12 +534,6 @@ public:
           AbstExt<T> ival           ///< initial value
           ) : SY_process(_name), init_val(ival) {}
     
-    //! The desctuctor runs the cleaning stage
-    ~delay()
-    {
-        clean();
-    }
-    
     //! Specifying from which process constructor is the module built
     std::string ForSyDe_kind() {return "SY::delay";}
     
@@ -638,12 +608,6 @@ public:
            AbstExt<T> ival,          ///< initial value
            unsigned int n            ///< number of delay elements
           ) : SY_process(_name), init_val(ival), ns(n) {}
-    
-    //! The desctuctor runs the cleaning stage
-    ~delayn()
-    {
-        clean();
-    }
     
     //! Specifying from which process constructor is the module built
     std::string ForSyDe_kind() {return "SY::delayn";}
@@ -1018,20 +982,15 @@ private:
  * Given an initial state and a function, the process repeatedly applies
  * the function to the current state to produce next state, which is
  * also the process output. It can be used in test-benches.
- * 
- * Note that this is an abstract class and can not be directly
- * instantiated. The designer should derive from this class and
- * implement the _func function which is run on each evaluation cycle to
- * produce an output.
  */
-template <class OTYP>
-class source : public sc_module
+template <class T>
+class source : public SY_process
 {
 public:
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    SY_out<T> oport;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<OTYP(const OTYP&)> functype;
+    typedef std::function<void(AbstExt<T>&, const AbstExt<T>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
@@ -1039,31 +998,61 @@ public:
      */
     source(sc_module_name _name,   ///< The module name
            functype _func,         ///< function to be passed
-           OTYP ist,               ///< Initial state
+           AbstExt<T> ist,                  ///< Initial state
            unsigned long long take=0 ///< number of tokens produced (0 for infinite)
-          ) : sc_module(_name), init_st(ist), take(take), _func(_func)
-    {
-        SC_THREAD(worker);
-    }
+          ) : SY_process(_name), init_st(ist), take(take), _func(_func) {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string ForSyDe_kind() {return "SY::source";}
+    
 private:
-    OTYP init_st;
-    unsigned long long take;
-    SC_HAS_PROCESS(source);
-
-    //! The main and only execution thread of the module
-    void worker()
-    {
-        OTYP st_val = init_st;
-        WRITE_MULTIPORT(oport,st_val);    // write the initial state
-        for (unsigned long long i=1;i!=take;i++)
-        {
-            st_val = _func(st_val);        // produce a new value
-            WRITE_MULTIPORT(oport,st_val);    // write to the output
-        }
-    }
+    AbstExt<T> init_st;         // The current state
+    unsigned long long take;    // Number of tokens produced
+    
+    AbstExt<T>* cur_st;         // The current state of the process
+    unsigned long long tok_cnt;
     
     //! The function passed to the process constructor
     functype _func;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        cur_st = new AbstExt<T>;
+        *cur_st = init_st;
+        WRITE_MULTIPORT(oport, *cur_st);
+        tok_cnt = 1;
+    }
+    
+    void prep() {}
+    
+    void exec()
+    {
+        _func(*cur_st, *cur_st);
+    }
+    
+    void prod()
+    {
+        if (tok_cnt++ < take)
+            WRITE_MULTIPORT(oport, *cur_st)
+        else wait();
+    }
+    
+    void clean()
+    {
+        delete cur_st;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].portType = typeid(T).name();
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
+#endif
 };
 
 //! Process constructor for a source process with vector input
@@ -1106,21 +1095,17 @@ private:
 
 //! Process constructor for a sink process
 /*! This class is used to build a sink process which only has an input.
- * Its main purpose is to be used in test-benches.
- * 
- * Note that this is an abstract class and can not be directly
- * instantiated. The designer should derive from this class and
- * implement the _func function which is run in each evaluation cycle on
- * the received input.
+ * Its main purpose is to be used in test-benches. The process repeatedly
+ * applies a given function to the current input.
  */
-template <class ITYP>
-class sink : public sc_module
+template <class T>
+class sink : public SY_process
 {
 public:
-    sc_fifo_in<ITYP> iport;         ///< port for the input channel
+    SY_in<T> iport1;         ///< port for the input channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(const ITYP&)> functype;
+    typedef std::function<void(const AbstExt<T>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
@@ -1128,26 +1113,50 @@ public:
      */
     sink(sc_module_name _name,      ///< process name
          functype _func             ///< function to be passed
-        ) : sc_module(_name), _func(_func)
-    {
-        SC_THREAD(worker);
-    }
-private:
-    SC_HAS_PROCESS(sink);
-
-    //! The main and only execution thread of the module
-    void worker()
-    {
-        ITYP in_val;
-        while (1)
-        {
-            in_val = iport.read();
-            _func(in_val);       // run the function
-        }
-    }
+        ) : SY_process(_name), _func(_func) {}
     
+    //! Specifying from which process constructor is the module built
+    std::string ForSyDe_kind() {return "SY::sink";}
+    
+private:
+    AbstExt<T>* val;         // The current state of the process
+
     //! The function passed to the process constructor
     functype _func;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        val = new AbstExt<T>;
+    }
+    
+    void prep()
+    {
+        *val = iport1.read();
+    }
+    
+    void exec()
+    {
+        _func(*val);
+    }
+    
+    void prod() {}
+    
+    void clean()
+    {
+        delete val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);    // only one output port
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(T).name();
+        for (int i=0;i<iport1.size();i++)
+            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
+    }
+#endif
 };
 
 //! Process constructor for a multi-input print process
@@ -1591,6 +1600,47 @@ inline delay<T>* make_delay(std::string pName,
     return p;
 }
 
+//! Helper function to construct a source process
+/*! This function is used to construct a source (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the output FIFOs.
+ */
+template <class T, template <class> class OIf>
+inline source<T>* make_source(std::string pName,
+    typename source<T>::functype _func,
+    AbstExt<T> initval,
+    unsigned long long take,
+    OIf<T>& outS
+    )
+{
+    auto p = new source<T>(pName.c_str(), _func, initval, take);
+    
+    (*p).oport(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a sink process
+/*! This function is used to construct a sink (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <class T, template <class> class IIf>
+inline sink<T>* make_sink(std::string pName,
+    typename sink<T>::functype _func,
+    IIf<T>& inS
+    )
+{
+    auto p = new sink<T>(pName.c_str(), _func);
+    
+    (*p).iport1(inS);
+    
+    return p;
+}
 
 }
 }

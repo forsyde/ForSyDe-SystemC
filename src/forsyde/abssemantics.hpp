@@ -74,14 +74,6 @@ private:
             prod();     // The production stage
         }
     }
-    
-#ifdef FORSYDE_INTROSPECTION
-    //! This hook is used to collect additional structural information
-    void end_of_elaboration()
-    {
-        bindInfo();
-    }
-#endif
 
 protected:
     //! The init stage
@@ -115,7 +107,20 @@ protected:
      */
     virtual void clean() = 0;
     
+    //! This hook is used to run the clean stage
+    void end_of_simulation()
+    {
+        clean();
+    }
+    
 #ifdef FORSYDE_INTROSPECTION
+
+    //! This hook is used to collect additional structural information
+    void end_of_elaboration()
+    {
+        bindInfo();
+    }
+
     //! This method is called during end_of_elaboration to gather binded channels information
     /*! This function should save the pointers to all of the channels
      * objects bound to the input and output channels in boundInChans
