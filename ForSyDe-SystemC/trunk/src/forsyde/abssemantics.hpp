@@ -149,7 +149,7 @@ public:
     }
     
     //! The ForSyDe process type represented by the current module
-    virtual std::string ForSyDe_kind() = 0;
+    virtual std::string ForSyDe_kind() const = 0;
 };
 
 }
