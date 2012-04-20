@@ -16,15 +16,19 @@
 using namespace ForSyDe::SY;
 
 
-AbstExt<int> siggen_func(AbstExt<int> inp)
+void siggen_func(AbstExt<int>& out1, const AbstExt<int>& inp)
 {
-    AbstExt<int> temp(-inp.fromAbstExt(0));
-    return temp;
+    int inp1 = inp.fromAbstExt(0);
+#pragma ForSyDe begin siggen_func
+    out1 = -inp1;
+#pragma ForSyDe end
 }
 
-void report_func(AbstExt<int> inp)
+void report_func(AbstExt<int> inp1)
 {
-    std::cout << "output value: " << inp << std::endl;
+#pragma ForSyDe begin report_func
+    std::cout << "output value: " << inp1 << std::endl;
+#pragma ForSyDe end
 }
 
 SC_MODULE(Top)
@@ -32,21 +36,18 @@ SC_MODULE(Top)
     SY2SY<int> srca, srcb, result;
     
     constant<AbstExt<int>> const1;
-    source<AbstExt<int>> siggen1;
     mulacc mulacc1;
-    sink<AbstExt<int>> report1;
     
     SC_CTOR(Top): const1("const1",AbstExt<int>(3)),
-                  siggen1("siggen1", siggen_func, AbstExt<int>(1), 10),
-                  mulacc1("mulacc1"), report1("report1", report_func)
+                  mulacc1("mulacc1")
     {
         const1.oport(srca);
-        siggen1.oport(srcb);
+        make_source("siggen1", siggen_func, AbstExt<int>(1), 10, srcb);
         
         mulacc1.a(srca);
         mulacc1.b(srcb);
         mulacc1.result(result);
         
-        report1.iport(result);
+        make_sink("report1", report_func, result);
     }
 };
