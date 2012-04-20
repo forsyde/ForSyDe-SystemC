@@ -165,7 +165,7 @@ public:
          ) : SY_process(_name), _func(_func) {}
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() {return "SY::comb";}
+    std::string ForSyDe_kind() const {return "SY::comb";}
 
 private:
     // Inputs and output variables
@@ -245,7 +245,7 @@ public:
           ) : SY_process(_name), _func(_func) {}
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() {return "SY::comb2";}
+    std::string ForSyDe_kind() const {return "SY::comb2";}
 private:
     // Inputs and output variables
     AbstExt<T0>* oval;
@@ -334,7 +334,7 @@ public:
           ) : SY_process(_name), _func(_func) {}
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() {return "SY::comb3";}
+    std::string ForSyDe_kind() const {return "SY::comb3";}
     
 private:
     // Inputs and output variables
@@ -433,7 +433,7 @@ public:
           ) : SY_process(_name), _func(_func) {}
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() {return "SY::comb4";}
+    std::string ForSyDe_kind() const{return "SY::comb4";}
     
 private:
     // Inputs and output variables
@@ -535,7 +535,7 @@ public:
           ) : SY_process(_name), init_val(ival) {}
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() {return "SY::delay";}
+    std::string ForSyDe_kind() const {return "SY::delay";}
     
 private:
     // Initial value
@@ -610,7 +610,7 @@ public:
           ) : SY_process(_name), init_val(ival), ns(n) {}
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() {return "SY::delayn";}
+    std::string ForSyDe_kind() const {return "SY::delayn";}
     
 private:
     // Initial value
@@ -1003,7 +1003,7 @@ public:
           ) : SY_process(_name), init_st(ist), take(take), _func(_func) {}
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() {return "SY::source";}
+    std::string ForSyDe_kind() const {return "SY::source";}
     
 private:
     AbstExt<T> init_st;         // The current state
@@ -1116,7 +1116,7 @@ public:
         ) : SY_process(_name), _func(_func) {}
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() {return "SY::sink";}
+    std::string ForSyDe_kind() const {return "SY::sink";}
     
 private:
     AbstExt<T>* val;         // The current state of the process
