@@ -16,15 +16,15 @@
 using namespace ForSyDe::SY;
 
 
-void siggen_func(AbstExt<int>& out1, const AbstExt<int>& inp)
+void siggen_func(abst_ext<int>& out1, const abst_ext<int>& inp)
 {
-    int inp1 = inp.fromAbstExt(0);
+    int inp1 = inp.from_abst_ext(0);
 #pragma ForSyDe begin siggen_func
     out1 = -inp1;
 #pragma ForSyDe end
 }
 
-void report_func(AbstExt<int> inp1)
+void report_func(abst_ext<int> inp1)
 {
 #pragma ForSyDe begin report_func
     std::cout << "output value: " << inp1 << std::endl;
@@ -35,14 +35,14 @@ SC_MODULE(Top)
 {
     SY2SY<int> srca, srcb, result;
     
-    constant<AbstExt<int>> const1;
+    constant<abst_ext<int>> const1;
     mulacc mulacc1;
     
-    SC_CTOR(Top): const1("const1",AbstExt<int>(3)),
+    SC_CTOR(Top): const1("const1",abst_ext<int>(3)),
                   mulacc1("mulacc1")
     {
         const1.oport(srca);
-        make_source("siggen1", siggen_func, AbstExt<int>(1), 10, srcb);
+        make_source("siggen1", siggen_func, abst_ext<int>(1), 10, srcb);
         
         mulacc1.a(srca);
         mulacc1.b(srcb);
