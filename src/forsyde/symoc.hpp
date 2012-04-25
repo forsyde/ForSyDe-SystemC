@@ -24,6 +24,8 @@
 #include <functional>
 #include <tuple>
 
+#include "abst_ext.hpp"
+
 namespace ForSyDe
 {
 //! The namespace for synchronous MoC
@@ -40,73 +42,14 @@ using namespace sc_core;
     for (int port_index=0;port_index<PORT.size();port_index++) \
         PORT[port_index]->write(VAL);
 
-//! Absent-extended data types
-/*! This template class extends a type TYP to its absent-extended version.
- * Values of this type could be either absent, or present with a specific
- * value.
- */
-template <typename T>
-class AbstExt
-{
-public:
-    //! The constructor with a present value
-    AbstExt(const T& val) : present(true), value(val) {}
-    
-    //! The constructor with an absent value
-    AbstExt() : present(false) {}
-    
-    //! Converts a value from an extended value, returning a default value if absent
-    T fromAbstExt (const T& defval) const
-    {
-        if (present) return value; else return defval;
-    }
-    
-    //! Unsafely converts a value from an extended value assuming it is present
-    T unsafeFromAbstExt () const {return value;}
-    
-    //! Sets absent
-    void setAbst() {present=false;}
-    
-    //! Sets the value
-    void setVal(const T& val) {present=true;value=val;}
-    
-    //! Checks for the absence of a value
-    bool isAbsent() const {return !present;}
-    
-    //! Checks for the presence of a value
-    bool isPresent() const {return present;}
-    
-    //! Checks for the equivalence of two absent-extended values
-    bool operator== (const AbstExt& rs) const
-    {
-        if (isAbsent() || rs.isAbsent())
-            return isAbsent() && rs.isAbsent();
-        else
-            return unsafeFromAbstExt() == rs.unsafeFromAbstExt();
-    }
-    
-    //! Overload the streaming operator to enable SystemC communiation
-    friend std::ostream& operator<< (std::ostream& os, const AbstExt &abstExt)
-    {
-        if (abstExt.isPresent())
-            os << abstExt.unsafeFromAbstExt();
-        else
-            os << "_";
-        return os;
-    }
-private:
-    bool present;
-    T value;
-};
-
 //! The SY2SY signal used to inter-connect SY processes
 template <typename T>
-class SY2SY: public sc_fifo<AbstExt<T>>, public ForSyDe::channel_size
+class SY2SY: public sc_fifo<abst_ext<T>>, public ForSyDe::channel_size
 {
 public:
     typedef T type;
     
-    //! Returns only the size of the actual type (not AbstExt version)
+    //! Returns only the size of the actual type (not abst_ext version)
     virtual unsigned token_size()
     {
         return sizeof(T);
@@ -115,7 +58,7 @@ public:
 
 //! The SY_in port is used for input ports of SY processes
 template <typename T>
-class SY_in: public sc_fifo_in<AbstExt<T>>
+class SY_in: public sc_fifo_in<abst_ext<T>>
 {
 public:
     typedef T type;
@@ -123,7 +66,7 @@ public:
 
 //! The SY_out port is used for output ports of SY processes
 template <typename T>
-class SY_out: public sc_fifo_out<AbstExt<T>>
+class SY_out: public sc_fifo_out<abst_ext<T>>
 {
 public:
     typedef T type;
@@ -153,7 +96,7 @@ public:
     SY_out<T0> oport;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(AbstExt<T0>&,const AbstExt<T1>&)> functype;
+    typedef std::function<void(abst_ext<T0>&,const abst_ext<T1>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -169,8 +112,8 @@ public:
 
 private:
     // Inputs and output variables
-    AbstExt<T0>* oval;
-    AbstExt<T1>* ival1;
+    abst_ext<T0>* oval;
+    abst_ext<T1>* ival1;
     
     //! The function passed to the process constructor
     functype _func;
@@ -178,8 +121,8 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        oval = new AbstExt<T0>;
-        ival1 = new AbstExt<T1>;
+        oval = new abst_ext<T0>;
+        ival1 = new abst_ext<T1>;
     }
     
     void prep()
@@ -232,8 +175,8 @@ public:
     SY_out<T0> oport;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(AbstExt<T0>&, const AbstExt<T1>&,
-                                             const AbstExt<T2>&)> functype;
+    typedef std::function<void(abst_ext<T0>&, const abst_ext<T1>&,
+                                              const abst_ext<T2>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
@@ -248,9 +191,9 @@ public:
     std::string ForSyDe_kind() const {return "SY::comb2";}
 private:
     // Inputs and output variables
-    AbstExt<T0>* oval;
-    AbstExt<T1>* ival1;
-    AbstExt<T2>* ival2;
+    abst_ext<T0>* oval;
+    abst_ext<T1>* ival1;
+    abst_ext<T2>* ival2;
     
     //! The function passed to the process constructor
     functype _func;
@@ -258,9 +201,9 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        oval = new AbstExt<T0>;
-        ival1 = new AbstExt<T1>;
-        ival2 = new AbstExt<T2>;
+        oval = new abst_ext<T0>;
+        ival1 = new abst_ext<T1>;
+        ival2 = new abst_ext<T2>;
     }
     
     void prep()
@@ -320,9 +263,9 @@ public:
     SY_out<T0> oport;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(AbstExt<T0>&, const AbstExt<T1>&,
-                                             const AbstExt<T2>&,
-                                             const AbstExt<T3>&)> functype;
+    typedef std::function<void(abst_ext<T0>&, const abst_ext<T1>&,
+                                              const abst_ext<T2>&,
+                                              const abst_ext<T3>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
@@ -338,10 +281,10 @@ public:
     
 private:
     // Inputs and output variables
-    AbstExt<T0>* oval;
-    AbstExt<T1>* ival1;
-    AbstExt<T2>* ival2;
-    AbstExt<T3>* ival3;
+    abst_ext<T0>* oval;
+    abst_ext<T1>* ival1;
+    abst_ext<T2>* ival2;
+    abst_ext<T3>* ival3;
 
     //! The function passed to the process constructor
     functype _func;
@@ -349,10 +292,10 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        oval = new AbstExt<T0>;
-        ival1 = new AbstExt<T1>;
-        ival2 = new AbstExt<T2>;
-        ival3 = new AbstExt<T3>;
+        oval = new abst_ext<T0>;
+        ival1 = new abst_ext<T1>;
+        ival2 = new abst_ext<T2>;
+        ival3 = new abst_ext<T3>;
     }
     
     void prep()
@@ -419,9 +362,9 @@ public:
     SY_out<T0> oport;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(AbstExt<T0>, const AbstExt<T1>&,
-                                            const AbstExt<T2>&,
-                                            const AbstExt<T3>&)> functype;
+    typedef std::function<void(abst_ext<T0>, const abst_ext<T1>&,
+                                             const abst_ext<T2>&,
+                                             const abst_ext<T3>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
@@ -437,10 +380,10 @@ public:
     
 private:
     // Inputs and output variables
-    AbstExt<T0>* oval;
-    AbstExt<T1>* ival1;
-    AbstExt<T2>* ival2;
-    AbstExt<T3>* ival3;
+    abst_ext<T0>* oval;
+    abst_ext<T1>* ival1;
+    abst_ext<T2>* ival2;
+    abst_ext<T3>* ival3;
     
     //! The function passed to the process constructor
     functype _func;
@@ -448,10 +391,10 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        oval = new AbstExt<T0>;
-        ival1 = new AbstExt<T1>;
-        ival2 = new AbstExt<T2>;
-        ival3 = new AbstExt<T3>;
+        oval = new abst_ext<T0>;
+        ival1 = new abst_ext<T1>;
+        ival2 = new abst_ext<T2>;
+        ival3 = new abst_ext<T3>;
     }
     
     void prep()
@@ -531,7 +474,7 @@ public:
      * port.
      */
     delay(sc_module_name _name,     ///< process name
-          AbstExt<T> ival           ///< initial value
+          abst_ext<T> ival          ///< initial value
           ) : SY_process(_name), init_val(ival) {}
     
     //! Specifying from which process constructor is the module built
@@ -539,15 +482,15 @@ public:
     
 private:
     // Initial value
-    AbstExt<T> init_val;
+    abst_ext<T> init_val;
     
     // Inputs and output variables
-    AbstExt<T>* val;
+    abst_ext<T>* val;
     
     //Implementing the abstract semantics
     void init()
     {
-        val = new AbstExt<T>;
+        val = new abst_ext<T>;
         WRITE_MULTIPORT(oport, init_val);
     }
     
@@ -605,7 +548,7 @@ public:
      * output port.
      */
     delayn(sc_module_name _name,     ///< process name
-           AbstExt<T> ival,          ///< initial value
+           abst_ext<T> ival,         ///< initial value
            unsigned int n            ///< number of delay elements
           ) : SY_process(_name), init_val(ival), ns(n) {}
     
@@ -614,16 +557,16 @@ public:
     
 private:
     // Initial value
-    AbstExt<T> init_val;
+    abst_ext<T> init_val;
     unsigned int ns;
     
     // Inputs and output variables
-    AbstExt<T>* val;
+    abst_ext<T>* val;
     
     //Implementing the abstract semantics
     void init()
     {
-        val = new AbstExt<T>;
+        val = new abst_ext<T>;
         for (int i=0; i<ns; i++)
             WRITE_MULTIPORT(oport, init_val);
     }
@@ -855,13 +798,13 @@ protected:
  * extended signal with present values by replacing absent values with a
  * given value.
  * 
- * The output signal is not any more of the type AbstExt. 
+ * The output signal is not any more of the type abst_ext. 
  */
 template <class TYP>
 class fill : public sc_module
 {
 public:
-    sc_fifo_out<AbstExt<TYP> > iport;   ///< port for the input channel
+    sc_fifo_out<abst_ext<TYP> > iport;   ///< port for the input channel
     sc_fifo_out<TYP> oport;             ///< port for the output channel
 
     //! The constructor requires the process name and a default value
@@ -882,12 +825,12 @@ private:
     //! The main and only execution thread of the module
     void worker()
     {
-        AbstExt<TYP> in_val;
+        abst_ext<TYP> in_val;
         TYP out_val;
         while (1)
         {
             in_val = iport.read();  // read from the input
-            out_val = in_val.fromAbstExt(defval); // fill the output signal
+            out_val = in_val.from_abst_ext(defval); // fill the output signal
             WRITE_MULTIPORT(oport,out_val);      // write to the output
         }
     }
@@ -899,13 +842,13 @@ private:
  * preceding present value. Only in cases, where no preceding value
  * exists, the absent value is replaced by a default value.
  * 
- * The output signal is not any more of the type AbstExt. 
+ * The output signal is not any more of the type abst_ext. 
  */
 template <class TYP>
 class hold : public sc_module
 {
 public:
-    sc_fifo_in<AbstExt<TYP> > iport;   ///< port for the input channel
+    sc_fifo_in<abst_ext<TYP> > iport;   ///< port for the input channel
     sc_fifo_out<TYP> oport;             ///< port for the output channel
 
     //! The constructor requires the process name and a default value
@@ -926,14 +869,14 @@ private:
     //! The main and only execution thread of the module
     void worker()
     {
-        AbstExt<TYP> in_val;
+        abst_ext<TYP> in_val;
         TYP out_val;
         while (1)
         {
             in_val = iport.read();  // read from the input
             // update the default value
-            defval = in_val.isPresent() ? in_val.unsafeFromAbstExt()
-                                        : defval;
+            defval = in_val.is_present() ? in_val.unsafe_from_abst_ext()
+                                         : defval;
             // fill the output signal
             out_val = defval;
             WRITE_MULTIPORT(oport,out_val);    // write to the output
@@ -990,7 +933,7 @@ public:
     SY_out<T> oport;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(AbstExt<T>&, const AbstExt<T>&)> functype;
+    typedef std::function<void(abst_ext<T>&, const abst_ext<T>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
@@ -998,7 +941,7 @@ public:
      */
     source(sc_module_name _name,   ///< The module name
            functype _func,         ///< function to be passed
-           AbstExt<T> ist,                  ///< Initial state
+           abst_ext<T> ist,        ///< Initial state
            unsigned long long take=0 ///< number of tokens produced (0 for infinite)
           ) : SY_process(_name), init_st(ist), take(take), _func(_func) {}
     
@@ -1006,10 +949,10 @@ public:
     std::string ForSyDe_kind() const {return "SY::source";}
     
 private:
-    AbstExt<T> init_st;         // The current state
+    abst_ext<T> init_st;        // The current state
     unsigned long long take;    // Number of tokens produced
     
-    AbstExt<T>* cur_st;         // The current state of the process
+    abst_ext<T>* cur_st;        // The current state of the process
     unsigned long long tok_cnt;
     
     //! The function passed to the process constructor
@@ -1018,7 +961,7 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        cur_st = new AbstExt<T>;
+        cur_st = new abst_ext<T>;
         *cur_st = init_st;
         WRITE_MULTIPORT(oport, *cur_st);
         tok_cnt = 1;
@@ -1105,7 +1048,7 @@ public:
     SY_in<T> iport1;         ///< port for the input channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(const AbstExt<T>&)> functype;
+    typedef std::function<void(const abst_ext<T>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
@@ -1119,7 +1062,7 @@ public:
     std::string ForSyDe_kind() const {return "SY::sink";}
     
 private:
-    AbstExt<T>* val;         // The current state of the process
+    abst_ext<T>* val;         // The current state of the process
 
     //! The function passed to the process constructor
     functype _func;
@@ -1127,7 +1070,7 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        val = new AbstExt<T>;
+        val = new abst_ext<T>;
     }
     
     void prep()
@@ -1466,7 +1409,7 @@ class group : public sc_module
 {
 public:
     sc_fifo_in<TYP> iport;                         ///< port for the input channel
-    sc_fifo_out<AbstExt<std::vector<TYP> > > oport;///< port for the output channel
+    sc_fifo_out<abst_ext<std::vector<TYP> > > oport;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -1488,7 +1431,7 @@ private:
     void worker()
     {
         std::vector<TYP> in_val(grppts);
-        AbstExt<std::vector<TYP> > out_val;
+        abst_ext<std::vector<TYP> > out_val;
         while (1)
         {
             for (int i=0;i<grppts;i++)
@@ -1587,9 +1530,9 @@ inline comb2<T0,T1,T2>* make_comb2(std::string pName,
  */
 template <typename T>
 inline delay<T>* make_delay(std::string pName,
-    AbstExt<T> initval,
-    sc_fifo_out_if<AbstExt<T>>& outS,
-    sc_fifo_in_if<AbstExt<T>>& inpS
+    abst_ext<T> initval,
+    sc_fifo_out_if<abst_ext<T>>& outS,
+    sc_fifo_in_if<abst_ext<T>>& inpS
     )
 {
     auto p = new delay<T>(pName.c_str(), initval);
@@ -1610,7 +1553,7 @@ inline delay<T>* make_delay(std::string pName,
 template <class T, template <class> class OIf>
 inline source<T>* make_source(std::string pName,
     typename source<T>::functype _func,
-    AbstExt<T> initval,
+    abst_ext<T> initval,
     unsigned long long take,
     OIf<T>& outS
     )
