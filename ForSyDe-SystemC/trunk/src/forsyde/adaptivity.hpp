@@ -21,7 +21,7 @@
  * facilities used for modeling adaptive systems.
  */
 
-#include "symoc.hpp"
+#include "sy_moc.hpp"
 #include <functional>
 
 namespace ForSyDe
