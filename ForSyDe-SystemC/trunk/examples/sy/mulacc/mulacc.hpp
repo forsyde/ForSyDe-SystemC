@@ -34,7 +34,7 @@ SC_MODULE(mulacc)
         auto add1 = make_comb2("add1", add_func, acci, addi1, addi2);
         add1->oport(result);
         
-        make_delay("accum", AbstExt<int>(0), addi2, acci);
+        make_delay("accum", abst_ext<int>(0), addi2, acci);
     }
 };
 
