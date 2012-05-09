@@ -73,7 +73,7 @@
 #include "forsyde/abssemantics.hpp"
 
 // include different MoCs
-#include "forsyde/symoc.hpp"
+#include "forsyde/sy_moc.hpp"
 //~ #include "forsyde/sylib.hpp"
 #include "forsyde/sdfmoc.hpp"
 #include "forsyde/democ.hpp"
@@ -83,5 +83,7 @@
 #include "forsyde/dis.hpp"
 
 #include "forsyde/adaptivity.hpp"
+
+#include "forsyde/xml.hpp"
 
 #endif

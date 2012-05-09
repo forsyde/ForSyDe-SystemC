@@ -32,11 +32,40 @@ namespace ForSyDe
 
 using namespace sc_core;
 
-//! A helper class used to provide interface for accessing size of the signal elements
-class channel_size
+//! Type of the object bound to a port
+enum bound_type {PORT, CHANNEL};
+
+//! A helper class used to provide introspective channels
+class introspective_channel
 {
 public:
-    virtual unsigned token_size() = 0;
+    //! Size of the tokens in the channels
+    virtual unsigned token_size() const = 0;
+    
+    //! To which MoC does the signal belong
+    virtual std::string moc() const = 0;
+    
+    //! Input port to which a channel is bound
+    sc_object* iport;
+    
+    //! Output port to which a channel is bound
+    sc_object* oport;
+};
+
+//! This type is used in the process base class to store structural information
+struct PortInfo
+{
+    sc_object* port;
+    unsigned toks;
+    std::vector<sc_object*> boundChans;
+    std::string portType;
+};
+
+//! A helper class used to provide introspective ports
+class introspective_port
+{
+public:
+    sc_object* bound_port;
 };
 
 //! The process constructor which defines the abstract semantics of execution
@@ -54,7 +83,6 @@ public:
  * The designer uses the process constructors which implement the
  * abstract methods in a specific MoC.
  */
-template <typename PortInfo>
 class process : public sc_module
 {
 private:
@@ -136,6 +164,9 @@ public:
     std::vector<PortInfo> boundInChans;
     //! Pointers to the output ports and their bound channels
     std::vector<PortInfo> boundOutChans;
+    
+    //! Vector holding a list of argument/value tuples passed to the process constructor
+    std::vector<std::tuple<std::string,std::string>> arg_vec;
 #endif
  
     //! The constructor requires the module name
@@ -149,7 +180,8 @@ public:
     }
     
     //! The ForSyDe process type represented by the current module
-    virtual std::string ForSyDe_kind() const = 0;
+    virtual std::string forsyde_kind() const = 0;
+    
 };
 
 }
