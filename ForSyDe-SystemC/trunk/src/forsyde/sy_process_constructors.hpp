@@ -47,7 +47,7 @@ using namespace sc_core;
  * data-types.
  */
 template <typename T0, typename T1>
-class comb : public SY_process
+class comb : public sy_process
 {
 public:
     SY_in<T1>  iport1;       ///< port for the input channel
@@ -63,10 +63,15 @@ public:
      */
     comb(sc_module_name _name,      ///< process name
          functype _func             ///< function to be passed
-         ) : SY_process(_name), _func(_func) {}
+         ) : sy_process(_name), _func(_func)
+    {
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+    }
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() const {return "SY::comb";}
+    std::string forsyde_kind() const {return "SY::comb";}
 
 private:
     // Inputs and output variables
@@ -125,7 +130,7 @@ private:
 /*! similar to comb with two inputs
  */
 template <typename T0, typename T1, typename T2>
-class comb2 : public SY_process
+class comb2 : public sy_process
 {
 public:
     SY_in<T1> iport1;        ///< port for the input channel 1
@@ -143,10 +148,15 @@ public:
      */
     comb2(sc_module_name _name,      ///< process name
           functype _func             ///< function to be passed
-          ) : SY_process(_name), _func(_func) {}
+          ) : sy_process(_name), _func(_func)
+    {
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+    }
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() const {return "SY::comb2";}
+    std::string forsyde_kind() const {return "SY::comb2";}
 private:
     // Inputs and output variables
     abst_ext<T0>* oval;
@@ -212,7 +222,7 @@ private:
 /*! similar to comb with three inputs
  */
 template <typename T0, typename T1, typename T2, typename T3>
-class comb3 : public SY_process
+class comb3 : public sy_process
 {
 public:
     SY_in<T1> iport1;        ///< port for the input channel 1
@@ -232,10 +242,15 @@ public:
      */
     comb3(sc_module_name _name,      ///< process name
           functype _func             ///< function to be passed
-          ) : SY_process(_name), _func(_func) {}
+          ) : sy_process(_name), _func(_func)
+    {
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+    }
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() const {return "SY::comb3";}
+    std::string forsyde_kind() const {return "SY::comb3";}
     
 private:
     // Inputs and output variables
@@ -310,7 +325,7 @@ private:
 /*! similar to comb with four inputs
  */
 template <typename T0, typename T1, typename T2, typename T3, typename T4>
-class comb4 : public SY_process
+class comb4 : public sy_process
 {
 public:
     SY_in<T1> iport1;       ///< port for the input channel 1
@@ -331,10 +346,15 @@ public:
      */
     comb4(sc_module_name _name,      ///< process name
           functype _func             ///< function to be passed
-          ) : SY_process(_name), _func(_func) {}
+          ) : sy_process(_name), _func(_func)
+    {
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+    }
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() const{return "SY::comb4";}
+    std::string forsyde_kind() const{return "SY::comb4";}
     
 private:
     // Inputs and output variables
@@ -420,7 +440,7 @@ private:
  * loops since combinational loops are forbidden in ForSyDe.
  */
 template <class T>
-class delay : public SY_process
+class delay : public sy_process
 {
 public:
     SY_in<T>  iport1;       ///< port for the input channel
@@ -432,11 +452,16 @@ public:
      * port.
      */
     delay(sc_module_name _name,     ///< process name
-          abst_ext<T> ival          ///< initial value
-          ) : SY_process(_name), init_val(ival) {}
+          abst_ext<T> init_val      ///< initial value
+          ) : sy_process(_name), init_val(init_val)
+    {
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
+    }
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() const {return "SY::delay";}
+    std::string forsyde_kind() const {return "SY::delay";}
     
 private:
     // Initial value
@@ -494,7 +519,7 @@ private:
  * parameterized for its input/output data-type.
  */
 template <class T>
-class delayn : public SY_process
+class delayn : public sy_process
 {
 public:
     SY_in<T>  iport1;       ///< port for the input channel
@@ -505,13 +530,21 @@ public:
      * reads data from its input port, and writes the results using the
      * output port.
      */
-    delayn(sc_module_name _name,     ///< process name
-           abst_ext<T> ival,         ///< initial value
+    delayn(sc_module_name _name,    ///< process name
+           abst_ext<T> init_val,    ///< initial value
            unsigned int n            ///< number of delay elements
-          ) : SY_process(_name), init_val(ival), ns(n) {}
+          ) : sy_process(_name), init_val(init_val), ns(n)
+    {
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
+        ss.str("");
+        ss << n;
+        arg_vec.push_back(std::make_tuple("n", ss.str()));
+    }
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() const {return "SY::delayn";}
+    std::string forsyde_kind() const {return "SY::delayn";}
     
 private:
     // Initial value
@@ -848,34 +881,69 @@ private:
  * 
  * This class can directly be instantiated to build a process.
  */
-template <class OTYP>
-class constant : public sc_module
+template <class T>
+class constant : public sy_process
 {
 public:
-    sc_fifo_out<OTYP> oport;     ///< port for the output channel
+    SY_out<T> oport;            ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * and writes the result using the output port
      */
-    constant(sc_module_name _name, OTYP val)  // module name and const val
-         :sc_module(_name), cval(val)
+    constant(sc_module_name _name,      ///< The module name
+              abst_ext<T> init_val,     ///< The constant output value
+              unsigned long long take=0 ///< number of tokens produced (0 for infinite)
+             ) : sy_process(_name), init_val(init_val), take(take)
     {
-        
-        SC_THREAD(worker);
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
+        ss.str("");
+        ss << take;
+        arg_vec.push_back(std::make_tuple("take", ss.str()));
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::constant";}
+    
 private:
-    OTYP cval;
-    SC_HAS_PROCESS(constant);
-
-    //! The main and only execution thread of the module
-    void worker()
+    abst_ext<T> init_val;
+    unsigned long long take;    // Number of tokens produced
+    
+    unsigned long long tok_cnt;
+    bool infinite;
+    
+    //Implementing the abstract semantics
+    void init()
     {
-        while (1)
-        {
-            WRITE_MULTIPORT(oport,cval);    // write to the output
-        }
+        if (take==0) infinite = true;
+        tok_cnt = 0;
     }
+    
+    void prep() {}
+    
+    void exec() {}
+    
+    void prod()
+    {
+        if (tok_cnt++ < take || infinite)
+            WRITE_MULTIPORT(oport, init_val)
+        else wait();
+    }
+    
+    void clean() {}
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport;
+        boundOutChans[0].portType = typeid(T).name();
+        for (int i=0;i<oport.size();i++)
+            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
+    }
+#endif
 };
 
 //! Process constructor for a source process
@@ -885,7 +953,7 @@ private:
  * also the process output. It can be used in test-benches.
  */
 template <class T>
-class source : public SY_process
+class source : public sy_process
 {
 public:
     SY_out<T> oport;        ///< port for the output channel
@@ -899,12 +967,23 @@ public:
      */
     source(sc_module_name _name,   ///< The module name
            functype _func,         ///< function to be passed
-           abst_ext<T> ist,        ///< Initial state
+           abst_ext<T> init_val,    ///< Initial state
            unsigned long long take=0 ///< number of tokens produced (0 for infinite)
-          ) : SY_process(_name), init_st(ist), take(take), _func(_func) {}
+          ) : sy_process(_name), init_st(init_val), take(take), _func(_func)
+    {
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
+        ss.str("");
+        ss << take;
+        arg_vec.push_back(std::make_tuple("take", ss.str()));
+    }
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() const {return "SY::source";}
+    std::string forsyde_kind() const {return "SY::source";}
     
 private:
     abst_ext<T> init_st;        // The current state
@@ -912,6 +991,7 @@ private:
     
     abst_ext<T>* cur_st;        // The current state of the process
     unsigned long long tok_cnt;
+    bool infinite;
     
     //! The function passed to the process constructor
     functype _func;
@@ -922,6 +1002,7 @@ private:
         cur_st = new abst_ext<T>;
         *cur_st = init_st;
         WRITE_MULTIPORT(oport, *cur_st);
+        if (take==0) infinite = true;
         tok_cnt = 1;
     }
     
@@ -934,7 +1015,7 @@ private:
     
     void prod()
     {
-        if (tok_cnt++ < take)
+        if (tok_cnt++ < take || infinite)
             WRITE_MULTIPORT(oport, *cur_st)
         else wait();
     }
@@ -1000,7 +1081,7 @@ private:
  * applies a given function to the current input.
  */
 template <class T>
-class sink : public SY_process
+class sink : public sy_process
 {
 public:
     SY_in<T> iport1;         ///< port for the input channel
@@ -1014,10 +1095,15 @@ public:
      */
     sink(sc_module_name _name,      ///< process name
          functype _func             ///< function to be passed
-        ) : SY_process(_name), _func(_func) {}
+        ) : sy_process(_name), _func(_func)
+    {
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+    }
     
     //! Specifying from which process constructor is the module built
-    std::string ForSyDe_kind() const {return "SY::sink";}
+    std::string forsyde_kind() const {return "SY::sink";}
     
 private:
     abst_ext<T>* val;         // The current state of the process
