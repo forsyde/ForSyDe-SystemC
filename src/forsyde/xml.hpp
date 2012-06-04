@@ -62,6 +62,7 @@ public:
         const_argument = (char*)"argument";
         const_value = (char*)"value";
         const_moc = (char*)"moc";
+        const_type = (char*)"type";
         const_sdf = (char*)"sdf";
         const_sy = (char*)"sy";
         const_de = (char*)"de";
@@ -126,7 +127,7 @@ public:
                     -> bound_port -> get_parent_object() -> basename();
                 const char* bound_port = dynamic_cast<ForSyDe::introspective_port*>(*it)
                     -> bound_port -> basename();
-                add_port((*it)->basename(), dir, pn_node, bound_process, bound_port);
+                add_port(dynamic_cast<ForSyDe::introspective_port*>(*it), dir, pn_node, bound_process, bound_port);
             }
             else if (is_signal(*it))
             {
@@ -222,9 +223,9 @@ public:
     void add_leaf_process_ports(const ForSyDe::process* p, xml_node<>* pn_node)
     {
         for (auto it=p->boundInChans.begin();it!=p->boundInChans.end();it++)
-            add_port((*it).port->basename(), const_in, pn_node);
+            add_port(dynamic_cast<ForSyDe::introspective_port*>((*it).port), const_in, pn_node);
         for (auto it=p->boundOutChans.begin();it!=p->boundOutChans.end();it++)
-            add_port((*it).port->basename(), const_out, pn_node);
+            add_port(dynamic_cast<ForSyDe::introspective_port*>((*it).port), const_out, pn_node);
     }
     
     //! Add a composite process
@@ -247,17 +248,18 @@ public:
             {
                 // TODO: determining port direction can be done in a better way
                 char* dir = it->kind()==std::string("sc_fifo_in") ? const_in : const_out;
-                add_port(it->basename(), dir, p_node);
+                add_port(dynamic_cast<ForSyDe::introspective_port*>(it), dir, p_node);
             }
         });
     }
     
     //! Add a port
-    void add_port(const char* name, const char* dir, xml_node<>* pn_node, 
+    void add_port(introspective_port* port, const char* dir, xml_node<>* pn_node, 
                   const char* bound_process=NULL, const char* bound_port=NULL)
     {
         xml_node<> *p_node = allocate_append_node(pn_node, const_port);
-        allocate_append_attribute(p_node, const_name, name);
+        allocate_append_attribute(p_node, const_name, dynamic_cast<sc_object*>(port)->basename());
+        allocate_append_attribute(p_node, const_type, port->token_type());
         allocate_append_attribute(p_node, const_direction, dir);
         if (bound_process != NULL && bound_port != NULL)
         {
@@ -282,6 +284,7 @@ public:
             return;
         }
         allocate_append_attribute(sig_node, const_moc, moc_name);
+        allocate_append_attribute(sig_node, const_type, sig->token_type());
         allocate_append_attribute(sig_node, const_source, sig->oport->get_parent_object()->basename());
         allocate_append_attribute(sig_node, const_source_port, sig->oport->basename());
         allocate_append_attribute(sig_node, const_target, sig->iport->get_parent_object()->basename());
@@ -322,7 +325,7 @@ private:
     //! Some global constant names
     char *const_name, *const_leaf_process, *const_composite_process, 
          *const_process_network, *const_process_constructor, *const_moc,
-         *const_port, *const_sdf, *const_sy, *const_de, *const_ct,
+         *const_type, *const_port, *const_sdf, *const_sy, *const_de, *const_ct,
          *const_port_dir, *const_direction, *const_in, *const_out,
          *const_signal, *const_component_name, *const_argument, *const_value,
          *const_source, *const_source_port, *const_target, *const_target_port,

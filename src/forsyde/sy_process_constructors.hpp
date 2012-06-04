@@ -51,7 +51,7 @@ class comb : public sy_process
 {
 public:
     SY_in<T1>  iport1;       ///< port for the input channel
-    SY_out<T0> oport;        ///< port for the output channel
+    SY_out<T0> oport1;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
     typedef std::function<void(abst_ext<T0>&,const abst_ext<T1>&)> functype;
@@ -63,7 +63,8 @@ public:
      */
     comb(sc_module_name _name,      ///< process name
          functype _func             ///< function to be passed
-         ) : sy_process(_name), _func(_func)
+         ) : sy_process(_name), iport1("iport1"), oport1("oport1"),
+             _func(_func)
     {
         std::string func_name = std::string(basename());
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
@@ -100,7 +101,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport, *oval);
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -116,12 +117,8 @@ private:
         boundInChans[0].port = &iport1;
         boundInChans[0].portType = typeid(T1).name();
         boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport;
+        boundOutChans[0].port = &oport1;
         boundOutChans[0].portType = typeid(T0).name();
-        for (int i=0;i<iport1.size();i++)
-            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
-        for (int i=0;i<oport.size();i++)
-            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 #endif
 };
@@ -135,7 +132,7 @@ class comb2 : public sy_process
 public:
     SY_in<T1> iport1;        ///< port for the input channel 1
     SY_in<T2> iport2;        ///< port for the input channel 2
-    SY_out<T0> oport;        ///< port for the output channel
+    SY_out<T0> oport1;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
     typedef std::function<void(abst_ext<T0>&, const abst_ext<T1>&,
@@ -148,7 +145,8 @@ public:
      */
     comb2(sc_module_name _name,      ///< process name
           functype _func             ///< function to be passed
-          ) : sy_process(_name), _func(_func)
+          ) : sy_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1"),
+              _func(_func)
     {
         std::string func_name = std::string(basename());
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
@@ -187,7 +185,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport, *oval);
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -206,14 +204,8 @@ private:
         boundInChans[1].port = &iport2;
         boundInChans[1].portType = typeid(T2).name();
         boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport;
+        boundOutChans[0].port = &oport1;
         boundOutChans[0].portType = typeid(T0).name();
-        for (int i=0;i<iport1.size();i++)
-            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
-        for (int i=0;i<iport2.size();i++)
-            boundInChans[1].boundChans.push_back(dynamic_cast<sc_object*>(iport2[i]));
-        for (int i=0;i<oport.size();i++)
-            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 #endif
 };
@@ -228,7 +220,7 @@ public:
     SY_in<T1> iport1;        ///< port for the input channel 1
     SY_in<T2> iport2;        ///< port for the input channel 2
     SY_in<T3> iport3;        ///< port for the input channel 3
-    SY_out<T0> oport;        ///< port for the output channel
+    SY_out<T0> oport1;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
     typedef std::function<void(abst_ext<T0>&, const abst_ext<T1>&,
@@ -285,7 +277,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport, *oval);
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -307,16 +299,8 @@ private:
         boundInChans[2].port = &iport3;
         boundInChans[2].portType = typeid(T3).name();
         boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport;
+        boundOutChans[0].port = &oport1;
         boundOutChans[0].portType = typeid(T0).name();
-        for (int i=0;i<iport1.size();i++)
-            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
-        for (int i=0;i<iport2.size();i++)
-            boundInChans[1].boundChans.push_back(dynamic_cast<sc_object*>(iport2[i]));
-        for (int i=0;i<iport3.size();i++)
-            boundInChans[2].boundChans.push_back(dynamic_cast<sc_object*>(iport3[i]));
-        for (int i=0;i<oport.size();i++)
-            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 #endif
 };
@@ -332,7 +316,7 @@ public:
     SY_in<T2> iport2;       ///< port for the input channel 2
     SY_in<T3> iport3;       ///< port for the input channel 3
     SY_in<T4> iport4;       ///< port for the input channel 4
-    SY_out<T0> oport;        ///< port for the output channel
+    SY_out<T0> oport1;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
     typedef std::function<void(abst_ext<T0>, const abst_ext<T1>&,
@@ -389,7 +373,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport, *oval);
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -413,18 +397,8 @@ private:
         boundInChans[3].port = &iport4;
         boundInChans[3].portType = typeid(T4).name();
         boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport;
+        boundOutChans[0].port = &oport1;
         boundOutChans[0].portType = typeid(T0).name();
-        for (int i=0;i<iport1.size();i++)
-            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
-        for (int i=0;i<iport2.size();i++)
-            boundInChans[1].boundChans.push_back(dynamic_cast<sc_object*>(iport2[i]));
-        for (int i=0;i<iport3.size();i++)
-            boundInChans[2].boundChans.push_back(dynamic_cast<sc_object*>(iport3[i]));
-        for (int i=0;i<iport4.size();i++)
-            boundInChans[3].boundChans.push_back(dynamic_cast<sc_object*>(iport4[i]));
-        for (int i=0;i<oport.size();i++)
-            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 #endif
 };
@@ -444,7 +418,7 @@ class delay : public sy_process
 {
 public:
     SY_in<T>  iport1;       ///< port for the input channel
-    SY_out<T> oport;        ///< port for the output channel
+    SY_out<T> oport1;        ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which inserts the initial element, reads
@@ -453,7 +427,8 @@ public:
      */
     delay(sc_module_name _name,     ///< process name
           abst_ext<T> init_val      ///< initial value
-          ) : sy_process(_name), init_val(init_val)
+          ) : sy_process(_name), iport1("iport1"), oport1("oport1"),
+              init_val(init_val)
     {
         std::stringstream ss;
         ss << init_val;
@@ -474,7 +449,7 @@ private:
     void init()
     {
         val = new abst_ext<T>;
-        WRITE_MULTIPORT(oport, init_val);
+        WRITE_MULTIPORT(oport1, init_val);
     }
     
     void prep()
@@ -486,7 +461,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport, *val);
+        WRITE_MULTIPORT(oport1, *val);
     }
     
     void clean()
@@ -500,12 +475,8 @@ private:
         boundInChans[0].port = &iport1;
         boundInChans[0].portType = typeid(T).name();
         boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport;
+        boundOutChans[0].port = &oport1;
         boundOutChans[0].portType = typeid(T).name();
-        for (int i=0;i<iport1.size();i++)
-            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
-        for (int i=0;i<oport.size();i++)
-            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 #endif
 };
@@ -523,7 +494,7 @@ class delayn : public sy_process
 {
 public:
     SY_in<T>  iport1;       ///< port for the input channel
-    SY_out<T> oport;        ///< port for the output channel
+    SY_out<T> oport1;        ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which inserts the initial elements,
@@ -559,7 +530,7 @@ private:
     {
         val = new abst_ext<T>;
         for (int i=0; i<ns; i++)
-            WRITE_MULTIPORT(oport, init_val);
+            WRITE_MULTIPORT(oport1, init_val);
     }
     
     void prep()
@@ -571,7 +542,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport, *val);
+        WRITE_MULTIPORT(oport1, *val);
     }
     
     void clean()
@@ -585,12 +556,8 @@ private:
         boundInChans[0].port = &iport1;
         boundInChans[0].portType = typeid(T).name();
         boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport;
+        boundOutChans[0].port = &oport1;
         boundOutChans[0].portType = typeid(T).name();
-        for (int i=0;i<iport1.size();i++)
-            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
-        for (int i=0;i<oport.size();i++)
-            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 #endif
 };
@@ -609,7 +576,7 @@ class moore : public sc_module
 {
 public:
     sc_fifo_in<ITYP>  iport;        ///< port for the input channel
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    sc_fifo_out<OTYP> oport1;        ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -638,7 +605,7 @@ private:
             in_val = iport.read();              // read from input
             ns_val = _ns_func(st_val,in_val);   // calculate next state
             out_val = _od_func(st_val);         // calculate output
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
+            WRITE_MULTIPORT(oport1,out_val);    // write to the output
             st_val = ns_val;                    // update the state
         }
     }
@@ -671,7 +638,7 @@ class mealy : public sc_module
 {
 public:
     sc_fifo_in<ITYP>  iport;        ///< port for the input channel
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    sc_fifo_out<OTYP> oport1;        ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -700,7 +667,7 @@ private:
             in_val = iport.read();              // read from input
             ns_val = _ns_func(st_val,in_val);   // calculate next state
             out_val = _od_func(st_val,in_val);  // calculate output
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
+            WRITE_MULTIPORT(oport1,out_val);    // write to the output
             st_val = ns_val;                    // update the state
         }
     }
@@ -734,7 +701,7 @@ class mealy2 : public sc_module
 public:
     sc_fifo_in<ITYP1>  iport1;       ///< port for the input channel
     sc_fifo_in<ITYP2>  iport2;       ///< port for the input channel
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    sc_fifo_out<OTYP> oport1;        ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -765,7 +732,7 @@ private:
             in_val2 = iport2.read();            // read from input
             ns_val  = _ns_func(st_val,in_val1,in_val2);// calculate next state
             out_val = _od_func(st_val,in_val1,in_val2);// calculate output
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
+            WRITE_MULTIPORT(oport1,out_val);    // write to the output
             st_val = ns_val;                    // update the state
         }
     }
@@ -796,7 +763,7 @@ class fill : public sc_module
 {
 public:
     sc_fifo_out<abst_ext<TYP> > iport;   ///< port for the input channel
-    sc_fifo_out<TYP> oport;             ///< port for the output channel
+    sc_fifo_out<TYP> oport1;             ///< port for the output channel
 
     //! The constructor requires the process name and a default value
     /*! It creates an SC_THREAD which fills the signal result using the
@@ -822,7 +789,7 @@ private:
         {
             in_val = iport.read();  // read from the input
             out_val = in_val.from_abst_ext(defval); // fill the output signal
-            WRITE_MULTIPORT(oport,out_val);      // write to the output
+            WRITE_MULTIPORT(oport1,out_val);      // write to the output
         }
     }
 };
@@ -840,7 +807,7 @@ class hold : public sc_module
 {
 public:
     sc_fifo_in<abst_ext<TYP> > iport;   ///< port for the input channel
-    sc_fifo_out<TYP> oport;             ///< port for the output channel
+    sc_fifo_out<TYP> oport1;             ///< port for the output channel
 
     //! The constructor requires the process name and a default value
     /*! It creates an SC_THREAD which fills the signal result using the
@@ -870,7 +837,7 @@ private:
                                          : defval;
             // fill the output signal
             out_val = defval;
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
+            WRITE_MULTIPORT(oport1,out_val);    // write to the output
         }
     }
 };
@@ -885,7 +852,7 @@ template <class T>
 class constant : public sy_process
 {
 public:
-    SY_out<T> oport;            ///< port for the output channel
+    SY_out<T> oport1;            ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
@@ -894,7 +861,9 @@ public:
     constant(sc_module_name _name,      ///< The module name
               abst_ext<T> init_val,     ///< The constant output value
               unsigned long long take=0 ///< number of tokens produced (0 for infinite)
-             ) : sy_process(_name), init_val(init_val), take(take)
+             ) : sy_process(_name), oport1("oport1"),
+                 init_val(init_val), take(take)
+                 
     {
         std::stringstream ss;
         ss << init_val;
@@ -928,7 +897,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport, init_val)
+            WRITE_MULTIPORT(oport1, init_val)
         else wait();
     }
     
@@ -938,10 +907,8 @@ private:
     void bindInfo()
     {
         boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport;
+        boundOutChans[0].port = &oport1;
         boundOutChans[0].portType = typeid(T).name();
-        for (int i=0;i<oport.size();i++)
-            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 #endif
 };
@@ -956,7 +923,7 @@ template <class T>
 class source : public sy_process
 {
 public:
-    SY_out<T> oport;        ///< port for the output channel
+    SY_out<T> oport1;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
     typedef std::function<void(abst_ext<T>&, const abst_ext<T>&)> functype;
@@ -969,7 +936,8 @@ public:
            functype _func,         ///< function to be passed
            abst_ext<T> init_val,    ///< Initial state
            unsigned long long take=0 ///< number of tokens produced (0 for infinite)
-          ) : sy_process(_name), init_st(init_val), take(take), _func(_func)
+          ) : sy_process(_name), oport1("oport1"),
+              init_st(init_val), take(take), _func(_func)
     {
         std::string func_name = std::string(basename());
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
@@ -1001,7 +969,7 @@ private:
     {
         cur_st = new abst_ext<T>;
         *cur_st = init_st;
-        WRITE_MULTIPORT(oport, *cur_st);
+        WRITE_MULTIPORT(oport1, *cur_st);
         if (take==0) infinite = true;
         tok_cnt = 1;
     }
@@ -1016,7 +984,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport, *cur_st)
+            WRITE_MULTIPORT(oport1, *cur_st)
         else wait();
     }
     
@@ -1029,10 +997,8 @@ private:
     void bindInfo()
     {
         boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport;
+        boundOutChans[0].port = &oport1;
         boundOutChans[0].portType = typeid(T).name();
-        for (int i=0;i<oport.size();i++)
-            boundOutChans[0].boundChans.push_back(dynamic_cast<sc_object*>(oport[i]));
     }
 #endif
 };
@@ -1046,7 +1012,7 @@ template <class OTYP>
 class vsource : public sc_module
 {
 public:
-    sc_fifo_out<OTYP> oport;     ///< port for the output channel
+    sc_fifo_out<OTYP> oport1;     ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which writes the result using the output
@@ -1070,7 +1036,7 @@ private:
         for (itr=in_vec.begin();itr!=in_vec.end();itr++)
         {
             OTYP out_val = *itr;
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
+            WRITE_MULTIPORT(oport1,out_val);    // write to the output
         }
     }
 };
@@ -1095,7 +1061,8 @@ public:
      */
     sink(sc_module_name _name,      ///< process name
          functype _func             ///< function to be passed
-        ) : sy_process(_name), _func(_func)
+        ) : sy_process(_name), iport1("iport1"), _func(_func)
+            
     {
         std::string func_name = std::string(basename());
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
@@ -1140,8 +1107,6 @@ private:
         boundInChans.resize(1);    // only one output port
         boundInChans[0].port = &iport1;
         boundInChans[0].portType = typeid(T).name();
-        for (int i=0;i<iport1.size();i++)
-            boundInChans[0].boundChans.push_back(dynamic_cast<sc_object*>(iport1[i]));
     }
 #endif
 };
@@ -1202,7 +1167,7 @@ class zip : public sc_module
 public:
     sc_fifo_in<ITYP1> iport1;        ///< port for the input channel 1
     sc_fifo_in<ITYP2> iport2;        ///< port for the input channel 2
-    sc_fifo_out<std::tuple<ITYP1,ITYP2> > oport;///< port for the output channel
+    sc_fifo_out<std::tuple<ITYP1,ITYP2> > oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -1227,7 +1192,7 @@ private:
             in_val1 = iport1.read();  // read from input 1
             in_val2 = iport2.read();  // read from input 2
             out_val = std::make_tuple(in_val1,in_val2); // make the output
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
+            WRITE_MULTIPORT(oport1,out_val);    // write to the output
         }
     }
 
@@ -1243,7 +1208,7 @@ public:
     sc_fifo_in<ITYP1> iport1;        ///< port for the input channel 1
     sc_fifo_in<ITYP2> iport2;        ///< port for the input channel 2
     sc_fifo_in<ITYP2> iport3;        ///< port for the input channel 2
-    sc_fifo_out<std::tuple<ITYP1,ITYP2,ITYP3> > oport;///< port for the output channel
+    sc_fifo_out<std::tuple<ITYP1,ITYP2,ITYP3> > oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -1270,7 +1235,7 @@ private:
             in_val2 = iport2.read();  // read from input 2
             in_val3 = iport3.read();  // read from input 3
             out_val = std::make_tuple(in_val1,in_val2,in_val3); // make the output
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
+            WRITE_MULTIPORT(oport1,out_val);    // write to the output
         }
     }
 
@@ -1284,7 +1249,7 @@ class zipN : public sc_module
 {
 public:
     std::tuple <sc_fifo_in<ITYPs>...> iport;///< tuple of ports for the input channels
-    sc_fifo_out<std::tuple<ITYPs...> > oport;///< port for the output channel
+    sc_fifo_out<std::tuple<ITYPs...> > oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -1305,7 +1270,7 @@ private:
         while (1)
         {
             in_vals = sc_fifo_tuple_read<ITYPs...>(iport);
-            WRITE_MULTIPORT(oport,in_vals);    // write to the output
+            WRITE_MULTIPORT(oport1,in_vals);    // write to the output
         }
     }
     
@@ -1343,41 +1308,72 @@ private:
 //! The unzip process with one input and two outputs
 /*! This process "unzips" a signal of tuples into two separate signals
  */
-template <class OTYP1, class OTYP2>
-class unzip : public sc_module
+template <class T1, class T2>
+class unzip : public sy_process
 {
 public:
-    sc_fifo_in<std::tuple<OTYP1,OTYP2> > iport;///< port for the input channel
-    sc_fifo_out<OTYP1> oport1;        ///< port for the output channel 1
-    sc_fifo_out<OTYP2> oport2;        ///< port for the output channel 2
+    SY_in<std::tuple<abst_ext<T1>,abst_ext<T2>>> iport1;///< port for the input channel
+    SY_out<T1> oport1;        ///< port for the output channel 1
+    SY_out<T2> oport2;        ///< port for the output channel 2
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
      * unzips them and writes the results using the output ports
      */
     unzip(sc_module_name _name)
-         :sc_module(_name)
-    {
-        SC_THREAD(worker);
-    }
+         :sy_process(_name), iport1("iport1"), oport1("oport1"), oport2("oport2")
+    {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::unzip";}
 private:
-    SC_HAS_PROCESS(unzip);
-
-    //! The main and only execution thread of the module
-    void worker()
+    // intermediate values
+    abst_ext<std::tuple<abst_ext<T1>,abst_ext<T2>>>* in_val;
+    
+    void init()
     {
-        std::tuple<OTYP1,OTYP2> in_val;
-        OTYP1 out_val1;
-        OTYP2 out_val2;
-        while (1)
+        in_val = new abst_ext<std::tuple<abst_ext<T1>,abst_ext<T2>>>;
+    }
+    
+    void prep()
+    {
+        *in_val = iport1.read();
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        if (in_val->is_absent())
         {
-            in_val = iport.read();  // read from input
-            std::tie(out_val1,out_val2) = in_val;
-            WRITE_MULTIPORT(oport1,out_val1);  // write to the output 1
-            WRITE_MULTIPORT(oport2,out_val2);  // write to the output 2
+            WRITE_MULTIPORT(oport1,abst_ext<T1>());  // write to the output 1
+            WRITE_MULTIPORT(oport2,abst_ext<T2>());  // write to the output 2
+        }
+        else
+        {
+            WRITE_MULTIPORT(oport1,std::get<0>(in_val->unsafe_from_abst_ext()));  // write to the output 1
+            WRITE_MULTIPORT(oport2,std::get<1>(in_val->unsafe_from_abst_ext()));  // write to the output 2
         }
     }
-
+    
+    void clean()
+    {
+        delete in_val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(std::tuple<T1,T2>).name();
+        boundOutChans.resize(2);    // two output ports
+        boundOutChans[0].port = &oport1;
+        boundOutChans[0].portType = typeid(T1).name();
+        boundOutChans[1].port = &oport2;
+        boundOutChans[1].portType = typeid(T2).name();
+    }
+#endif
 };
 
 //! The unzip process with one input and variable number of outputs
@@ -1453,7 +1449,7 @@ class group : public sc_module
 {
 public:
     sc_fifo_in<TYP> iport;                         ///< port for the input channel
-    sc_fifo_out<abst_ext<std::vector<TYP> > > oport;///< port for the output channel
+    sc_fifo_out<abst_ext<std::vector<TYP> > > oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -1484,11 +1480,11 @@ private:
                 if (i<grppts-1)
                 {
                     out_val.setAbst(); // Absent Output
-                    WRITE_MULTIPORT(oport,out_val);// write to the output
+                    WRITE_MULTIPORT(oport1,out_val);// write to the output
                 }
             }
             out_val.setVal(in_val); // the grouped input
-            WRITE_MULTIPORT(oport,out_val);        // write to the output
+            WRITE_MULTIPORT(oport1,out_val);        // write to the output
         }
     }
 
@@ -1509,7 +1505,7 @@ class fanout : public sc_module
 {
 public:
     sc_fifo_in<IOTYP> iport;        ///< port for the input channel
-    sc_fifo_out<IOTYP> oport;       ///< port for the output channel
+    sc_fifo_out<IOTYP> oport1;       ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -1532,7 +1528,7 @@ private:
         {
             in_val = iport.read();  // read from input
             out_val = in_val;        // same output
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
+            WRITE_MULTIPORT(oport1,out_val);    // write to the output
         }
     }
 
