@@ -32,7 +32,7 @@ SC_MODULE(mulacc)
         make_comb2("mul1", mul_func, addi1, a, b);
 
         auto add1 = make_comb2("add1", add_func, acci, addi1, addi2);
-        add1->oport(result);
+        add1->oport1(result);
         
         make_delay("accum", abst_ext<int>(0), addi2, acci);
     }

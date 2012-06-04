@@ -35,13 +35,13 @@ SC_MODULE(Top)
 {
     SY2SY<int> srca, srcb, result;
     
-    constant<abst_ext<int>> const1;
+    constant<int> const1;
     mulacc mulacc1;
     
     SC_CTOR(Top): const1("const1",abst_ext<int>(3)),
                   mulacc1("mulacc1")
     {
-        const1.oport(srca);
+        const1.oport1(srca);
         make_source("siggen1", siggen_func, abst_ext<int>(1), 10, srcb);
         
         mulacc1.a(srca);
@@ -49,5 +49,13 @@ SC_MODULE(Top)
         mulacc1.result(result);
         
         make_sink("report1", report_func, result);
+    }
+    
+    void start_of_simulation()
+    {
+        ForSyDe::XMLExport dumper("gen/");
+        dumper.traverse(this);
+        //~ dumper.printXML("gen/mulacc.xml");
+        //~ dumper.printSrc("./","gen/");
     }
 };
