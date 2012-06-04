@@ -39,6 +39,9 @@ enum bound_type {PORT, CHANNEL};
 class introspective_channel
 {
 public:
+    //! Name of the tokens in the channels
+    virtual const char* token_type() const = 0;
+    
     //! Size of the tokens in the channels
     virtual unsigned token_size() const = 0;
     
@@ -57,7 +60,6 @@ struct PortInfo
 {
     sc_object* port;
     unsigned toks;
-    std::vector<sc_object*> boundChans;
     std::string portType;
 };
 
@@ -65,7 +67,11 @@ struct PortInfo
 class introspective_port
 {
 public:
+    //! To which port it is bound (used for binding ports of composite processes in the hierarchy)
     sc_object* bound_port;
+    
+    //! Name of the tokens of the port
+    virtual const char* token_type() const = 0;
 };
 
 //! The process constructor which defines the abstract semantics of execution

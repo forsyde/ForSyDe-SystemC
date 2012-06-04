@@ -48,6 +48,12 @@ public:
         return sizeof(T);
     }
     
+    //! Returns the name of the actual type (not abst_ext version)
+    virtual const char* token_type() const
+    {
+        return typeid(T).name();
+    }
+    
     std::string moc() const
     {
         return "SY";
@@ -63,6 +69,8 @@ class SY_in: public sc_fifo_in<abst_ext<T>>
 #endif
 {
 public:
+    SY_in() : sc_fifo_in<abst_ext<T>>(){}
+    SY_in(const char* name) : sc_fifo_in<abst_ext<T>>(name){}
 #ifdef FORSYDE_INTROSPECTION
     typedef T type;
     
@@ -82,6 +90,12 @@ public:
         sc_fifo_in<abst_ext<T>>::operator()(p);
         p.bound_port = this;
     }
+    
+    //! Returns the name of the actual type (not abst_ext version)
+    virtual const char* token_type() const
+    {
+        return typeid(T).name();
+    }
 #endif
 };
 
@@ -93,6 +107,8 @@ class SY_out: public sc_fifo_out<abst_ext<T>>
 #endif
 {
 public:
+    SY_out() : sc_fifo_out<abst_ext<T>>(){}
+    SY_out(const char* name) : sc_fifo_out<abst_ext<T>>(name){}
 #ifdef FORSYDE_INTROSPECTION
     typedef T type;
     
@@ -111,6 +127,12 @@ public:
         sc_fifo_out<abst_ext<T>>::operator()(p);
         // Register the port-to-port binding
         p.bound_port = this;
+    }
+    
+    //! Returns the name of the actual type (not abst_ext version)
+    virtual const char* token_type() const
+    {
+        return typeid(T).name();
     }
 #endif
 };
