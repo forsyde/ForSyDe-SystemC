@@ -24,59 +24,36 @@ using namespace ForSyDe::SY;
 
 SC_MODULE(sorter)
 {
-    sc_fifo_in<int>  a, b, c;
-    sc_fifo_out<int> biggest;
+    SY_in<int>  a, b, c;
+    SY_out<int> biggest;
     
-    comparator comp1, comp2, comp3;
-    decoder decoder1;
-    mux mux1;
-    fanout<int> foa, fob, foc;
-    
-    sc_fifo<int> c11, c12, c21, c22, c31, c32,
+    SY2SY<int> c11, c12, c21, c22, c31, c32,
                  m1, m2, m3, m4;
-    sc_fifo<bool> dec1, dec2, dec3;
+    SY2SY<bool> dec1, dec2, dec3;
     
-    SC_CTOR(sorter): comp1("comp1"), comp2("comp2"), comp3("comp3"),
-                     decoder1("decoder1"), mux1("mux1"),
-                     foa("foa"), fob("fob"), foc("foc")
+    SC_CTOR(sorter)
     {
-        foa.iport(a);
-        foa.oport(c11);
-        foa.oport(c32);
-        foa.oport(m2);
+        auto foa = make_fanout("foa", c11, a);
+        foa->oport1(c32);
+        foa->oport1(m2);
         
-        fob.iport(b);
-        fob.oport(c12);
-        fob.oport(c21);
-        fob.oport(m3);
+        auto fob = make_fanout("fob", c12, b);
+        fob->oport1(c21);
+        fob->oport1(m3);
         
-        foc.iport(c);
-        foc.oport(c22);
-        foc.oport(c31);
-        foc.oport(m4);
+        auto foc = make_fanout("foc", c22, c);
+        foc->oport1(c31);
+        foc->oport1(m4);
         
-        comp1.iport1(c11);
-        comp1.iport2(c12);
-        comp1.oport(dec1);
+        make_comb2("comparator1", comparator_func, dec1, c11, c12);
         
-        comp2.iport1(c21);
-        comp2.iport2(c22);
-        comp2.oport(dec2);
+        make_comb2("comparator2", comparator_func, dec2, c21, c22);
         
-        comp3.iport1(c31);
-        comp3.iport2(c32);
-        comp3.oport(dec3);
+        make_comb2("comparator3", comparator_func, dec3, c31, c32);
         
-        decoder1.iport1(dec1);
-        decoder1.iport2(dec2);
-        decoder1.iport3(dec3);
-        decoder1.oport(m1);
+        make_comb3("decoder1", decoder_func, m1, dec1, dec2, dec3);
         
-        mux1.iport1(m1);
-        mux1.iport2(m2);
-        mux1.iport3(m3);
-        mux1.iport4(m4);
-        mux1.oport(biggest);
+        make_comb4("mux1", mux_func, biggest, m1, m2, m3, m4);
     }
 };
 

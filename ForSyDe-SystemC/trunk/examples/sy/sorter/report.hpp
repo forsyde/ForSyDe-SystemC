@@ -1,32 +1,29 @@
-/**********************************************************************           
-    * comparator.hpp -- a simple two input comparator                 *
+/**********************************************************************
+    * report.hpp -- a report process                                  *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of a simple program.                     *
     *                                                                 *
-    * Usage:   Sorter example                                         *
-    *          inspired by material from Doulos SystemC course        *
+    * Usage:   sorter example                                         *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef COMPARATOR_HPP
-#define COMPARATOR_HPP
+
+#ifndef REPORT_HPP
+#define REPORT_HPP
 
 #include <forsyde.hpp>
+#include <iostream>
 
 using namespace ForSyDe;
 using namespace ForSyDe::SY;
 
-void comparator_func(abst_ext<bool>& out1,
-              const abst_ext<int>& a, const abst_ext<int>& b)
+void report_func(abst_ext<int> inp1)
 {
-    int inp1 = a.from_abst_ext(0);
-    int inp2 = b.from_abst_ext(0);
-
-#pragma ForSyDe begin comparator_func  
-    out1 = inp1>inp2 ? true : false;
+#pragma ForSyDe begin report_func
+    std::cout << "output value: " << inp1 << std::endl;
 #pragma ForSyDe end
 }
 
