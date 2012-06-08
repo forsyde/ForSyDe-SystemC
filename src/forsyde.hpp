@@ -84,6 +84,8 @@
 
 #include "forsyde/adaptivity.hpp"
 
+#ifdef FORSYDE_INTROSPECTION
 #include "forsyde/xml.hpp"
+#endif
 
 #endif
