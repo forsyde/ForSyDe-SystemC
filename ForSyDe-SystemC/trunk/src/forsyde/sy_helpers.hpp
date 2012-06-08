@@ -34,6 +34,29 @@ namespace SY
 
 using namespace sc_core;
 
+//! Helper function to construct a comb process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class T0, template <class> class OIf,
+          class T1, template <class> class I1If>
+inline comb<T0,T1>* make_comb(std::string pName,
+    typename comb<T0,T1>::functype _func,
+    OIf<T0>& outS,
+    I1If<T1>& inp1S
+    )
+{
+    auto p = new comb<T0,T1>(pName.c_str(), _func);
+    
+    (*p).iport1(inp1S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct a comb2 process
 /*! This function is used to construct a process (SystemC module) and
  * connect its output and output signals.
@@ -60,6 +83,67 @@ inline comb2<T0,T1,T2>* make_comb2(std::string pName,
     return p;
 }
 
+//! Helper function to construct a comb3 process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class T0, template <class> class OIf,
+          class T1, template <class> class I1If,
+          class T2, template <class> class I2If,
+          class T3, template <class> class I3If>
+inline comb3<T0,T1,T2,T3>* make_comb3(std::string pName,
+    typename comb3<T0,T1,T2,T3>::functype _func,
+    OIf<T0>& outS,
+    I1If<T1>& inp1S,
+    I2If<T2>& inp2S,
+    I3If<T3>& inp3S
+    )
+{
+    auto p = new comb3<T0,T1,T2,T3>(pName.c_str(), _func);
+    
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
+    (*p).iport3(inp3S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a comb4 process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class T0, template <class> class OIf,
+          class T1, template <class> class I1If,
+          class T2, template <class> class I2If,
+          class T3, template <class> class I3If,
+          class T4, template <class> class I4If>
+inline comb4<T0,T1,T2,T3,T4>* make_comb4(std::string pName,
+    typename comb4<T0,T1,T2,T3,T4>::functype _func,
+    OIf<T0>& outS,
+    I1If<T1>& inp1S,
+    I2If<T2>& inp2S,
+    I3If<T3>& inp3S,
+    I4If<T4>& inp4S
+    )
+{
+    auto p = new comb4<T0,T1,T2,T3,T4>(pName.c_str(), _func);
+    
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
+    (*p).iport3(inp3S);
+    (*p).iport4(inp4S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct a delay process
 /*! This function is used to construct a process (SystemC module) and
  * connect its output and output signals.
@@ -67,14 +151,136 @@ inline comb2<T0,T1,T2>* make_comb2(std::string pName,
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
-template <typename T>
+template <typename T, template <class> class IIf,
+                        template <class> class OIf>
 inline delay<T>* make_delay(std::string pName,
     abst_ext<T> initval,
-    sc_fifo_out_if<abst_ext<T>>& outS,
-    sc_fifo_in_if<abst_ext<T>>& inpS
+    OIf<T>& outS,
+    IIf<T>& inpS
     )
 {
     auto p = new delay<T>(pName.c_str(), initval);
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a moore process
+/*! This function is used to construct a moore process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename IT, typename ST, typename OT,
+           template <class> class IIf,
+           template <class> class OIf>
+inline moore<IT,ST,OT>* make_moore(std::string pName,
+    typename moore<IT,ST,OT>::ns_functype _ns_func,
+    typename moore<IT,ST,OT>::od_functype _od_func,
+    abst_ext<ST> init_st,
+    OIf<OT>& outS,
+    IIf<IT>& inpS
+    )
+{
+    auto p = new moore<IT,ST,OT>(pName.c_str(), _ns_func, _od_func, init_st);
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a mealy process
+/*! This function is used to construct a mealy process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename IT, typename ST, typename OT,
+           template <class> class IIf,
+           template <class> class OIf>
+inline mealy<IT,ST,OT>* make_moore(std::string pName,
+    typename mealy<IT,ST,OT>::ns_functype _ns_func,
+    typename mealy<IT,ST,OT>::od_functype _od_func,
+    abst_ext<ST> init_st,
+    OIf<OT>& outS,
+    IIf<IT>& inpS
+    )
+{
+    auto p = new mealy<IT,ST,OT>(pName.c_str(), _ns_func, _od_func, init_st);
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a delay process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename T, template <class> class IIf,
+                        template <class> class OIf>
+inline fill<T>* make_fill(std::string pName,
+    T def_val,
+    OIf<T>& outS,
+    IIf<T>& inpS
+    )
+{
+    auto p = new fill<T>(pName.c_str(), def_val);
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a delay process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename T, template <class> class IIf,
+                        template <class> class OIf>
+inline hold<T>* make_hold(std::string pName,
+    T def_val,
+    OIf<T>& outS,
+    IIf<T>& inpS
+    )
+{
+    auto p = new hold<T>(pName.c_str(), def_val);
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a delay process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename T, template <class> class IIf,
+                        template <class> class OIf>
+inline group<T>* make_group(std::string pName,
+    unsigned long samples,
+    OIf<std::vector<abst_ext<T>>>& outS,
+    IIf<T>& inpS
+    )
+{
+    auto p = new group<T>(pName.c_str(), samples);
     
     (*p).iport1(inpS);
     (*p).oport1(outS);
@@ -145,6 +351,31 @@ inline sink<T>* make_sink(std::string pName,
     return p;
 }
 
+//! Helper function to construct a zip process
+/*! This function is used to construct a zip process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <class T1, template <class> class I1If,
+           class T2, template <class> class I2If,
+           template <class> class OIf>
+inline zip<T1,T2>* make_zip(std::string pName,
+    OIf<std::tuple<abst_ext<T1>,abst_ext<T2>>>& outS,
+    I1If<T1>& inp1S,
+    I2If<T2>& inp2S
+    )
+{
+    auto p = new zip<T1,T2>(pName.c_str());
+    
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct an unzip process
 /*! This function is used to construct an unzip process (SystemC module) and
  * connect its output and output signals.
@@ -169,6 +400,29 @@ inline unzip<T1,T2>* make_unzip(std::string pName,
     
     return p;
 }
+
+//! Helper function to construct a fanout process
+/*! This function is used to construct a fanout process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename T, template <class> class IIf,
+                        template <class> class OIf>
+inline fanout<T>* make_fanout(std::string pName,
+    OIf<T>& outS,
+    IIf<T>& inpS
+    )
+{
+    auto p = new fanout<T>(pName.c_str());
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 
 }
 }
