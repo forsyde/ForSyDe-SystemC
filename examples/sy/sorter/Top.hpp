@@ -12,42 +12,29 @@
     *******************************************************************/
 
 #include "sorter.hpp"
+#include "report.hpp"
 #include <iostream>
 
 using namespace ForSyDe::SY;
 
-class report : public sink<int>
-{
-public:
-    report(sc_module_name _name) : sink<int>(_name){}
-protected:
-    void _func(int inp)
-    {
-        std::cout << "output value: " << inp << std::endl;
-    }
-    
-};
-
 SC_MODULE(Top)
 {
-    sc_fifo<int> srca, srcb, srcc, biggest;
+    SY2SY<int> srca, srcb, srcc, biggest;
     
-    constant<int> const1, const2, const3;
-    sorter sorter1;
-    report report1;
-    
-    SC_CTOR(Top): const1("const1",5), const2("const2",7), const3("const3",3),
-                  sorter1("sorter1"), report1("report1")
+    SC_CTOR(Top)
     {
-        const1.oport(srca);
-        const2.oport(srcb);
-        const3.oport(srcc);
+        make_constant("constant1", abst_ext<int>(5), 1, srca);
         
-        sorter1.a(srca);
-        sorter1.b(srcb);
-        sorter1.c(srcc);
-        sorter1.biggest(biggest);
+        make_constant("constant2", abst_ext<int>(7), 1, srcb);
         
-        report1.iport(biggest);
+        make_constant("constant3", abst_ext<int>(3), 1, srcc);
+        
+        auto sorter1 = new sorter("sorter1");
+        sorter1->a(srca);
+        sorter1->b(srcb);
+        sorter1->c(srcc);
+        sorter1->biggest(biggest);
+        
+        make_sink("sink1", report_func, biggest);
     }
 };

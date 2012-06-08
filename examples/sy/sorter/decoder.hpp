@@ -17,21 +17,23 @@
 
 #include <forsyde.hpp>
 
+using namespace ForSyDe;
 using namespace ForSyDe::SY;
 
-class decoder : public comb3<bool,bool,bool,int>
+void decoder_func(abst_ext<int>& out1,
+              const abst_ext<bool>& in0, const abst_ext<bool>& in1,
+              const abst_ext<bool>& in2)
 {
-public:
-    decoder(sc_module_name _name) : comb3<bool,bool,bool,int>(_name){}
-protected:
-    int _func(bool in0, bool in1, bool in2)
-    {
-        int res = 0;
-        if (in0 && !in2) res = 0;
-        else if (!in0 && in1) res = 1;
-             else if (!in1 && in2) res = 2;
-        return res;
-    }
-};
+    int inp1 = in0.from_abst_ext(0);
+    int inp2 = in1.from_abst_ext(0);
+    int inp3 = in2.from_abst_ext(0);
+
+#pragma ForSyDe begin decoder_func  
+    out1 = 0;
+    if (inp1 && !inp3) out1 = 0;
+    else if (!inp1 && inp2) out1 = 1;
+        else if (!inp2 && inp3) out1 = 2;
+#pragma ForSyDe end
+}
 
 #endif
