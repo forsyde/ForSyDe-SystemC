@@ -51,7 +51,7 @@ public:
     //! Returns the name of the actual type (not abst_ext version)
     virtual const char* token_type() const
     {
-        return typeid(T).name();
+        return get_type_name<T>();
     }
     
     std::string moc() const
@@ -94,7 +94,7 @@ public:
     //! Returns the name of the actual type (not abst_ext version)
     virtual const char* token_type() const
     {
-        return typeid(T).name();
+        return get_type_name<T>();
     }
 #endif
 };
@@ -132,7 +132,7 @@ public:
     //! Returns the name of the actual type (not abst_ext version)
     virtual const char* token_type() const
     {
-        return typeid(T).name();
+        return get_type_name<T>();
     }
 #endif
 };
