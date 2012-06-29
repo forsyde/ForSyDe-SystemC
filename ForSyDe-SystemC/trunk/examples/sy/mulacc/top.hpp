@@ -11,51 +11,34 @@
     *******************************************************************/
 
 #include "mulacc.hpp"
+#include "report.hpp"
+#include "siggen.hpp"
 #include <iostream>
 
 using namespace ForSyDe::SY;
 
-
-void siggen_func(abst_ext<int>& out1, const abst_ext<int>& inp)
-{
-    int inp1 = inp.from_abst_ext(0);
-#pragma ForSyDe begin siggen_func
-    out1 = -inp1;
-#pragma ForSyDe end
-}
-
-void report_func(abst_ext<int> inp1)
-{
-#pragma ForSyDe begin report_func
-    std::cout << "output value: " << inp1 << std::endl;
-#pragma ForSyDe end
-}
-
-SC_MODULE(Top)
+SC_MODULE(top)
 {
     SY2SY<int> srca, srcb, result;
     
-    constant<int> const1;
-    mulacc mulacc1;
-    
-    SC_CTOR(Top): const1("const1",abst_ext<int>(3)),
-                  mulacc1("mulacc1")
+    SC_CTOR(top)
     {
-        const1.oport1(srca);
+        make_constant("constant1", abst_ext<int>(3), 10, srca);
+        
         make_source("siggen1", siggen_func, abst_ext<int>(1), 10, srcb);
         
-        mulacc1.a(srca);
-        mulacc1.b(srcb);
-        mulacc1.result(result);
+        auto mulacc1 = new mulacc("mulacc1");
+        mulacc1->a(srca);
+        mulacc1->b(srcb);
+        mulacc1->result(result);
         
         make_sink("report1", report_func, result);
     }
-    
+#ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()
     {
         ForSyDe::XMLExport dumper("gen/");
         dumper.traverse(this);
-        //~ dumper.printXML("gen/mulacc.xml");
-        //~ dumper.printSrc("./","gen/");
     }
+#endif
 };
