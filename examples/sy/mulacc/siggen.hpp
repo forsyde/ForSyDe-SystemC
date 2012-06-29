@@ -1,24 +1,30 @@
 /**********************************************************************
-    * main.cpp -- the main file and testbench for the mulacc example  *
+    * add.hpp -- an adder process                                     *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Demonstration of a simple sequential processes.        *
+    * Purpose: Demonstration of a simple sequential process.          *
     *                                                                 *
     * Usage:   MulAcc example                                         *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#include "top.hpp"
 
-int sc_main(int argc, char **argv)
+#ifndef SIGGEN_HPP
+#define SIGGEN_HPP
+
+#include <forsyde.hpp>
+
+using namespace ForSyDe::SY;
+
+
+void siggen_func(abst_ext<int>& out1, const abst_ext<int>& inp)
 {
-    top top1("top1");
-
-    sc_start();
-        
-    return 0;
+    int inp1 = inp.from_abst_ext(0);
+#pragma ForSyDe begin siggen_func
+    out1 = -inp1;
+#pragma ForSyDe end
 }
 
-
+#endif
