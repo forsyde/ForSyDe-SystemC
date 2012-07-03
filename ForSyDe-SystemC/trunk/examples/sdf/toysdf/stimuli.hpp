@@ -1,5 +1,5 @@
-/**********************************************************************           
-    * averager.hpp -- an averager with feedback from outside          *
+/**********************************************************************
+    * stimuli.hpp -- a stimuli generator                              *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
@@ -10,18 +10,18 @@
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef AVERAGER_HPP
-#define AVERAGER_HPP
+
+#ifndef STIMULI_HPP
+#define STIMULI_HPP
 
 #include <forsyde.hpp>
 
-void averager_func(std::vector<double>& out1,
-                   const std::vector<double>& inp1,
-                   const std::vector<double>& inp2)
+using namespace ForSyDe::SDF;
+
+void stimuli_func(double& out1, const double& inp1)
 {
-#pragma ForSyDe begin averager_func
-    out1[0] = (inp1[0]+inp1[1]+inp2[0])/3;
-    out1[1] = (inp1[1]+inp1[2]+inp2[1])/3;
+#pragma ForSyDe begin stimuli_func
+    out1 = inp1 + 1;
 #pragma ForSyDe end
 }
 

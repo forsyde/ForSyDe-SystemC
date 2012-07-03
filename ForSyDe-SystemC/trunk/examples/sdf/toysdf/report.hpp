@@ -1,5 +1,5 @@
-/**********************************************************************           
-    * averager.hpp -- an averager with feedback from outside          *
+/**********************************************************************
+    * report.hpp -- a report process                                  *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
@@ -10,18 +10,18 @@
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef AVERAGER_HPP
-#define AVERAGER_HPP
+#ifndef REPORT_HPP
+#define REPORT_HPP
 
 #include <forsyde.hpp>
+#include <iostream>
 
-void averager_func(std::vector<double>& out1,
-                   const std::vector<double>& inp1,
-                   const std::vector<double>& inp2)
+using namespace ForSyDe::SDF;
+
+void report_func(double inp1)
 {
-#pragma ForSyDe begin averager_func
-    out1[0] = (inp1[0]+inp1[1]+inp2[0])/3;
-    out1[1] = (inp1[1]+inp1[2]+inp2[1])/3;
+#pragma ForSyDe begin report_func
+    std::cout << "output value: " << inp1 << std::endl;
 #pragma ForSyDe end
 }
 
