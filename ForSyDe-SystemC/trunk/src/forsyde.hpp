@@ -80,7 +80,7 @@
 #include "forsyde/sy_moc.hpp"
 //~ #include "forsyde/sylib.hpp"
 #include "forsyde/sdf_moc.hpp"
-#include "forsyde/democ.hpp"
+#include "forsyde/de_moc.hpp"
 #include "forsyde/ctmoc.hpp"
 #include "forsyde/ctlib.hpp"
 
