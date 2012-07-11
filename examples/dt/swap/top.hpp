@@ -1,36 +1,35 @@
 /**********************************************************************
-    * top.hpp -- the top module and testbench for the toyde example   *
+    * top.hpp -- the top module and testbench for the swap example    *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Demonstration of a simple DE system.                   *
+    * Purpose: Demonstration of a the usage of mealyT.                *
     *                                                                 *
-    * Usage:   ToyDE example                                          *
+    * Usage:   swap example                                           *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
+#include "swap.hpp"
 #include "report.hpp"
-#include "inc.hpp"
-#include "add.hpp"
 #include <iostream>
 
-using namespace ForSyDe::DE;
+using namespace std;
+using namespace ForSyDe::DT;
+
+vector<tuple<unsigned int,int>> in_vec1 = 
+    {make_tuple(0,1), make_tuple(1,2), make_tuple(2,3),
+     make_tuple(3,4), make_tuple(4,5), make_tuple(5,6)};
 
 SC_MODULE(top)
 {
-    DE2DE<int> srca, feedback, addi1, addi2, result;
+    DT2DT<int> src, result;
     
     SC_CTOR(top)
-    {
-        make_delay("delay1", 0, sc_time(10, SC_NS), srca, feedback);
+    {        
+        make_vsource("vsource1", in_vec1, src);
         
-        auto inc1 = make_comb("inc1", inc_func, addi1, srca);
-        inc1->oport1(feedback);
-        
-        make_constant("const1", -1, sc_time(100,SC_NS), addi2);
-        
-        make_comb2("add1", add_func, result, addi1, addi2);
+        make_mealyT("swap1", swap_gamma, swap_ns_func, swap_od_func, 0, result, src);
         
         make_sink("report1", report_func, result);
     }
