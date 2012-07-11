@@ -14,7 +14,7 @@
 #ifndef SY_MOC_HPP
 #define SY_MOC_HPP
 
-/*! \file sy_moc.h
+/*! \file sy_moc.hpp
  * \brief Implements the synchronous Model of Computation
  * 
  *  This file includes the basic process constructors and other

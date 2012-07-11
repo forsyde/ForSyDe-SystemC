@@ -1,5 +1,5 @@
 /**********************************************************************           
-    * symoc.hpp -- The synchronous MoC process                        *
+    * sy_process.hpp -- The synchronous MoC process                   *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
