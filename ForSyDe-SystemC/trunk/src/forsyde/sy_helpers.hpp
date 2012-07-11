@@ -13,7 +13,7 @@
 #ifndef SY_HELPERS_HPP
 #define SY_HELPERS_HPP
 
-/*! \file sy_helpers.h
+/*! \file sy_helpers.hpp
  * \brief Implements helper primitives for modeling in the SY MoC
  * 
  *  This file includes helper functions which facilliate construction of
@@ -203,7 +203,7 @@ inline moore<IT,ST,OT>* make_moore(std::string pName,
 template <typename IT, typename ST, typename OT,
            template <class> class IIf,
            template <class> class OIf>
-inline mealy<IT,ST,OT>* make_moore(std::string pName,
+inline mealy<IT,ST,OT>* make_mealy(std::string pName,
     typename mealy<IT,ST,OT>::ns_functype _ns_func,
     typename mealy<IT,ST,OT>::od_functype _od_func,
     abst_ext<ST> init_st,
@@ -400,6 +400,36 @@ inline unzip<T1,T2>* make_unzip(std::string pName,
     
     return p;
 }
+
+//! Helper function to construct an unzipN process
+/*! This function is used to construct an unzipN process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+//~ template <template <class> class IIf,
+           //~ typename T1, template <typename> typename OIf,
+           //~ typename... Ts>
+//~ inline unzipN<T...>* make_unzipN(std::string pName,
+    //~ IIf<std::tuple<abst_ext<Ts>...>>& inpS,
+    //~ OIf<T1>& outS,
+    //~ OIfs<Ts>&... outsS
+    //~ )
+//~ {
+    //~ make_unzipN(pName, inpS, outsS...);
+    //~ std:get???????????(*p).iport1(inpS);
+    //~ 
+    //~ return p;
+//~ }
+    //~ auto p = new unzip<T1,T2>(pName.c_str());
+    //~ 
+    //~ (*p).iport1(inpS);
+    //~ (*p).oport1(out1S);
+    //~ (*p).oport2(out2S);
+    //~ 
+    //~ return p;
+//~ }
 
 //! Helper function to construct a fanout process
 /*! This function is used to construct a fanout process (SystemC module) and

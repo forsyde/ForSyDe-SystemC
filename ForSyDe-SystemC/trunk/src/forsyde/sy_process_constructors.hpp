@@ -15,7 +15,7 @@
 #ifndef SY_PROCESS_CONSTRUCTORS_HPP
 #define SY_PROCESS_CONSTRUCTORS_HPP
 
-/*! \file sy_process_constructors.h
+/*! \file sy_process_constructors.hpp
  * \brief Implements the basic process constructors in the SY MoC
  * 
  *  This file includes the basic process constructors used for modeling
@@ -620,7 +620,7 @@ public:
         arg_vec.push_back(std::make_tuple("_od_func",func_name+std::string("_od_func")));
         std::stringstream ss;
         ss << init_st;
-        arg_vec.push_back(std::make_tuple("init_st",ss));
+        arg_vec.push_back(std::make_tuple("init_st",ss.str()));
 #endif
     }
     
@@ -734,7 +734,7 @@ public:
         arg_vec.push_back(std::make_tuple("_od_func",func_name+std::string("_od_func")));
         std::stringstream ss;
         ss << init_st;
-        arg_vec.push_back(std::make_tuple("init_st",ss));
+        arg_vec.push_back(std::make_tuple("init_st",ss.str()));
 #endif
     }
     
@@ -1495,34 +1495,55 @@ private:
 //! The unzip process with one input and variable number of outputs
 /*! This process "unzips" the incoming signal into a tuple of signals.
  */
-template <class... ITYPs>
-class unzipN : public sc_module
+template <class... Ts>
+class unzipN : public sy_process
 {
 public:
-    sc_fifo_in<std::tuple<ITYPs...> > iport;///< port for the input channel
-    std::tuple <sc_fifo_out<ITYPs>...> oport;///< tuple of ports for the output channels
+    SY_in<std::tuple<abst_ext<Ts>...>> iport1;///< port for the input channel
+    std::tuple<SY_out<Ts>...> oport;///< tuple of ports for the output channels
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * unzips it and writes the results using the output ports
      */
     unzipN(sc_module_name _name)
-          :sc_module(_name)
-    {
-        SC_THREAD(worker);
-    }
+          :sy_process(_name), iport1("iport1")
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::unzipN";}
 private:
-    SC_HAS_PROCESS(unzipN);
-
-    //! The main and only execution thread of the module
-    void worker()
+    // intermediate values
+    abst_ext<std::tuple<abst_ext<Ts>...>>* in_val;
+    
+    void init()
     {
-        std::tuple<ITYPs...> in_vals;
-        while (1)
+        in_val = new abst_ext<std::tuple<abst_ext<Ts>...>>;
+    }
+    
+    void prep()
+    {
+        *in_val = iport1.read();
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        if (in_val->is_absent())
         {
-            in_vals = iport.read();
-            sc_fifo_tuple_write<ITYPs...>(in_vals, oport);
+            std::tuple<abst_ext<Ts>...> all_abs;
+            fifo_tuple_write<Ts...>(all_abs, oport);
         }
+        else
+        {
+            fifo_tuple_write<Ts...>(in_val->unsafe_from_abst_ext(), oport);
+        }
+    }
+    
+    void clean()
+    {
+        delete in_val;
     }
     
     template<size_t N,class R,  class T>
@@ -1545,13 +1566,51 @@ private:
     };
 
     template<class... T>
-    void sc_fifo_tuple_write(const std::tuple<T...>& vals,
-                             std::tuple<sc_fifo_out<T>...>& ports)
+    void fifo_tuple_write(const std::tuple<abst_ext<T>...>& vals,
+                             std::tuple<SY_out<T>...>& ports)
     {
         fifo_write_helper<sizeof...(T)-1,
-                          std::tuple<T...>,
-                          std::tuple<sc_fifo_out<T>...>>::write(vals,ports);
+                          std::tuple<abst_ext<T>...>,
+                          std::tuple<SY_out<T>...>>::write(vals,ports);
     }
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(int).name();
+        boundOutChans.resize(sizeof...(Ts));    // two output ports
+        register_ports(boundOutChans, oport);
+    }
+    
+    template<size_t N, class T>
+    struct register_ports_helper
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            register_ports_helper<N-1,T>::reg_port(boundChans,t);
+            boundChans[N].port = &std::get<N>(t);
+        }
+    };
+
+    template<class T>
+    struct register_ports_helper<0,T>
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            boundChans[0].port = &std::get<0>(t);
+        }
+    };
+
+    template<class... T>
+    void register_ports(std::vector<PortInfo>& boundChans,
+                             std::tuple<SY_out<T>...>& ports)
+    {
+        register_ports_helper<sizeof...(T)-1,
+                              std::tuple<SY_out<T>...>&>::reg_port(boundChans,ports);
+    }
+#endif
 
 };
 
