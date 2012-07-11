@@ -81,6 +81,7 @@
 //~ #include "forsyde/sylib.hpp"
 #include "forsyde/sdf_moc.hpp"
 #include "forsyde/de_moc.hpp"
+#include "forsyde/dt_moc.hpp"
 #include "forsyde/ctmoc.hpp"
 #include "forsyde/ctlib.hpp"
 
