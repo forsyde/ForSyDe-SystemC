@@ -44,20 +44,48 @@ public:
         if (present) return value; else return defval;
     }
     
+    //! Converts a value from an extended value, returning a default value if absent
+    inline friend T from_abst_ext (const abst_ext& absval, const T& defval)
+    {
+        if (absval.present) return absval.value; else return defval;
+    }
+    
     //! Unsafely converts a value from an extended value assuming it is present
     T unsafe_from_abst_ext () const {return value;}
+    
+    //! Unsafely converts a value from an extended value assuming it is present
+    inline friend T unsafe_from_abst_ext(const abst_ext& absval)
+    {
+        return absval.value;
+    }
     
     //! Sets absent
     void set_abst() {present=false;}
     
+    //! Sets absent
+    inline friend void set_abst(abst_ext& absval) {absval.present=false;}
+    
     //! Sets the value
     void set_val(const T& val) {present=true;value=val;}
+    
+    //! Sets the value
+    inline friend void set_val(abst_ext& absval, const T& val)
+    {
+        absval.present=true;
+        absval.value=val;
+    }
     
     //! Checks for the absence of a value
     bool is_absent() const {return !present;}
     
+    //! Checks for the absence of a value
+    inline friend bool is_absent(const abst_ext& absval) {return !absval.present;}
+    
     //! Checks for the presence of a value
     bool is_present() const {return present;}
+    
+    //! Checks for the presence of a value
+    inline friend bool is_present(const abst_ext& absval) {return absval.present;}
     
     //! Checks for the equivalence of two absent-extended values
     bool operator== (const abst_ext& rs) const
