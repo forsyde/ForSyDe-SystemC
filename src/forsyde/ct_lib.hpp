@@ -219,15 +219,17 @@ public:
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
-template <class OIf, class IIf>
+template <class OIf, class IIf1, class IIf2>
 inline add* make_add(std::string pName,
     OIf& outS,
-    IIf& inpS
+    IIf1& inp1S,
+    IIf2& inp2S
     )
 {
     auto p = new add(pName.c_str());
     
-    (*p).iport1(inpS);
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
     (*p).oport1(outS);
     
     return p;
@@ -258,15 +260,17 @@ public:
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
-template <class OIf, class IIf>
+template <class OIf, class IIf1, class IIf2>
 inline sub* make_sub(std::string pName,
     OIf& outS,
-    IIf& inpS
+    IIf1& inp1S,
+    IIf2& inp2S
     )
 {
     auto p = new sub(pName.c_str());
     
-    (*p).iport1(inpS);
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
     (*p).oport1(outS);
     
     return p;
@@ -296,15 +300,17 @@ public:
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
-template <class OIf, class IIf>
+template <class OIf, class IIf1, class IIf2>
 inline mul* make_mul(std::string pName,
     OIf& outS,
-    IIf& inpS
+    IIf1& inp1S,
+    IIf2& inp2S
     )
 {
     auto p = new mul(pName.c_str());
     
-    (*p).iport1(inpS);
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
     (*p).oport1(outS);
     
     return p;
@@ -319,7 +325,7 @@ SC_MODULE(gaussian)
     CT_out oport1;          ///< port for the output channel
     
     SY::gaussian gaussian1;
-    SY2CT<CTTYPE> sy2ct1;
+    SY2CT sy2ct1;
     
     SY::SY2SY<CTTYPE> out_sig;
     
