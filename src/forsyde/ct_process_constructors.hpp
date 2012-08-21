@@ -90,10 +90,10 @@ private:
     void exec()
     {
         oval = sub_signal(get_start_time(ival1), get_end_time(ival1),
-                    [=](const sc_time& t)
+                    [ival1,_func](const sc_time& t)
                     {
                         CTTYPE res;
-                        _func(res, get_function(ival1)(t));
+                        _func(res, ival1(t));
                         return res;
                     }
                );
@@ -195,12 +195,12 @@ private:
         }
         
         oval = sub_signal(std::max(get_start_time(ival1),get_start_time(ival2)),
-                    outEndT, [=](const sc_time& t)
-                        {
-                            CTTYPE res;
-                            _func(res, get_function(ival1)(t), get_function(ival2)(t));
-                            return res;
-                        }
+                    outEndT, [ival1,ival2,_func](const sc_time& t)
+                             {
+                                 CTTYPE res;
+                                 _func(res, ival1(t), ival2(t));
+                                 return res;
+                             }
                );
     }
     
@@ -362,7 +362,7 @@ private:
     {
         set_range(val, get_start_time(val)+delay_time,
                        get_end_time(val)+delay_time);
-        set_function(val, [=](sc_time t){return get_function(val)(t-delay_time);});
+        set_function(val, [val,delay_time](const sc_time& t){return val(t-delay_time);});
     }
     
     void prod()
@@ -426,7 +426,7 @@ private:
     void init()
     {
         auto ss = sub_signal(sc_time(0,SC_NS), end_time, 
-                        [=](const sc_time& t){return init_val;}
+                        [init_val](const sc_time& t){return init_val;}
                   );
         WRITE_MULTIPORT(oport1, ss)
     }
@@ -499,7 +499,7 @@ private:
     void init()
     {
         auto ss = sub_signal(sc_time(0,SC_NS), end_time,
-                                [&](const sc_time& t)
+                                [_func](const sc_time& t)
                                 {
                                     CTTYPE res=0;
                                     _func(res, t);
