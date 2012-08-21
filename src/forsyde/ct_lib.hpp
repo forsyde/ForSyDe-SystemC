@@ -1,0 +1,432 @@
+/**********************************************************************           
+    * ct_lib.hpp -- a library of useful processes in the CT MoC       *
+    *                                                                 *
+    * Authors:  Hosien Attarzadeh (shan2@kth.se)                      *
+    *                                                                 *
+    * Purpose: Enriching the CT library.                              *
+    *                                                                 *
+    * Usage:                                                          *
+    *                                                                 *
+    * License: BSD3                                                   *
+    *******************************************************************/
+
+#ifndef CTLIB_H
+#define CTLIB_H
+
+#include "ct_moc.hpp"
+#include "de_moc.hpp"
+#include "dis.hpp"
+
+namespace ForSyDe
+{
+    
+namespace CT
+{
+
+//! Helper function to construct a coasine source
+/*! This class is used to cretae a continuous-time signal source which 
+ * produces a sinosoid.
+ */
+class sine : public source
+{
+public:
+    sine(sc_module_name name_,      ///< The Process name
+           const sc_time& endT,     ///< The end time of the generated signal
+           const sc_time& period,   ///< The signal period (1/f)
+           const CTTYPE& ampl      ///< The signal amplitude
+           ) : source(name_, [=](CTTYPE& out, const sc_time& t)
+                              {
+                                  out = ampl*sin(2*M_PI*t/period); 
+                              }, endT) {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "CT::sine";}
+};
+    
+//! Helper function to construct a sine source process
+/*! This function is used to construct a sine source and connect its
+ * output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf>
+inline sine* make_sine(std::string pName,
+    const sc_time& endT,  ///< The end time of the generated signal
+    const sc_time& period,///< The signal period (1/f)
+    const CTTYPE& ampl,  ///< The signal amplitude
+    OIf& outS
+    )
+{
+    auto p = new sine(pName.c_str(), endT, period, ampl);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a coasine source
+/*! This class is used to cretae a continuous-time signal source which 
+ * produces a cosine wave.
+ */
+class cosine : public source
+{
+public:
+    cosine(sc_module_name name_,      ///< The Process name
+           const sc_time& endT,       ///< The end time of the generated signal
+           const sc_time& period,     ///< The signal period (1/f)
+           const CTTYPE& ampl         ///< The signal amplitude
+           ) : source(name_, [=](CTTYPE& out, const sc_time& t)
+                              {
+                                  out = ampl*cos(2*M_PI*t/period); 
+                              }, endT) {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "CT::cosine";}
+};
+    
+//! Helper function to construct a cosine source process
+/*! This function is used to construct a cosine source and connect its
+ * output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf>
+inline cosine* make_cosine(std::string pName,
+    const sc_time& endT,  ///< The end time of the generated signal
+    const sc_time& period,///< The signal period (1/f)
+    const CTTYPE& ampl,  ///< The signal amplitude
+    OIf& outS
+    )
+{
+    auto p = new cosine(pName.c_str(), endT, period, ampl);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a square source
+/*! This class is used to cretae a continuous-time signal source which 
+ * produces a square wave.
+ */
+class square : public source
+{
+public:
+    square(sc_module_name name_,      ///< The Process name
+           const sc_time& endT,       ///< The end time of the generated signal
+           const sc_time& period,     ///< The signal period (1/f)
+           const CTTYPE& highS,       ///< The signal high swing
+           const CTTYPE& lowS,        ///< The signal low swing
+           const double& dutyCycle = 0.5///< The duty cycle (0 to 1)
+           ) : source(name_, [=](CTTYPE& out, const sc_time& t)
+                              {
+                                  double tmp = (t/period);
+                                  out = tmp-(long)tmp < dutyCycle ? highS : lowS;
+                              }, endT) {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "CT::square";}
+};
+    
+//! Helper function to construct a square source process
+/*! This function is used to construct a square source and connect its
+ * output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf>
+inline square* make_square(std::string pName,
+    const sc_time& endT,  ///< The end time of the generated signal
+    const sc_time& period,///< The signal period (1/f)
+    const CTTYPE& highS,       ///< The signal high swing
+    const CTTYPE& lowS,        ///< The signal low swing
+    const double& dutyCycle,   ///< The duty cycle (0 to 1)
+    OIf& outS
+    )
+{
+    auto p = new square(pName.c_str(), endT, period, highS, lowS, dutyCycle);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Process constructor for a continuous-time process which scales the input
+/*! This class is used to build continuous-time processes with one input
+ * and one output. By passing a constant value to the constructor, the
+ * process scales the inputs using it.
+ */
+class scale : public comb
+{
+public:
+    scale(sc_module_name name_,             ///< The Process name
+           const CTTYPE& scaling_factor    ///< The scaling factor
+           ) : comb(name_, [=](CTTYPE& out1, const CTTYPE& inp1)
+                             {
+                                out1 = scaling_factor * inp1;
+                             }) {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "CT::scale";}
+};
+
+//! Helper function to construct a scale process
+/*! This function is used to construct a scale source and connect its
+ * input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class IIf>
+inline scale* make_scale(std::string pName,
+    const CTTYPE& scaling_factor,       ///< The scaling factor
+    OIf& outS,
+    IIf& inpS
+    )
+{
+    auto p = new scale(pName.c_str(), scaling_factor);
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Process constructor for a continuous-time process which adds its inputs
+/*! This class is used to build continuous-time processes with two inputs
+ * and one output. The process adds its two inputs and produces the output.
+ */
+class add : public comb2
+{
+public:
+    add(sc_module_name name_        ///< The Process name
+        ) : comb2(name_, [=](CTTYPE& out1, const CTTYPE& inp1, const CTTYPE& inp2)
+                             {
+                                out1 = inp1 + inp2;
+                             }) {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "CT::add";}
+};
+
+//! Helper function to construct an add process
+/*! This function is used to construct an adder and connect its
+ * input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class IIf>
+inline add* make_add(std::string pName,
+    OIf& outS,
+    IIf& inpS
+    )
+{
+    auto p = new add(pName.c_str());
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Process constructor for a continuous-time process which subtracts its inputs
+/*! This class is used to build continuous-time processes with two inputs
+ * and one output. The process subtracts the second input from the first
+ * and produces the output.
+ */
+class sub : public comb2
+{
+public:
+    sub(sc_module_name name_        ///< The Process name
+        ) : comb2(name_, [=](CTTYPE& out1, const CTTYPE& inp1, const CTTYPE& inp2)
+                             {
+                                out1 = inp1 - inp2;
+                             }) {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "CT::sub";}
+};
+
+//! Helper function to construct a sub process
+/*! This function is used to construct a subtractor and connect its
+ * input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class IIf>
+inline sub* make_sub(std::string pName,
+    OIf& outS,
+    IIf& inpS
+    )
+{
+    auto p = new sub(pName.c_str());
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Process constructor for a continuous-time process which multiplies its inputs
+/*! This class is used to build continuous-time processes with two inputs
+ * and one output. The process multiplies its two inputs and produces the output.
+ */
+class mul : public comb2
+{
+public:
+    mul(sc_module_name name_        ///< The Process name
+        ) : comb2(name_, [=](CTTYPE& out1, const CTTYPE& inp1, const CTTYPE& inp2)
+                             {
+                                out1 = inp1 * inp2;
+                             }) {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "CT::mul";}
+};
+
+//! Helper function to construct a mul process
+/*! This function is used to construct a multiplier and connect its
+ * input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class IIf>
+inline mul* make_mul(std::string pName,
+    OIf& outS,
+    IIf& inpS
+    )
+{
+    auto p = new mul(pName.c_str());
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Process constructor for a Gaussian randome wave generator
+/*! This class is used to create a continuous-time signal source which 
+ * produces a Random signal based on the Gaussian distribution
+ */
+SC_MODULE(gaussian)
+{
+    CT_out oport1;          ///< port for the output channel
+    
+    SY::gaussian gaussian1;
+    SY2CT<CTTYPE> sy2ct1;
+    
+    SY::SY2SY<CTTYPE> out_sig;
+    
+    //! The constructor requires the module name and the generator parameters
+    /*! 
+     */
+    gaussian(sc_module_name _name,          ///< Process name
+              const double& gaussVar,       ///< The variance
+              const double& gaussMean,      ///< The mean value
+              sc_time sample_period          ///< sampling period
+          ) : sc_module(_name), gaussian1("gaussian1", gaussVar, gaussMean),
+              sy2ct1("sy2ct1", sample_period, HOLD)
+    {
+        gaussian1.oport1(out_sig);
+        
+        sy2ct1.iport1(out_sig);
+        sy2ct1.oport1(oport1);
+    }
+};
+
+//! Helper function to construct a gaussian process
+/*! This function is used to construct a gaussian signal generator and
+ * connect its input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf>
+inline gaussian* make_gaussian(std::string pName,
+    const double& gaussVar,       ///< The variance
+    const double& gaussMean,      ///< The mean value
+    sc_time sample_period,         ///< sampling period
+    OIf& outS
+    )
+{
+    auto p = new gaussian(pName.c_str(), gaussVar, gaussMean, sample_period);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Process constructor for implementing a linear filter
+/*! This class is used to build a process which implements a linear
+ * in the CT MoC filter based on the numerator and denominator constants.
+ * It internally uses a DE filter together with CT2DE and DE2CT domain
+ * interfaces.
+ */
+SC_MODULE(filter)
+{
+    CT_in iport1;           ///< port for the input channel
+    CT_out oport1;          ///< port for the output channel;
+    
+    CT2DE<CTTYPE> ct2de1;
+    DE::filter<CTTYPE> filter1;
+    DE2CT<CTTYPE> de2ct1;
+    
+    DE::DE2DE<CTTYPE> inp_sig, smp_sig, out_sig;
+    
+    //! The constructor requires the module name and the filter parameters
+    /*! 
+     */
+    filter(sc_module_name _name,            ///< Process name
+           std::vector<CTTYPE> numerators,  ///< Numerator constants
+           std::vector<CTTYPE> denominators,///< Denominator constants
+           sc_time sample_period             ///< sampling period
+          ) : sc_module(_name), ct2de1("ct2de1"),
+              filter1("filter1", numerators, denominators, sample_period),
+              de2ct1("de2ct1", HOLD)
+    {
+        ct2de1.iport1(iport1);
+        ct2de1.iport2(smp_sig);
+        ct2de1.oport1(inp_sig);
+        
+        filter1.iport1(inp_sig);
+        filter1.oport1(out_sig);
+        filter1.oport2(smp_sig);
+        
+        de2ct1.iport1(out_sig);
+        de2ct1.oport1(oport1);
+    }
+};
+
+//! Helper function to construct a linear process
+/*! This function is used to construct a CT filter and connect its
+ * input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class I1If>
+inline filter* make_filter(std::string pName,
+    std::vector<CTTYPE> numerators,  ///< Numerator constants
+    std::vector<CTTYPE> denominators,///< Denominator constants
+    sc_time sample_period,            ///< sampling period
+    OIf& outS,
+    I1If& inp1S
+    )
+{
+    auto p = new filter(pName.c_str(), numerators, denominators, sample_period);
+    
+    (*p).iport1(inp1S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+}
+}
+#endif
