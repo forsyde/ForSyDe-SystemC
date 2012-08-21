@@ -1,5 +1,5 @@
 /**********************************************************************           
-    * pwr.hpp -- a process that computes square of a signal           *
+    * top.hpp -- the Top process and testbench for a toy CT system    *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
@@ -10,20 +10,37 @@
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef PWR_HPP
-#define PWR_HPP
-
 #include <forsyde.hpp>
+#include "add.hpp"
+#include "pwr.hpp"
 
-using namespace ForSyDe;
+using namespace sc_core;
 using namespace ForSyDe::CT;
 
-void pwr_func(CTTYPE& out1, const CTTYPE& inp1)
+void abssin_func(CTTYPE& out1, const sc_time& inp1)
 {
-#pragma ForSyDe begin pwr_func
-    out1 = inp1 * inp1;
+#pragma ForSyDe begin abssin_func
+    out1 = fabs(sin(2*M_PI*inp1.to_seconds()));
 #pragma ForSyDe end
 }
 
-#endif
-
+SC_MODULE(top)
+{
+    CT2CT src1, src2, src3, des1, des2;
+    
+    SC_CTOR(top)
+    {
+        auto stimuli1 = make_source("stimuli1", abssin_func, sc_time(3,SC_SEC), src1);
+        stimuli1->oport1(src2);
+        stimuli1->oport1(src3);
+        
+        make_comb2("add1", add_func, des1, src2, src3);
+        
+        make_comb("pwr1", pwr_func, des2, des1);
+        
+        make_traceSig("report1", sc_time(10,SC_MS), src1);
+        
+        make_traceSig("report2", sc_time(10,SC_MS), des2);
+    }
+   
+};
