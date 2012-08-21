@@ -1,5 +1,5 @@
 /**********************************************************************           
-    * sylib.hpp -- a library of useful processes in the SY MoC        *
+    * sy_lib.hpp -- a library of useful processes in the SY MoC       *
     *                                                                 *
     * Authors:  Hosien Attarzadeh (shan2@kth.se)                      *
     *                                                                 *
@@ -13,7 +13,7 @@
 #ifndef SYLIB_H
 #define SYLIB_H
 
-#include "symoc.hpp"
+#include "sy_moc.hpp"
 
 namespace ForSyDe
 {
@@ -22,8 +22,8 @@ namespace SY
 {
 
 //! Process constructor for a Gaussian randome wave generator
-/*! This class is used to cretae a synchronous signal source which 
- * produces a Random signal based on the Gaussian distribution
+/*! This class is used to create a synchronous signal source which 
+ * produces a random signal based on the Gaussian distribution
  */
 class gaussian : public source<double>
 {
@@ -31,31 +31,29 @@ public:
     gaussian(sc_module_name name_,      ///< The Process name
              const double& gaussVar,    ///< The variance
              const double& gaussMean    ///< The mean value
-            ) : source(name_, 0), gaussVar(gaussVar), gaussMean(gaussMean) {}
-protected:
-    double _func(double inp)
-    {
-        double rnd1,rnd2,G,Q,Q1,Q2;
-        do
-        { 
-            rnd1 = ((double)my_rand()) / ((double)2147483647) ;
-            rnd2 = ((double)my_rand()) / ((double)2147483647) ;
+            ) : source(name_, [=](abst_ext<double>& out1, const abst_ext<double>& inp)
+                               {
+                                   double rnd1,rnd2,G,Q,Q1,Q2;
+                                   do
+                                   {
+                                       rnd1 = ((double)my_rand()) / ((double)2147483647) ;
+                                       rnd2 = ((double)my_rand()) / ((double)2147483647) ;
 
-            Q1 = 2.0 * rnd1 - 1.0 ;
-            Q2 = 2.0 * rnd2 - 1.0 ;
+                                       Q1 = 2.0 * rnd1 - 1.0 ;
+                                       Q2 = 2.0 * rnd2 - 1.0 ;
 
-            Q = Q1 * Q1 + Q2 * Q2 ;
-    
-        } while (Q > 1.0) ;
+                                       Q = Q1 * Q1 + Q2 * Q2 ;
+                                   } while (Q > 1.0) ;
 
-        G = gaussMean+sqrt(gaussVar)*(sqrt(-2.0*log(Q)/Q)*Q1) ;
-        return G;
-    }
+                                   G = gaussMean+sqrt(gaussVar)*(sqrt(-2.0*log(Q)/Q)*Q1);
+                                   out1 = abst_ext<double>(G);
+                               }, abst_ext<double>(0)),
+                gaussVar(gaussVar), gaussMean(gaussMean) {}
 private:
     double gaussVar, gaussMean;
     // state variable:  
     bool shiftreg[64];	// boolean array for the LFSR random number generator
-    void init()
+    void initialize()
     {
         long int seed = 11206341;
         for(int i=63; i>=0; i--) {	// the LFSR shiftregister is initialized with 0
