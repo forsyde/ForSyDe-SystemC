@@ -76,7 +76,7 @@ public:
      * Additionally, it checks the sampling time validity with respect
      * to the range.
      */
-    CTTYPE operator() (const sc_time& valAt)
+    CTTYPE operator() (const sc_time& valAt) const
     {
         if ((valAt>=start_time) && (valAt<end_time))
             return _f(valAt);
