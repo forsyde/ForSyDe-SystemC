@@ -117,10 +117,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T1).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T0).name();
     }
 #endif
 };
@@ -204,12 +202,9 @@ private:
     {
         boundInChans.resize(2);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T1).name();
         boundInChans[1].port = &iport2;
-        boundInChans[1].portType = typeid(T2).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T0).name();
     }
 #endif
 };
@@ -300,14 +295,10 @@ private:
     {
         boundInChans.resize(3);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T1).name();
         boundInChans[1].port = &iport2;
-        boundInChans[1].portType = typeid(T2).name();
         boundInChans[2].port = &iport3;
-        boundInChans[2].portType = typeid(T3).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T0).name();
     }
 #endif
 };
@@ -404,16 +395,11 @@ private:
     {
         boundInChans.resize(4);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T1).name();
         boundInChans[1].port = &iport2;
-        boundInChans[1].portType = typeid(T2).name();
         boundInChans[2].port = &iport3;
-        boundInChans[2].portType = typeid(T3).name();
         boundInChans[3].port = &iport4;
-        boundInChans[3].portType = typeid(T4).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T0).name();
     }
 #endif
 };
@@ -490,10 +476,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
     }
 #endif
 };
@@ -574,10 +558,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
     }
 #endif
 };
@@ -687,10 +669,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(IT).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(OT).name();
     }
 #endif
 };
@@ -794,10 +774,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(IT).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(OT).name();
     }
 #endif
 };
@@ -872,10 +850,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
     }
 #endif
 };
@@ -952,10 +928,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
     }
 #endif
 };
@@ -1028,7 +1002,6 @@ private:
     {
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
     }
 #endif
 };
@@ -1120,7 +1093,6 @@ private:
     {
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
     }
 #endif
 };
@@ -1230,7 +1202,6 @@ private:
     {
         boundInChans.resize(1);    // only one output port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T).name();
     }
 #endif
 };
@@ -1347,12 +1318,9 @@ private:
     {
         boundInChans.resize(2);     // two input ports
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T1).name();
         boundInChans[1].port = &iport2;
-        boundInChans[1].portType = typeid(T2).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(std::tuple<T1,T2>).name();
     }
 #endif
 };
@@ -1482,12 +1450,9 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(std::tuple<T1,T2>).name();
         boundOutChans.resize(2);    // two output ports
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T1).name();
         boundOutChans[1].port = &oport2;
-        boundOutChans[1].portType = typeid(T2).name();
     }
 #endif
 };
@@ -1579,7 +1544,6 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(int).name();
         boundOutChans.resize(sizeof...(Ts));    // two output ports
         register_ports(boundOutChans, oport);
     }
@@ -1689,10 +1653,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
     }
 #endif
 };
@@ -1755,10 +1717,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
     }
 #endif
 };
