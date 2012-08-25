@@ -86,6 +86,7 @@
 #include "forsyde/ct_lib.hpp"
 
 #include "forsyde/dis.hpp"
+#include "forsyde/di_helpers.hpp"
 
 #include "forsyde/adaptivity.hpp"
 
