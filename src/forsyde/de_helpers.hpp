@@ -57,39 +57,39 @@ inline comb<T0,T1>* make_comb(std::string pName,
     return p;
 }
 
-//~ //! Helper function to construct a comb2 process
-//~ /*! This function is used to construct a process (SystemC module) and
- //~ * connect its output and output signals.
- //~ * It provides a more functional style definition of a ForSyDe process.
- //~ * It also removes bilerplate code by using type-inference feature of
- //~ * C++ and automatic binding to the input and output FIFOs.
- //~ */
-//~ template <class T0, template <class> class OIf,
-          //~ class T1, template <class> class I1If,
-          //~ class T2, template <class> class I2If>
-//~ inline comb2<T0,T1,T2>* make_comb2(std::string pName,
-    //~ typename comb2<T0,T1,T2>::functype _func,
-    //~ OIf<T0>& outS,
-    //~ I1If<T1>& inp1S,
-    //~ I2If<T2>& inp2S
-    //~ )
-//~ {
-    //~ auto p = new comb2<T0,T1,T2>(pName.c_str(), _func);
-    //~ 
-    //~ (*p).iport1(inp1S);
-    //~ (*p).iport2(inp2S);
-    //~ (*p).oport1(outS);
-    //~ 
-    //~ return p;
-//~ }
-//~ 
-//~ //! Helper function to construct a comb3 process
-//~ /*! This function is used to construct a process (SystemC module) and
- //~ * connect its output and output signals.
- //~ * It provides a more functional style definition of a ForSyDe process.
- //~ * It also removes bilerplate code by using type-inference feature of
- //~ * C++ and automatic binding to the input and output FIFOs.
- //~ */
+//! Helper function to construct a comb2 process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class T0, template <class> class OIf,
+          class T1, template <class> class I1If,
+          class T2, template <class> class I2If>
+inline comb2<T0,T1,T2>* make_comb2(std::string pName,
+    typename comb2<T0,T1,T2>::functype _func,
+    OIf<T0>& outS,
+    I1If<T1>& inp1S,
+    I2If<T2>& inp2S
+    )
+{
+    auto p = new comb2<T0,T1,T2>(pName.c_str(), _func);
+    
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a comb3 process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
 //~ template <class T0, template <class> class OIf,
           //~ class T1, template <class> class I1If,
           //~ class T2, template <class> class I2If,
@@ -179,11 +179,10 @@ template <class T, template <class> class OIf>
 inline constant<T>* make_constant(std::string pName,
     T initval,
     sc_time interval,
-    unsigned long long take,
     OIf<T>& outS
     )
 {
-    auto p = new constant<T>(pName.c_str(), initval, interval, take);
+    auto p = new constant<T>(pName.c_str(), initval, interval);
     
     (*p).oport1(outS);
     
