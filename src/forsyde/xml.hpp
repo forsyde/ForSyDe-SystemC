@@ -260,9 +260,12 @@ public:
                   const char* bound_process=NULL, const char* bound_port=NULL)
     {
         xml_node<> *p_node = allocate_append_node(pn_node, const_port);
-        allocate_append_attribute(p_node, const_name, dynamic_cast<sc_object*>(port)->basename());
-        allocate_append_attribute(p_node, const_type, port->token_type());
-        allocate_append_attribute(p_node, const_direction, dir);
+        if (port != NULL)
+        {
+            allocate_append_attribute(p_node, const_name, dynamic_cast<sc_object*>(port)->basename());
+            allocate_append_attribute(p_node, const_type, port->token_type());
+            allocate_append_attribute(p_node, const_direction, dir);
+        }
         if (bound_process != NULL && bound_port != NULL)
         {
             allocate_append_attribute(p_node, const_bound_process, bound_process);
