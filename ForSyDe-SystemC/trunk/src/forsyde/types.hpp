@@ -14,35 +14,38 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
-namespace ForSyDe
-{
+//~ namespace ForSyDe
+//~ {
 
 // The general case uses RTTI (if the type is not registered explicitly)
 #pragma once
 template<typename T> const char* get_type_name() {return typeid(T).name();}
 
 // Specialization for each type
-#define DEFINE_TYPE_NAME(X) \
+#define DEFINE_TYPE(X) \
     template<>const char* get_type_name<X>(){return #X;}
+// Another version where we explicitly provide the type name (for complex types)
+#define DEFINE_TYPE_NAME(X,N) \
+    template<>const char* get_type_name<X>(){return N;}
 
 // Specialization for base types
 
-DEFINE_TYPE_NAME(char);
-DEFINE_TYPE_NAME(short int);
-DEFINE_TYPE_NAME(unsigned short int);
-DEFINE_TYPE_NAME(int);
-DEFINE_TYPE_NAME(unsigned int);
-DEFINE_TYPE_NAME(long int);
-DEFINE_TYPE_NAME(unsigned long int);
-DEFINE_TYPE_NAME(long long int);
-DEFINE_TYPE_NAME(unsigned long long int);
-DEFINE_TYPE_NAME(bool);
-DEFINE_TYPE_NAME(float);
-DEFINE_TYPE_NAME(double);
-DEFINE_TYPE_NAME(long double);
-DEFINE_TYPE_NAME(wchar_t);
+DEFINE_TYPE(char);
+DEFINE_TYPE(short int);
+DEFINE_TYPE(unsigned short int);
+DEFINE_TYPE(int);
+DEFINE_TYPE(unsigned int);
+DEFINE_TYPE(long int);
+DEFINE_TYPE(unsigned long int);
+DEFINE_TYPE(long long int);
+DEFINE_TYPE(unsigned long long int);
+DEFINE_TYPE(bool);
+DEFINE_TYPE(float);
+DEFINE_TYPE(double);
+DEFINE_TYPE(long double);
+DEFINE_TYPE(wchar_t);
 
 
-}
+//~ }
 
 #endif
