@@ -180,7 +180,7 @@ template <typename IT, typename ST, typename OT,
 inline moore<IT,ST,OT>* make_moore(std::string pName,
     typename moore<IT,ST,OT>::ns_functype _ns_func,
     typename moore<IT,ST,OT>::od_functype _od_func,
-    abst_ext<ST> init_st,
+    const ST& init_st,
     OIf<OT>& outS,
     IIf<IT>& inpS
     )
@@ -206,7 +206,7 @@ template <typename IT, typename ST, typename OT,
 inline mealy<IT,ST,OT>* make_mealy(std::string pName,
     typename mealy<IT,ST,OT>::ns_functype _ns_func,
     typename mealy<IT,ST,OT>::od_functype _od_func,
-    abst_ext<ST> init_st,
+    const ST& init_st,
     OIf<OT>& outS,
     IIf<IT>& inpS
     )
@@ -325,6 +325,26 @@ inline source<T>* make_source(std::string pName,
     )
 {
     auto p = new source<T>(pName.c_str(), _func, initval, take);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a vector source process
+/*! This function is used to construct a vector source (SystemC module) and
+ * connect its output signal.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the output FIFOs.
+ */
+template <class T, template <class> class OIf>
+inline vsource<T>* make_vsource(std::string pName,
+    const std::vector<abst_ext<T>>& in_vec,
+    OIf<T>& outS
+    )
+{
+    auto p = new vsource<T>(pName.c_str(), in_vec);
     
     (*p).oport1(outS);
     

@@ -577,11 +577,10 @@ public:
     SY_out<OT> oport1;        ///< port for the output channel
     
     //! Type of the next-state function to be passed to the process constructor
-    typedef std::function<void(abst_ext<ST>, const abst_ext<ST>&,
-                                                const abst_ext<IT>&)> ns_functype;
+    typedef std::function<void(ST&, const ST&, const abst_ext<IT>&)> ns_functype;
     
     //! Type of the output-decoding function to be passed to the process constructor
-    typedef std::function<void(abst_ext<OT>, const abst_ext<ST>&)> od_functype;
+    typedef std::function<void(abst_ext<OT>&, const ST&)> od_functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -591,7 +590,7 @@ public:
     moore(sc_module_name _name,   ///< The module name
            ns_functype _ns_func, ///< The next_state function
            od_functype _od_func, ///< The output-decoding function
-           abst_ext<ST> init_st  ///< Initial state
+           ST init_st  ///< Initial state
           ) : sy_process(_name), _ns_func(_ns_func), _od_func(_od_func),
               init_st(init_st)
     {
@@ -611,7 +610,7 @@ public:
     
 private:
     // Initial value
-    abst_ext<ST> init_st;
+    ST init_st;
     
     //! The functions passed to the process constructor
     ns_functype _ns_func;
@@ -621,17 +620,17 @@ private:
     
     // Input, output, current state, and next state variables
     abst_ext<IT>* ival;
-    abst_ext<ST>* stval;
-    abst_ext<ST>* nsval;
+    ST* stval;
+    ST* nsval;
     abst_ext<OT>* oval;
 
     //Implementing the abstract semantics
     void init()
     {
         ival = new abst_ext<IT>;
-        stval = new abst_ext<ST>;
+        stval = new ST;
         *stval = init_st;
-        nsval = new abst_ext<ST>;
+        nsval = new ST;
         oval = new abst_ext<OT>;
         // First evaluation cycle
         first_run = true;
@@ -647,8 +646,8 @@ private:
     
     void exec()
     {
-        *nsval = _ns_func(*stval, *ival);
-        *oval = _od_func(*stval);
+        _ns_func(*nsval, *stval, *ival);
+        _od_func(*oval, *stval);
         *stval = *nsval;
     }
     
@@ -688,11 +687,11 @@ public:
     SY_out<OT> oport1;        ///< port for the output channel
     
     //! Type of the next-state function to be passed to the process constructor
-    typedef std::function<void(abst_ext<ST>, const abst_ext<ST>&,
+    typedef std::function<void(ST&, const ST&, 
                                                 const abst_ext<IT>&)> ns_functype;
     
     //! Type of the output-decoding function to be passed to the process constructor
-    typedef std::function<void(abst_ext<OT>, const abst_ext<ST>&,
+    typedef std::function<void(abst_ext<OT>&, const ST&,
                                                 const abst_ext<IT>&)> od_functype;
     
     //! The constructor requires the module name
@@ -703,7 +702,7 @@ public:
     mealy(sc_module_name _name,   ///< The module name
            ns_functype _ns_func, ///< The next_state function
            od_functype _od_func, ///< The output-decoding function
-           abst_ext<ST> init_st  ///< Initial state
+           const ST& init_st  ///< Initial state
           ) : sy_process(_name), _ns_func(_ns_func), _od_func(_od_func),
               init_st(init_st)
     {
@@ -722,26 +721,25 @@ public:
     std::string forsyde_kind() const{return "SY::mealy";}
     
 private:
-    // Initial value
-    abst_ext<ST> init_st;
-    
     //! The functions passed to the process constructor
     ns_functype _ns_func;
     od_functype _od_func;
+    // Initial value
+    ST init_st;
     
     // Input, output, current state, and next state variables
     abst_ext<IT>* ival;
-    abst_ext<ST>* stval;
-    abst_ext<ST>* nsval;
+    ST* stval;
+    ST* nsval;
     abst_ext<OT>* oval;
 
     //Implementing the abstract semantics
     void init()
     {
         ival = new abst_ext<IT>;
-        stval = new abst_ext<ST>;
+        stval = new ST;
         *stval = init_st;
-        nsval = new abst_ext<ST>;
+        nsval = new ST;
         oval = new abst_ext<OT>;
     }
     
@@ -752,8 +750,8 @@ private:
     
     void exec()
     {
-        *nsval = _ns_func(*stval, *ival);
-        *oval = _od_func(*stval);
+        _ns_func(*nsval, *stval, *ival);
+        _od_func(*oval, *stval, *ival);
         *stval = *nsval;
     }
     
@@ -1102,37 +1100,65 @@ private:
  * Given the test bench vector, the process iterates over the emenets
  * of the vector and outputs one value on each evaluation cycle.
  */
-template <class OTYP>
-class vsource : public sc_module
+template <class T>
+class vsource : public sy_process
 {
 public:
-    sc_fifo_out<OTYP> oport1;     ///< port for the output channel
+    SY_out<T> oport1;     ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which writes the result using the output
      * port.
      */
-    vsource(sc_module_name _name,           ///< The module name
-            const std::vector<OTYP>& invec  ///< Initial vector
-            )
-         :sc_module(_name), in_vec(invec)
+    vsource(sc_module_name _name,                   ///< The module name
+            const std::vector<abst_ext<T>>& in_vec  ///< Initial vector
+            ) : sy_process(_name), in_vec(in_vec)
     {
-        SC_THREAD(worker);
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << in_vec;
+        arg_vec.push_back(std::make_tuple("in_vec", ss.str()));
+#endif
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::vsource";}
+    
 private:
-    std::vector<OTYP> in_vec;
-    SC_HAS_PROCESS(vsource);
+    std::vector<abst_ext<T>> in_vec;
+    
+    unsigned long tok_cnt;
 
-    //! The main and only execution thread of the module
-    void worker()
+    //Implementing the abstract semantics
+    void init()
     {
-        typename std::vector<OTYP>::iterator itr;
-        for (itr=in_vec.begin();itr!=in_vec.end();itr++)
-        {
-            OTYP out_val = *itr;
-            WRITE_MULTIPORT(oport1,out_val)    // write to the output
-        }
+        tok_cnt = 0;
     }
+    
+    void prep() {}
+    
+    void exec() {}
+    
+    void prod()
+    {
+        if (tok_cnt < in_vec.size())
+        {
+            WRITE_MULTIPORT(oport1, in_vec[tok_cnt])
+            tok_cnt++;
+        }
+        else
+            wait();
+    }
+    
+    void clean() {}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
 };
 
 //! Process constructor for a sink process
@@ -1278,7 +1304,7 @@ public:
 private:
     // intermediate values
     abst_ext<T1>* ival1;
-    abst_ext<T1>* ival2;
+    abst_ext<T2>* ival2;
     
     void init()
     {
@@ -1303,7 +1329,7 @@ private:
         }
         else
         {
-            WRITE_MULTIPORT(oport1,std::make_tuple(ival1,ival2))  // write to the output
+            WRITE_MULTIPORT(oport1,std::make_tuple(*ival1,*ival2))  // write to the output
         }
     }
     
@@ -1598,7 +1624,7 @@ public:
     group(sc_module_name _name,        ///< The module name
           unsigned long samples       ///< Number of samples in each group
           )
-         :sc_module(_name), samples(samples)
+         :sy_process(_name), samples(samples)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::stringstream ss;
@@ -1623,12 +1649,14 @@ private:
     void init()
     {
         oval = new std::vector<abst_ext<T>>;
+        oval->resize(samples);
         samples_took = 0;
     }
     
     void prep()
     {
-        oval->at(samples_took++) = iport1.read();
+        (*oval)[samples_took] = iport1.read();
+        samples_took++;
     }
     
     void exec() {}
