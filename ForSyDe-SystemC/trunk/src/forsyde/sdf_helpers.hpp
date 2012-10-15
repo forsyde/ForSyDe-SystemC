@@ -13,7 +13,7 @@
 #ifndef SDF_HELPERS_HPP
 #define SDF_HELPERS_HPP
 
-/*! \file sdf_helpers.h
+/*! \file sdf_helpers.hpp
  * \brief Implements helper primitives for modeling in the SDF MoC
  * 
  *  This file includes helper functions which facilliate construction of
