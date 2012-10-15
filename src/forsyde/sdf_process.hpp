@@ -38,6 +38,8 @@ class SDF2SDF: public sc_fifo<T>
 #endif
 {
 public:
+    SDF2SDF() : sc_fifo<T>() {}
+    SDF2SDF(sc_module_name name, unsigned size) : sc_fifo<T>(name, size) {}
 #ifdef FORSYDE_INTROSPECTION
     typedef T type;
     

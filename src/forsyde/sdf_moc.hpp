@@ -14,7 +14,7 @@
 #ifndef SDF_MOC_HPP
 #define SDF_MOC_HPP
 
-/*! \file sdf_moc.h
+/*! \file sdf_moc.hpp
  * \brief Implements the Synchronous Dataflow (SDF) Model of Computation
  * 
  *  This file includes the basic process constructors and other

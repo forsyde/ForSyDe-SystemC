@@ -15,7 +15,7 @@
 #ifndef SDF_PROCESS_CONSTRUCTORS_HPP
 #define SDF_PROCESS_CONSTRUCTORS_HPP
 
-/*! \file sdf_process_constructors.h
+/*! \file sdf_process_constructors.hpp
  * \brief Implements the basic process constructors in the SDF MoC
  * 
  *  This file includes the basic process constructors used for modeling
@@ -473,7 +473,9 @@ public:
               init_val(init_val)
     {
 #ifdef FORSYDE_INTROSPECTION
-        arg_vec.push_back(std::make_tuple("init_val", std::to_string(init_val)));
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
 #endif
     }
     
@@ -548,7 +550,9 @@ public:
               init_val(init_val), ns(n)
     {
 #ifdef FORSYDE_INTROSPECTION
-        arg_vec.push_back(std::make_tuple("init_val", std::to_string(init_val)));
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
         arg_vec.push_back(std::make_tuple("n", std::to_string(n)));
 #endif
     }
@@ -623,7 +627,9 @@ public:
                  
     {
 #ifdef FORSYDE_INTROSPECTION
-        arg_vec.push_back(std::make_tuple("init_val", std::to_string(init_val)));
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
         arg_vec.push_back(std::make_tuple("take", std::to_string(take)));
 #endif
     }
@@ -697,7 +703,9 @@ public:
         std::string func_name = std::string(basename());
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
-        arg_vec.push_back(std::make_tuple("init_val", std::to_string(init_val)));
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
         arg_vec.push_back(std::make_tuple("take", std::to_string(take)));
 #endif
     }
@@ -988,64 +996,128 @@ private:
 //! The zip process with variable number of inputs and one output
 /*! This process "zips" the incoming signals into one signal of tuples.
  */
-template <class... ITYPs>
-class zipN : public sc_module
+template <class... Ts>
+class zipN : public sdf_process
 {
 public:
-    std::tuple <sc_fifo_in<ITYPs>...> iport;///< tuple of ports for the input channels
-    sc_fifo_out<std::tuple<ITYPs...> > oport1;///< port for the output channel
+    std::tuple <SDF_in<Ts>...> iport;///< tuple of ports for the input channels
+    SDF_out<std::tuple<std::vector<Ts>...> > oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * zips them together and writes the results using the output port
      */
-    zipN(sc_module_name _name)
-         :sc_module(_name)
+    zipN(sc_module_name _name,
+         std::vector<unsigned> in_toks)
+          :sdf_process(_name), in_toks(in_toks), oport1("iport1")
     {
-        SC_THREAD(worker);
+        if (in_toks.size()!=sizeof...(Ts))
+            SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << in_toks;
+        arg_vec.push_back(std::make_tuple("itoks",ss.str()));
+#endif
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SDF::zipN";}
 private:
-    SC_HAS_PROCESS(zipN);
-
-    //! The main and only execution thread of the module
-    void worker()
+    std::vector<unsigned> in_toks;
+    // intermediate values
+    std::tuple<std::vector<Ts>...>* in_val;
+    
+    void init()
     {
-        std::tuple<ITYPs...> in_vals;
-        while (1)
-        {
-            in_vals = sc_fifo_tuple_read<ITYPs...>(iport);
-            WRITE_MULTIPORT(oport1,in_vals)    // write to the output
-        }
+        in_val = new std::tuple<std::vector<Ts>...>;
+    }
+    
+    void prep()
+    {
+        *in_val = sc_fifo_tuple_read<Ts...>(iport, in_toks);
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1,*in_val);    // write to the output
+    }
+    
+    void clean()
+    {
+        delete in_val;
     }
     
     template<size_t N,class R,  class T>
     struct fifo_read_helper
     {
-        static void read(R& ret, T& t)
+        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
         {
-            fifo_read_helper<N-1,R,T>::read(ret,t);
-            std::get<N>(ret) = std::get<N>(t).read();
+            fifo_read_helper<N-1,R,T>::read(ret,t,itoks);
+            for (unsigned int i=0;i<itoks[N];i++)
+                std::get<N>(ret).push_back(std::get<N>(t).read());
         }
     };
 
     template<class R, class T>
     struct fifo_read_helper<0,R,T>
     {
-        static void read(R& ret, T& t)
+        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
         {
-            std::get<0>(ret) = std::get<0>(t).read();
+            for (unsigned int i=0;i<itoks[0];i++)
+                std::get<0>(ret).push_back(std::get<0>(t).read());
         }
     };
 
     template<class... T>
-    std::tuple<T...> sc_fifo_tuple_read(std::tuple<sc_fifo_in<T>...>& ports)
+    std::tuple<std::vector<T>...> sc_fifo_tuple_read(std::tuple<SDF_in<T>...>& ports,
+                                                     const std::vector<unsigned int>& itoks)
     {
-        std::tuple<T...> ret;
+        std::tuple<std::vector<T>...> ret;
         fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<T...>,
-                         std::tuple<sc_fifo_in<T>...>>::read(ret,ports);
+                         std::tuple<std::vector<T>...>,
+                         std::tuple<SDF_in<T>...>>::read(ret,ports,itoks);
         return ret;
     }
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(Ts));    // two output ports
+        register_ports(boundInChans, iport);
+        boundOutChans.resize(1);     // only one input port
+        boundInChans[0].port = &oport1;
+        boundInChans[0].portType = typeid(int).name();
+    }
+    
+    template<size_t N, class T>
+    struct register_ports_helper
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            register_ports_helper<N-1,T>::reg_port(boundChans,t);
+            boundChans[N].port = &std::get<N>(t);
+        }
+    };
+
+    template<class T>
+    struct register_ports_helper<0,T>
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            boundChans[0].port = &std::get<0>(t);
+        }
+    };
+
+    template<class... T>
+    void register_ports(std::vector<PortInfo>& boundChans,
+                             std::tuple<SDF_in<T>...>& ports)
+    {
+        register_ports_helper<sizeof...(T)-1,
+                              std::tuple<SDF_in<T>...>&>::reg_port(boundChans,ports);
+    }
+#endif
 
 };
 
@@ -1129,26 +1201,36 @@ template <class... Ts>
 class unzipN : public sdf_process
 {
 public:
-    SDF_in<std::tuple<abst_ext<Ts>...>> iport1;///< port for the input channel
+    SDF_in<std::tuple<std::vector<Ts>...>> iport1;///< port for the input channel
     std::tuple<SDF_out<Ts>...> oport;///< tuple of ports for the output channels
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * unzips it and writes the results using the output ports
      */
-    unzipN(sc_module_name _name)
-          :sdf_process(_name), iport1("iport1")
-    { }
+    unzipN(sc_module_name _name,
+            std::vector<unsigned> out_toks)
+          :sdf_process(_name), out_toks(out_toks), iport1("iport1")
+    {
+        if (out_toks.size()!=sizeof...(Ts))
+            SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << out_toks;
+        arg_vec.push_back(std::make_tuple("otoks",ss.str()));
+#endif
+    }
     
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "SDF::unzipN";}
 private:
+    std::vector<unsigned> out_toks;
     // intermediate values
-    abst_ext<std::tuple<abst_ext<Ts>...>>* in_val;
+    std::tuple<std::vector<Ts>...>* in_val;
     
     void init()
     {
-        in_val = new abst_ext<std::tuple<abst_ext<Ts>...>>;
+        in_val = new std::tuple<std::vector<Ts>...>;
     }
     
     void prep()
@@ -1160,15 +1242,7 @@ private:
     
     void prod()
     {
-        if (in_val->is_absent())
-        {
-            std::tuple<abst_ext<Ts>...> all_abs;
-            fifo_tuple_write<Ts...>(all_abs, oport);
-        }
-        else
-        {
-            fifo_tuple_write<Ts...>(in_val->unsafe_from_abst_ext(), oport);
-        }
+        fifo_tuple_write<Ts...>(*in_val, oport);
     }
     
     void clean()
@@ -1182,7 +1256,8 @@ private:
         static void write(const R& vals, T& t)
         {
             fifo_write_helper<N-1,R,T>::write(vals,t);
-            std::get<N>(t).write(std::get<N>(vals));
+            for (unsigned int i=0;i<(std::get<N>(vals)).size();i++)
+                std::get<N>(t).write(std::get<N>(vals)[i]);
         }
     };
 
@@ -1191,16 +1266,17 @@ private:
     {
         static void write(const R& vals, T& t)
         {
-            std::get<0>(t).write(std::get<0>(vals));
+            for (unsigned int i=0;i<(std::get<0>(vals)).size();i++)
+                std::get<0>(t).write(std::get<0>(vals)[i]);
         }
     };
 
     template<class... T>
-    void fifo_tuple_write(const std::tuple<abst_ext<T>...>& vals,
+    void fifo_tuple_write(const std::tuple<std::vector<T>...>& vals,
                              std::tuple<SDF_out<T>...>& ports)
     {
         fifo_write_helper<sizeof...(T)-1,
-                          std::tuple<abst_ext<T>...>,
+                          std::tuple<std::vector<T>...>,
                           std::tuple<SDF_out<T>...>>::write(vals,ports);
     }
 
