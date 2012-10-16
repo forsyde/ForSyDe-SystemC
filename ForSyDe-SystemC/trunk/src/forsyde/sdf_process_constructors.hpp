@@ -983,12 +983,9 @@ private:
     {
         boundInChans.resize(2);     // two input ports
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T1).name();
         boundInChans[1].port = &iport2;
-        boundInChans[1].portType = typeid(T2).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(std::tuple<T1,T2>).name();
     }
 #endif
 };
@@ -1088,7 +1085,6 @@ private:
         register_ports(boundInChans, iport);
         boundOutChans.resize(1);     // only one input port
         boundInChans[0].port = &oport1;
-        boundInChans[0].portType = typeid(int).name();
     }
     
     template<size_t N, class T>
@@ -1285,7 +1281,6 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(int).name();
         boundOutChans.resize(sizeof...(Ts));    // two output ports
         register_ports(boundOutChans, oport);
     }
@@ -1349,12 +1344,12 @@ public:
     
 private:
     // Inputs and output variables
-    abst_ext<T>* val;
+    T* val;
     
     //Implementing the abstract semantics
     void init()
     {
-        val = new abst_ext<T>;
+        val = new T;
     }
     
     void prep()
@@ -1378,10 +1373,8 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(T).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
     }
 #endif
 };
