@@ -43,8 +43,8 @@ using namespace sc_core;
  */
 template <class T0, template <class> class OIf,
           class T1, template <class> class I1If>
-inline comb<T0,T1>* make_comb(std::string pName,
-    typename comb<T0,T1>::functype _func,
+inline comb<T0,T1>* make_comb(const std::string& pName,
+    const typename comb<T0,T1>::functype& _func,
     OIf<T0>& outS,
     I1If<T1>& inp1S
     )
@@ -67,8 +67,8 @@ inline comb<T0,T1>* make_comb(std::string pName,
 template <class T0, template <class> class OIf,
           class T1, template <class> class I1If,
           class T2, template <class> class I2If>
-inline comb2<T0,T1,T2>* make_comb2(std::string pName,
-    typename comb2<T0,T1,T2>::functype _func,
+inline comb2<T0,T1,T2>* make_comb2(const std::string& pName,
+    const typename comb2<T0,T1,T2>::functype& _func,
     OIf<T0>& outS,
     I1If<T1>& inp1S,
     I2If<T2>& inp2S
@@ -94,8 +94,8 @@ template <class T0, template <class> class OIf,
           class T1, template <class> class I1If,
           class T2, template <class> class I2If,
           class T3, template <class> class I3If>
-inline comb3<T0,T1,T2,T3>* make_comb3(std::string pName,
-    typename comb3<T0,T1,T2,T3>::functype _func,
+inline comb3<T0,T1,T2,T3>* make_comb3(const std::string& pName,
+    const typename comb3<T0,T1,T2,T3>::functype& _func,
     OIf<T0>& outS,
     I1If<T1>& inp1S,
     I2If<T2>& inp2S,
@@ -124,8 +124,8 @@ template <class T0, template <class> class OIf,
           class T2, template <class> class I2If,
           class T3, template <class> class I3If,
           class T4, template <class> class I4If>
-inline comb4<T0,T1,T2,T3,T4>* make_comb4(std::string pName,
-    typename comb4<T0,T1,T2,T3,T4>::functype _func,
+inline comb4<T0,T1,T2,T3,T4>* make_comb4(const std::string& pName,
+    const typename comb4<T0,T1,T2,T3,T4>::functype& _func,
     OIf<T0>& outS,
     I1If<T1>& inp1S,
     I2If<T2>& inp2S,
@@ -153,8 +153,8 @@ inline comb4<T0,T1,T2,T3,T4>* make_comb4(std::string pName,
  */
 template <typename T, template <class> class IIf,
                         template <class> class OIf>
-inline delay<T>* make_delay(std::string pName,
-    abst_ext<T> initval,
+inline delay<T>* make_delay(const std::string& pName,
+    const abst_ext<T>& initval,
     OIf<T>& outS,
     IIf<T>& inpS
     )
@@ -177,9 +177,9 @@ inline delay<T>* make_delay(std::string pName,
 template <typename IT, typename ST, typename OT,
            template <class> class IIf,
            template <class> class OIf>
-inline moore<IT,ST,OT>* make_moore(std::string pName,
-    typename moore<IT,ST,OT>::ns_functype _ns_func,
-    typename moore<IT,ST,OT>::od_functype _od_func,
+inline moore<IT,ST,OT>* make_moore(const std::string& pName,
+    const typename moore<IT,ST,OT>::ns_functype& _ns_func,
+    const typename moore<IT,ST,OT>::od_functype& _od_func,
     const ST& init_st,
     OIf<OT>& outS,
     IIf<IT>& inpS
@@ -203,9 +203,9 @@ inline moore<IT,ST,OT>* make_moore(std::string pName,
 template <typename IT, typename ST, typename OT,
            template <class> class IIf,
            template <class> class OIf>
-inline mealy<IT,ST,OT>* make_mealy(std::string pName,
-    typename mealy<IT,ST,OT>::ns_functype _ns_func,
-    typename mealy<IT,ST,OT>::od_functype _od_func,
+inline mealy<IT,ST,OT>* make_mealy(const std::string& pName,
+    const typename mealy<IT,ST,OT>::ns_functype& _ns_func,
+    const typename mealy<IT,ST,OT>::od_functype& _od_func,
     const ST& init_st,
     OIf<OT>& outS,
     IIf<IT>& inpS
@@ -228,8 +228,8 @@ inline mealy<IT,ST,OT>* make_mealy(std::string pName,
  */
 template <typename T, template <class> class IIf,
                         template <class> class OIf>
-inline fill<T>* make_fill(std::string pName,
-    T def_val,
+inline fill<T>* make_fill(const std::string& pName,
+    const T& def_val,
     OIf<T>& outS,
     IIf<T>& inpS
     )
@@ -251,8 +251,8 @@ inline fill<T>* make_fill(std::string pName,
  */
 template <typename T, template <class> class IIf,
                         template <class> class OIf>
-inline hold<T>* make_hold(std::string pName,
-    T def_val,
+inline hold<T>* make_hold(const std::string& pName,
+    const T& def_val,
     OIf<T>& outS,
     IIf<T>& inpS
     )
@@ -274,8 +274,8 @@ inline hold<T>* make_hold(std::string pName,
  */
 template <typename T, template <class> class IIf,
                         template <class> class OIf>
-inline group<T>* make_group(std::string pName,
-    unsigned long samples,
+inline group<T>* make_group(const std::string& pName,
+    const unsigned long& samples,
     OIf<std::vector<abst_ext<T>>>& outS,
     IIf<T>& inpS
     )
@@ -296,9 +296,9 @@ inline group<T>* make_group(std::string pName,
  * C++ and automatic binding to the output FIFOs.
  */
 template <class T, template <class> class OIf>
-inline constant<T>* make_constant(std::string pName,
-    abst_ext<T> initval,
-    unsigned long long take,
+inline constant<T>* make_constant(const std::string& pName,
+    const abst_ext<T>& initval,
+    const unsigned long long& take,
     OIf<T>& outS
     )
 {
@@ -317,10 +317,10 @@ inline constant<T>* make_constant(std::string pName,
  * C++ and automatic binding to the output FIFOs.
  */
 template <class T, template <class> class OIf>
-inline source<T>* make_source(std::string pName,
-    typename source<T>::functype _func,
-    abst_ext<T> initval,
-    unsigned long long take,
+inline source<T>* make_source(const std::string& pName,
+    const typename source<T>::functype& _func,
+    const abst_ext<T>& initval,
+    const unsigned long long& take,
     OIf<T>& outS
     )
 {
@@ -339,7 +339,7 @@ inline source<T>* make_source(std::string pName,
  * C++ and automatic binding to the output FIFOs.
  */
 template <class T, template <class> class OIf>
-inline vsource<T>* make_vsource(std::string pName,
+inline vsource<T>* make_vsource(const std::string& pName,
     const std::vector<abst_ext<T>>& in_vec,
     OIf<T>& outS
     )
@@ -359,8 +359,8 @@ inline vsource<T>* make_vsource(std::string pName,
  * C++ and automatic binding to the input FIFOs.
  */
 template <class T, template <class> class IIf>
-inline sink<T>* make_sink(std::string pName,
-    typename sink<T>::functype _func,
+inline sink<T>* make_sink(const std::string& pName,
+    const typename sink<T>::functype& _func,
     IIf<T>& inS
     )
 {
@@ -381,7 +381,7 @@ inline sink<T>* make_sink(std::string pName,
 template <class T1, template <class> class I1If,
            class T2, template <class> class I2If,
            template <class> class OIf>
-inline zip<T1,T2>* make_zip(std::string pName,
+inline zip<T1,T2>* make_zip(const std::string& pName,
     OIf<std::tuple<abst_ext<T1>,abst_ext<T2>>>& outS,
     I1If<T1>& inp1S,
     I2If<T2>& inp2S
@@ -406,7 +406,7 @@ inline zip<T1,T2>* make_zip(std::string pName,
 template <template <class> class IIf,
            class T1, template <class> class O1If,
            class T2, template <class> class O2If>
-inline unzip<T1,T2>* make_unzip(std::string pName,
+inline unzip<T1,T2>* make_unzip(const std::string& pName,
     IIf<std::tuple<abst_ext<T1>,abst_ext<T2>>>& inpS,
     O1If<T1>& out1S,
     O2If<T2>& out2S
@@ -460,7 +460,7 @@ inline unzip<T1,T2>* make_unzip(std::string pName,
  */
 template <typename T, template <class> class IIf,
                         template <class> class OIf>
-inline fanout<T>* make_fanout(std::string pName,
+inline fanout<T>* make_fanout(const std::string& pName,
     OIf<T>& outS,
     IIf<T>& inpS
     )
