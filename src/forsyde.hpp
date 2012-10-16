@@ -77,14 +77,21 @@
 #include "forsyde/abssemantics.hpp"
 
 // include different MoCs
+#include "forsyde/ut_moc.hpp"
+
 #include "forsyde/sy_moc.hpp"
 #include "forsyde/sy_lib.hpp"
+
 #include "forsyde/sdf_moc.hpp"
+
 #include "forsyde/de_moc.hpp"
+
 #include "forsyde/dt_moc.hpp"
+
 #include "forsyde/ct_moc.hpp"
 #include "forsyde/ct_lib.hpp"
 
+// include domain interfaces
 #include "forsyde/dis.hpp"
 #include "forsyde/di_helpers.hpp"
 
