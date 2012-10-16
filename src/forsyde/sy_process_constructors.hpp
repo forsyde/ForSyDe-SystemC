@@ -61,8 +61,8 @@ public:
      * applies the user-imlpemented function to it and writes the
      * results using the output port
      */
-    comb(sc_module_name _name,      ///< process name
-         functype _func             ///< function to be passed
+    comb(const sc_module_name& _name,      ///< process name
+         const functype& _func             ///< function to be passed
          ) : sy_process(_name), iport1("iport1"), oport1("oport1"),
              _func(_func)
     {
@@ -143,8 +143,8 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb2(sc_module_name _name,      ///< process name
-          functype _func             ///< function to be passed
+    comb2(const sc_module_name& _name,      ///< process name
+           const functype& _func             ///< function to be passed
           ) : sy_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1"),
               _func(_func)
     {
@@ -231,8 +231,8 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb3(sc_module_name _name,      ///< process name
-          functype _func             ///< function to be passed
+    comb3(const sc_module_name& _name,      ///< process name
+           const functype& _func             ///< function to be passed
           ) : sy_process(_name), iport1("iport1"), iport2("iport2"), iport3("iport3"), 
               oport1("oport1"), _func(_func)
     {
@@ -327,8 +327,8 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    comb4(sc_module_name _name,      ///< process name
-          functype _func             ///< function to be passed
+    comb4(const sc_module_name& _name,      ///< process name
+           const functype& _func             ///< function to be passed
           ) : sy_process(_name), iport1("iport1"), iport2("iport2"), 
               iport3("iport3"), iport4("iport4"), _func(_func)
     {
@@ -426,8 +426,8 @@ public:
      * data from its input port, and writes the results using the output
      * port.
      */
-    delay(sc_module_name _name,     ///< process name
-          abst_ext<T> init_val      ///< initial value
+    delay(const sc_module_name& _name,      ///< process name
+           const abst_ext<T>& init_val      ///< initial value
           ) : sy_process(_name), iport1("iport1"), oport1("oport1"),
               init_val(init_val)
     {
@@ -502,9 +502,9 @@ public:
      * reads data from its input port, and writes the results using the
      * output port.
      */
-    delayn(sc_module_name _name,    ///< process name
-           abst_ext<T> init_val,    ///< initial value
-           unsigned int n            ///< number of delay elements
+    delayn(const sc_module_name& _name,      ///< process name
+            const abst_ext<T>& init_val,    ///< initial value
+            const unsigned int& n            ///< number of delay elements
           ) : sy_process(_name), iport1("iport1"), oport1("oport1"),
               init_val(init_val), ns(n)
     {
@@ -587,10 +587,10 @@ public:
      * applies the user-imlpemented functions to the input and current
      * state and writes the results using the output port
      */
-    moore(sc_module_name _name,   ///< The module name
-           ns_functype _ns_func, ///< The next_state function
-           od_functype _od_func, ///< The output-decoding function
-           ST init_st  ///< Initial state
+    moore(const sc_module_name& _name,      ///< process name
+           const ns_functype& _ns_func, ///< The next_state function
+           const od_functype& _od_func, ///< The output-decoding function
+           const ST& init_st  ///< Initial state
           ) : sy_process(_name), _ns_func(_ns_func), _od_func(_od_func),
               init_st(init_st)
     {
@@ -699,9 +699,9 @@ public:
      * applies the user-imlpemented functions to the input and current
      * state and writes the results using the output port
      */
-    mealy(sc_module_name _name,   ///< The module name
-           ns_functype _ns_func, ///< The next_state function
-           od_functype _od_func, ///< The output-decoding function
+    mealy(const sc_module_name& _name,      ///< process name
+           const ns_functype& _ns_func, ///< The next_state function
+           const od_functype& _od_func, ///< The output-decoding function
            const ST& init_st  ///< Initial state
           ) : sy_process(_name), _ns_func(_ns_func), _od_func(_od_func),
               init_st(init_st)
@@ -794,8 +794,8 @@ public:
     /*! It creates an SC_THREAD which fills the signal result using the
      * output port
      */
-    fill(sc_module_name _name,      ///< process name
-         T def_val                  ///< default value
+    fill(const sc_module_name& _name,      ///< process name
+          const T& def_val                  ///< default value
          ) : sy_process(_name), def_val(def_val)
     {
 #ifdef FORSYDE_INTROSPECTION
@@ -871,8 +871,8 @@ public:
     /*! It creates an SC_THREAD which fills the signal result using the
      * output port
      */
-    hold(sc_module_name _name,      ///< process name
-         T def_val                   ///< default value
+    hold(const sc_module_name& _name,      ///< process name
+          const T& def_val                   ///< default value
          ) : sy_process(_name), def_val(def_val)
     {
 #ifdef FORSYDE_INTROSPECTION
@@ -948,9 +948,9 @@ public:
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * and writes the result using the output port
      */
-    constant(sc_module_name _name,      ///< The module name
-              abst_ext<T> init_val,     ///< The constant output value
-              unsigned long long take=0 ///< number of tokens produced (0 for infinite)
+    constant(const sc_module_name& _name,      ///< process name
+              const abst_ext<T>& init_val,     ///< The constant output value
+              const unsigned long long& take=0 ///< number of tokens produced (0 for infinite)
              ) : sy_process(_name), oport1("oport1"),
                  init_val(init_val), take(take)
                  
@@ -1023,10 +1023,10 @@ public:
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * and writes the result using the output port
      */
-    source(sc_module_name _name,   ///< The module name
-           functype _func,         ///< function to be passed
-           abst_ext<T> init_val,    ///< Initial state
-           unsigned long long take=0 ///< number of tokens produced (0 for infinite)
+    source(const sc_module_name& _name,      ///< process name
+            const functype& _func,         ///< function to be passed
+            const abst_ext<T>& init_val,    ///< Initial state
+            const unsigned long long& take=0 ///< number of tokens produced (0 for infinite)
           ) : sy_process(_name), oport1("oport1"),
               init_st(init_val), take(take), _func(_func)
     {
@@ -1110,7 +1110,7 @@ public:
     /*! It creates an SC_THREAD which writes the result using the output
      * port.
      */
-    vsource(sc_module_name _name,                   ///< The module name
+    vsource(const sc_module_name& _name,      ///< process name
             const std::vector<abst_ext<T>>& in_vec  ///< Initial vector
             ) : sy_process(_name), in_vec(in_vec)
     {
@@ -1179,8 +1179,8 @@ public:
     /*! It creates an SC_THREAD which runs the user-imlpemented function
      * in each cycle.
      */
-    sink(sc_module_name _name,      ///< process name
-         functype _func             ///< function to be passed
+    sink(const sc_module_name& _name,      ///< process name
+          const functype& _func             ///< function to be passed
         ) : sy_process(_name), iport1("iport1"), _func(_func)
             
     {
@@ -1232,53 +1232,6 @@ private:
 #endif
 };
 
-//! Process constructor for a multi-input print process
-/*! This class is used to build a sink process which has a multi-port input.
- * Its main purpose is to be used in test-benches.
- * 
- * The resulting process prints the sampled data as a trace in the
- * standard output.
- */
-template <class ITYP>
-class printSigs : public sc_module
-{
-public:
-    sc_fifo_in<ITYP> iport;         ///< multi-port for the input channel
-
-    //! The constructor requires the module name
-    /*! It creates an SC_THREAD which runs the user-imlpemented function
-     * in each cycle.
-     */
-    printSigs(sc_module_name _name     ///< Process name
-              ):sc_module(_name)
-    {
-        SC_THREAD(worker);
-    }
-
-private:
-    SC_HAS_PROCESS(printSigs);
-
-    //! The main and only execution thread of the module
-    void worker()
-    {
-        // write the header
-        for (int i=0;i<iport.size();i++)
-            std::cout << " " << name() << "(" << i << ")";
-        std::cout << std::endl;
-        // start reading from the ports
-        ITYP in_val[iport.size()];
-        while (1)
-        {
-            for (int i=0;i<iport.size();i++)
-                in_val[i] = iport[i]->read();
-            // print one line
-            for (int i=0;i<iport.size();i++)
-                std::cout << " " << in_val[i];
-            std::cout << std::endl;
-        }
-    }
-};
-
 //! The zip process with two inputs and one output
 /*! This process "zips" two incoming signals into one signal of tuples.
  */
@@ -1294,7 +1247,8 @@ public:
     /*! It creates an SC_THREAD which reads data from its input port,
      * zips them together and writes the results using the output port
      */
-    zip(sc_module_name _name)
+    zip(const sc_module_name& _name      ///< process name
+        )
          :sy_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1")
     { }
     
@@ -1365,7 +1319,8 @@ public:
     /*! It creates an SC_THREAD which reads data from its input port,
      * zips them together and writes the results using the output port
      */
-    zipN(sc_module_name _name)
+    zipN(const sc_module_name& _name      ///< process name
+         )
          :sc_module(_name)
     {
         SC_THREAD(worker);
@@ -1430,7 +1385,8 @@ public:
     /*! It creates an SC_THREAD which reads data from its input ports,
      * unzips them and writes the results using the output ports
      */
-    unzip(sc_module_name _name)
+    unzip(const sc_module_name& _name      ///< process name
+          )
          :sy_process(_name), iport1("iport1"), oport1("oport1"), oport2("oport2")
     {}
     
@@ -1497,7 +1453,8 @@ public:
     /*! It creates an SC_THREAD which reads data from its input port,
      * unzips it and writes the results using the output ports
      */
-    unzipN(sc_module_name _name)
+    unzipN(const sc_module_name& _name      ///< process name
+           )
           :sy_process(_name), iport1("iport1")
     { }
     
@@ -1621,8 +1578,8 @@ public:
      * groups together n samples and writes the results using the output
      * port.
      */
-    group(sc_module_name _name,        ///< The module name
-          unsigned long samples       ///< Number of samples in each group
+    group(const sc_module_name& _name,      ///< process name
+           const unsigned long& samples       ///< Number of samples in each group
           )
          :sy_process(_name), samples(samples)
     {
@@ -1708,7 +1665,8 @@ public:
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies and writes the results using the output port
      */
-    fanout(sc_module_name _name)  // module name
+    fanout(const sc_module_name& _name      ///< process name
+           ) 
          : sy_process(_name) { }
     
     //! Specifying from which process constructor is the module built
