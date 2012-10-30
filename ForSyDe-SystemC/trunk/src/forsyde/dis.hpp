@@ -98,19 +98,26 @@ private:
         set_range(subsig, sample_period*iter, sample_period*(iter+1));
         if(op_mode==HOLD)
         {
-            set_function(subsig,[previousVal](sc_time t)
+            // FIXME: the following intermediate variables shouldn't be necassary
+            //        but generates an error in GCC 4.7
+            CTTYPE pv = previousVal;
+            set_function(subsig,[pv](const sc_time& t)
                                 {
-                                    return previousVal;
+                                    return pv;
                                 }
             );
         }
         else 
         {
             CTTYPE dv = currentVal - previousVal;
-            
-            set_function(subsig,[=](sc_time t) -> CTTYPE
+            // FIXME: the following intermediate variables shouldn't be necassary
+            //        but generates an error in GCC 4.7
+            CTTYPE pv = previousVal;
+            unsigned long itr = iter;
+            sc_time sp = sample_period;
+            set_function(subsig,[pv,itr,sp,dv](const sc_time& t)
             {
-                return dv*(t-iter*sample_period)/sample_period + previousVal;
+                return (t-itr*sp)/sp*dv + pv;
             });
         }
     }

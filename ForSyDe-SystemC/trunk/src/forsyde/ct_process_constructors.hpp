@@ -89,11 +89,15 @@ private:
     
     void exec()
     {
+        // FIXME: the following intermediate variables shouldn't be necassary
+        //        but generates an error in GCC 4.7
+        sub_signal iv1 = ival1;
+        functype _f = _func;
         oval = sub_signal(get_start_time(ival1), get_end_time(ival1),
-                    [ival1,_func](const sc_time& t)
+                    [iv1,_f](const sc_time& t)
                     {
                         CTTYPE res;
-                        _func(res, ival1(t));
+                        _f(res, iv1(t));
                         return res;
                     }
                );
@@ -194,11 +198,16 @@ private:
             evalSt = Aligned;
         }
         
+        // FIXME: the following intermediate variables shouldn't be necassary
+        //        but generates an error in GCC 4.7
+        sub_signal iv1 = ival1;
+        sub_signal iv2 = ival2;
+        functype _f = _func;
         oval = sub_signal(std::max(get_start_time(ival1),get_start_time(ival2)),
-                    outEndT, [ival1,ival2,_func](const sc_time& t)
+                    outEndT, [iv1,iv2,_f](const sc_time& t)
                              {
                                  CTTYPE res;
-                                 _func(res, ival1(t), ival2(t));
+                                 _f(res, iv1(t), iv2(t));
                                  return res;
                              }
                );
@@ -362,7 +371,11 @@ private:
     {
         set_range(val, get_start_time(val)+delay_time,
                        get_end_time(val)+delay_time);
-        set_function(val, [val,delay_time](const sc_time& t){return val(t-delay_time);});
+        // FIXME: the following intermediate variables shouldn't be necassary
+        //        but generates an error in GCC 4.7
+        sub_signal v = val;
+        sc_time dt = delay_time;
+        set_function(val, [v,dt](const sc_time& t){return v(t-dt);});
     }
     
     void prod()
@@ -425,8 +438,11 @@ private:
     //Implementing the abstract semantics
     void init()
     {
+        // FIXME: the following intermediate variables shouldn't be necassary
+        //        but generates an error in GCC 4.7
+        CTTYPE iv = init_val;
         auto ss = sub_signal(sc_time(0,SC_NS), end_time, 
-                        [init_val](const sc_time& t){return init_val;}
+                        [iv](const sc_time& t){return iv;}
                   );
         WRITE_MULTIPORT(oport1, ss)
     }
@@ -498,11 +514,14 @@ private:
     //Implementing the abstract semantics
     void init()
     {
+        // FIXME: the following intermediate variables shouldn't be necassary
+        //        but generates an error in GCC 4.7
+        functype _f = _func;
         auto ss = sub_signal(sc_time(0,SC_NS), end_time,
-                                [_func](const sc_time& t)
+                                [_f](const sc_time& t)
                                 {
                                     CTTYPE res=0;
-                                    _func(res, t);
+                                    _f(res, t);
                                     return res;
                                 }
                             );
