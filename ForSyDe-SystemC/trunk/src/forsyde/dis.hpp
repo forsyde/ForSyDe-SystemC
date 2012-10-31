@@ -26,10 +26,6 @@ namespace ForSyDe
 {
 using namespace sc_core;
 
-// Auxilliary Macro definitions
-#define WRITE_MULTIPORT(PORT,VAL) \
-    for (int i=0;i<PORT.size();i++) PORT[i]->write(VAL);
-
 //! Operation modes for the SY2CT converter
 enum A2DMode {LINEAR, HOLD};
 

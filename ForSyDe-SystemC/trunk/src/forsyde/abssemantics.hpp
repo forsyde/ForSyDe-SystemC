@@ -32,6 +32,14 @@ namespace ForSyDe
 
 using namespace sc_core;
 
+// Auxilliary Macro definitions
+#define WRITE_MULTIPORT(PORT,VAL) \
+    for (int i=0;i<PORT.size();i++) PORT[i]->write(VAL);
+
+#define WRITE_VEC_MULTIPORT(PORT,VEC) \
+    for (int i=0;i<PORT.size();i++) \
+        for (auto it=VEC.begin();it!=VEC.end();it++) PORT[i]->write(*it);
+
 //! Type of the object bound to a port
 enum bound_type {PORT, CHANNEL};
 
