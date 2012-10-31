@@ -41,7 +41,7 @@ SC_MODULE(top)
         fir1->iport1(dig_in);
         fir1->oport1(dig_out);
         
-        make_SY2CT("d2a", samplingPeriod, HOLD, filtOut, dig_out);
+        make_SY2CT("d2a", samplingPeriod, LINEAR, filtOut, dig_out);
                 
         make_traceSig("report1", sc_time(100,SC_US), filtOut);
         

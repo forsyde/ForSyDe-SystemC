@@ -66,7 +66,7 @@ private:
     }  
 
   int my_rand() { 
-    bool zw = (shiftreg[59]==shiftreg[60]==shiftreg[62]==shiftreg[63]); // computing feedback
+    bool zw = (((shiftreg[59]==shiftreg[60])==shiftreg[62])==shiftreg[63]); // computing feedback
     for(int i=63; i>0; i--) {
       shiftreg[i] = shiftreg[i-1];	// shifting
     }

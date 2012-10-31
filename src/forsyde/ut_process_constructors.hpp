@@ -36,15 +36,6 @@ namespace UT
 
 using namespace sc_core;
 
-
-// Auxilliary Macro definitions
-#define WRITE_MULTIPORT(PORT,VAL) \
-    for (int i=0;i<PORT.size();i++) PORT[i]->write(VAL);
-
-#define WRITE_VEC_MULTIPORT(PORT,VEC) \
-    for (int i=0;i<PORT.size();i++) \
-        for (auto it=VEC.begin();it!=VEC.end();it++) PORT[i]->write(*it);
-
 //! Process constructor for a combinational process (actor) with one input and one output
 /*! This class is used to build combinational processes with one input
  * and one output. The class is parameterized for input and output

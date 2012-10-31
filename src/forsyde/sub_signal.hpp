@@ -81,7 +81,10 @@ public:
         if ((valAt>=start_time) && (valAt<end_time))
             return _f(valAt);
         else
+        {
             SC_REPORT_ERROR("Using ForSyDe::CT","Access out of sub-signal range");
+            return -1;
+        }
     }
     
     //! A helper function used to get the beginning of the range

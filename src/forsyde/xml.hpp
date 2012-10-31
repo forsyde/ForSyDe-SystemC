@@ -344,7 +344,7 @@ private:
         return node;
     }
     
-    inline xml_node<>* allocate_append_attribute(xml_node<>* node, const char* attr_name, const char* attr_val)
+    inline void allocate_append_attribute(xml_node<>* node, const char* attr_name, const char* attr_val)
     {
         xml_attribute<>* attr = xml_doc.allocate_attribute(attr_name, attr_val);
         node->append_attribute(attr);

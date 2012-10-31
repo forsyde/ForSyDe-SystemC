@@ -40,11 +40,6 @@ namespace DE
 using namespace sc_core;
 using namespace boost::numeric::ublas;
 
-// Auxilliary Macro definitions
-#define WRITE_MULTIPORT(PORT,VAL) \
-    for (int port_index=0;port_index<PORT.size();port_index++) \
-        PORT[port_index]->write(VAL);
-
 //! Process constructor for a combinational process with one input and one output
 /*! This class is used to build combinational processes with one input
  * and one output. The class is parameterized for input and output
