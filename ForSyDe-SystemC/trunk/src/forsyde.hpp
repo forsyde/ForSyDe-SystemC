@@ -101,4 +101,8 @@
 #include "forsyde/xml.hpp"
 #endif
 
+#ifdef FORSYDE_PARALLEL_SIM
+#include "forsyde/parallel_sim_helpers.hpp"
+#endif
+
 #endif
