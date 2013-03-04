@@ -24,6 +24,7 @@
 
 #include <functional>
 #include <tuple>
+#include <array>
 
 #include "abst_ext.hpp"
 #include "sy_process.hpp"
@@ -393,6 +394,85 @@ private:
         boundInChans[1].port = &iport2;
         boundInChans[2].port = &iport3;
         boundInChans[3].port = &iport4;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a combinational process with an array of inputs and one output
+/*! similar to comb with an array of inputs
+ */
+template <typename T0, typename T1, unsigned int N>
+class combX : public sy_process
+{
+public:
+    std::array<SY_in<T1>,N> iport;       ///< port for the input channel 1
+    SY_out<T0> oport1;        ///< port for the output channel
+
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(abst_ext<T0>&, const std::array<abst_ext<T1>,N>&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output port
+     */
+    combX(const sc_module_name& _name,      ///< process name
+           const functype& _func             ///< function to be passed
+          ) : sy_process(_name), _func(_func)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+#endif
+    }
+
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "SY::combX";}
+
+private:
+    // Inputs and output variables
+    abst_ext<T0>* oval;
+    std::array<abst_ext<T1>,N> ival;
+
+    //! The function passed to the process constructor
+    functype _func;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        oval = new abst_ext<T0>;
+    }
+
+    void prep()
+    {
+    	for (unsigned int i=0; i<N; i++)
+    		ival[i] = iport[i].read();
+    }
+
+    void exec()
+    {
+        _func(*oval, ival);
+    }
+
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, *oval)
+    }
+
+    void clean()
+    {
+        delete oval;
+    }
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(N);     // only one input port
+        for (unsigned int i=0; i<N; i++)
+        	boundInChans[i].port = &iport[i];
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
     }
@@ -973,7 +1053,7 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        if (take==0) infinite = true;
+        infinite = take==0 ? true : false;
         tok_cnt = 0;
     }
     
@@ -1058,7 +1138,7 @@ private:
         cur_st = new abst_ext<T>;
         *cur_st = init_st;
         WRITE_MULTIPORT(oport1, *cur_st)
-        if (take==0) infinite = true;
+        infinite = take==0 ? true : false;
         tok_cnt = 1;
     }
     
@@ -1185,7 +1265,7 @@ public:
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "SY::sink";}
     
