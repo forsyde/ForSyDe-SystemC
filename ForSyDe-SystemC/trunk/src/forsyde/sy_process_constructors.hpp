@@ -25,6 +25,7 @@
 #include <functional>
 #include <tuple>
 #include <array>
+#include <algorithm>
 
 #include "abst_ext.hpp"
 #include "sy_process.hpp"
@@ -1380,6 +1381,69 @@ private:
 #endif
 };
 
+//! The zipX process with an array of inputs and one output
+/*! This process "zips" an array of incoming signals into one signal of arrays.
+ */
+template <class T1, unsigned int N>
+class zipX : public sy_process
+{
+public:
+    std::array<SY_in<T1>,N> iport;        ///< port array for the input channels
+    SY_out<std::array<T1,N>> oport1;        ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * zips them together and writes the results using the output port
+     */
+    zipX(const sc_module_name& _name      ///< process name
+        )
+         :sy_process(_name), oport1("oport1")
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::zipX";}
+    
+private:
+    // intermediate values
+    std::array<abst_ext<T1>,N> ival;
+    
+    void init() {}
+    
+    void prep()
+    {
+        for (int i=0; i<N; i++)
+            ival[i] = iport[i].read();
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        typedef std::array<abst_ext<T1>,N> TT;
+        if (std::all_of(ival.begin(), ival.end(), [](abst_ext<T1> ivalx){ivalx->is_absent();}))
+        {
+            WRITE_MULTIPORT(oport1,abst_ext<TT>())  // write to the output 1
+        }
+        else
+        {
+            WRITE_MULTIPORT(oport1,abst_ext<TT>(ival))  // write to the output
+        }
+    }
+    
+    void clean() {}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(N);     // N input ports
+        for (int i=0;i<N;i++)
+            boundInChans[i].port = &iport[i];
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
 //! The zip process with variable number of inputs and one output
 /*! This process "zips" the incoming signals into one signal of tuples.
  */
@@ -1510,6 +1574,74 @@ private:
         boundOutChans.resize(2);    // two output ports
         boundOutChans[0].port = &oport1;
         boundOutChans[1].port = &oport2;
+    }
+#endif
+};
+
+//! The unzipX process with one input and an array of outputs
+/*! This process "unzips" a signal of arrays into an array of separate signals
+ */
+template <class T1, unsigned int N>
+class unzipX : public sy_process
+{
+public:
+    SY_in<std::array<abst_ext<T1>,N>> iport1;///< port for the input channel
+    std::array<SY_out<T1>,N> oport;///< port array for the output channels
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * unzips them and writes the results using the output ports
+     */
+    unzipX(const sc_module_name& _name      ///< process name
+          )
+         :sy_process(_name), iport1("iport1")
+    {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::unzipX";}
+private:
+    // intermediate values
+    abst_ext<std::array<abst_ext<T1>,N>>* in_val;
+    
+    void init()
+    {
+        in_val = new abst_ext<std::array<abst_ext<T1>,N>>;
+    }
+    
+    void prep()
+    {
+        *in_val = iport1.read();
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        if (in_val->is_absent())
+        {
+            for (int i=0; i<N; i++)
+                WRITE_MULTIPORT(oport[i],abst_ext<T1>())  // write to the output i
+        }
+        else
+        {
+            for (int i=0; i<N; i++)
+                WRITE_MULTIPORT(oport[i],in_val->unsafe_from_abst_ext()[i])  // write to the output i
+        }
+    }
+    
+    void clean()
+    {
+        delete in_val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(N);    // two output ports
+        for (int i=0;i<N;i++)
+            boundOutChans[i].port = &oport[i];
     }
 #endif
 };
