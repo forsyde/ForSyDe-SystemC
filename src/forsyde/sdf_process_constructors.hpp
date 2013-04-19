@@ -918,49 +918,54 @@ class zip : public sdf_process
 public:
     SDF_in<T1> iport1;        ///< port for the input channel 1
     SDF_in<T2> iport2;        ///< port for the input channel 2
-    SDF_out<std::tuple<abst_ext<T1>,abst_ext<T2>>> oport1;///< port for the output channel
+    SDF_out<std::tuple<std::vector<T1>,std::vector<T2>>> oport1;///< port for the output channel
 
     //! The constructor requires the module name
-    /*! It creates an SC_THREAD which reads data from its input port,
+    /*! It creates an SC_THREAD which reads data from its input ports,
      * zips them together and writes the results using the output port
      */
-    zip(sc_module_name _name)
-         :sdf_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1")
-    { }
+    zip(sc_module_name _name,       ///< process name
+        unsigned int i1toks,        ///< consumption rate for the first input
+        unsigned int i2toks         ///< consumption rate for the second input
+    ) : sdf_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1"),
+        i1toks(i1toks), i2toks(i2toks)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        arg_vec.push_back(std::make_tuple("i1toks",std::to_string(i1toks)));
+        arg_vec.push_back(std::make_tuple("i2toks",std::to_string(i2toks)));
+#endif
+    }
     
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "SDF::zip";}
     
 private:
+    unsigned i1toks;
+    unsigned i2toks;
+    
     // intermediate values
-    abst_ext<T1>* ival1;
-    abst_ext<T1>* ival2;
+    std::vector<T1> ival1;
+    std::vector<T2> ival2;
     
     void init()
     {
-        ival1 = new abst_ext<T1>;
-        ival2 = new abst_ext<T2>;
+        ival1.resize(i1toks);
+        ival1.resize(i2toks);
     }
     
     void prep()
     {
-        *ival1 = iport1.read();
-        *ival2 = iport2.read();
+        for (auto i=0; i<i1toks; i++)
+            ival1[i] = iport1.read();
+        for (auto i=0; i<i2toks; i++)
+            ival2[i] = iport2.read();    
     }
     
     void exec() {}
     
     void prod()
     {
-        if (ival1->is_absent() && ival2->is_absent())
-        {
-            typedef std::tuple<abst_ext<T1>,abst_ext<T2>> TT;
-            WRITE_MULTIPORT(oport1,abst_ext<TT>())  // write to the output 1
-        }
-        else
-        {
-            WRITE_MULTIPORT(oport1,std::make_tuple(ival1,ival2))  // write to the output
-        }
+        WRITE_MULTIPORT(oport1,std::make_tuple(ival1,ival2))  // write to the output
     }
     
     void clean()

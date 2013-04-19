@@ -281,12 +281,14 @@ template <class T1, template <class> class I1If,
            class T2, template <class> class I2If,
            template <class> class OIf>
 inline zip<T1,T2>* make_zip(std::string pName,
+    unsigned int i1toks,
+    unsigned int i2toks,
     OIf<std::tuple<std::vector<T1>,std::vector<T2>>>& outS,
     I1If<T1>& inp1S,
     I2If<T2>& inp2S
     )
 {
-    auto p = new zip<T1,T2>(pName.c_str());
+    auto p = new zip<T1,T2>(pName.c_str(), i1toks, i2toks);
     
     (*p).iport1(inp1S);
     (*p).iport2(inp2S);
