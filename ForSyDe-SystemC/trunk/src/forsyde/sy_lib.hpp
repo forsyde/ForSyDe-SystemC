@@ -13,7 +13,7 @@
 #ifndef SYLIB_H
 #define SYLIB_H
 
-/*! \file sy_helpers.hpp
+/*! \file sy_lib.hpp
  * \brief Implements extra facilities on top of the SY MoC
  * 
  *  This file includes the basic process constructors and helper

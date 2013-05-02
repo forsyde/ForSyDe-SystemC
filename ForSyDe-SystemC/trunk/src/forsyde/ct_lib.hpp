@@ -17,6 +17,13 @@
 #include "de_moc.hpp"
 #include "dis.hpp"
 
+/*! \file ct_lib.hpp
+ * \brief Implements extra facilities on top of the CT MoC
+ * 
+ *  This file includes the basic process constructors and helper
+ * functions for creating advanced CT processes.
+ */
+
 namespace ForSyDe
 {
     
