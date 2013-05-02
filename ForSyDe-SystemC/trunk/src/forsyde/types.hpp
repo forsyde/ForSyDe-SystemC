@@ -14,6 +14,14 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+/*! \file types.hpp
+ * \brief Provides facilities for basic type introspection
+ * 
+ *  This file includes a a set of basic facilities for registering names
+ * for non-POD C/C++ types to be reflected in the XML output of the
+ * interospection stage.
+ */
+
 //~ namespace ForSyDe
 //~ {
 
