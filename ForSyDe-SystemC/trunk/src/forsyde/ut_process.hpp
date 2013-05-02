@@ -13,7 +13,7 @@
 #ifndef UT_PROCESS_HPP
 #define UT_PROCESS_HPP
 
-/*! \file ut_process.h
+/*! \file ut_process.hpp
  * \brief Implements the abstract process in the UT Model of Computation
  * 
  *  This files procides definitions for the signals, ports ans the

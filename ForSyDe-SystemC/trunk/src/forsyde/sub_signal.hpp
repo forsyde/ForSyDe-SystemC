@@ -14,7 +14,7 @@
 #ifndef SUB_SIGNAL_HPP
 #define SUB_SIGNAL_HPP
 
-/*! \file sub_signal.h
+/*! \file sub_signal.hpp
  * \brief Implements the sub-components of a CT signal
  */
 
