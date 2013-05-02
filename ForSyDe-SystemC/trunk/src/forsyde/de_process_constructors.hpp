@@ -343,9 +343,9 @@ template <class T>
 class filter : public de_process
 {
 public:
-    DE_in<T>  iport1;       ///< port for the input channel
-    DE_out<T> oport1;        ///< port for the output channel
-    DE_out<T> oport2;        ///< port for the sampling signal
+    DE_in<T>  iport1;           ///< port for the input channel
+    DE_out<T> oport1;           ///< port for the output channel
+    DE_out<unsigned int> oport2;///< port for the sampling signal
 
     typedef matrix<T> MatrixDouble;
 
@@ -439,7 +439,7 @@ private:
         k4 = MatrixDouble(numState,1);
         
         // initial sampling time tag
-        WRITE_MULTIPORT(oport2,tt_event<T>(0, samplingTimeTag))
+        WRITE_MULTIPORT(oport2,tt_event<unsigned int>(0, samplingTimeTag))
         // read initial input
         auto in_ev = iport1.read();
         u(0,0) = get_value(in_ev);
@@ -449,8 +449,8 @@ private:
         *out_ev = tt_event<T>(y1(0,0), t);
         WRITE_MULTIPORT(oport1, *out_ev)
         // step signal
-        WRITE_MULTIPORT(oport2, tt_event<T>(0, samplingTimeTag+step/2))
-        WRITE_MULTIPORT(oport2, tt_event<T>(0, samplingTimeTag+step))
+        WRITE_MULTIPORT(oport2, tt_event<unsigned int>(0, samplingTimeTag+step/2))
+        WRITE_MULTIPORT(oport2, tt_event<unsigned int>(0, samplingTimeTag+step))
         u_1(0,0) = u(0,0); 
         t_1 = t;
         roundingFactor = 1.0001;
@@ -486,7 +486,7 @@ private:
           x = x0;
           samplingTimeTag = t;
           // TODO: move the following line to the prod stage
-          WRITE_MULTIPORT(oport2, tt_event<T>(1, samplingTimeTag)) // commitment
+          WRITE_MULTIPORT(oport2, tt_event<unsigned int>(1, samplingTimeTag)) // commitment
           *out_ev = tt_event<T>(y0(0,0), t);
           WRITE_MULTIPORT(oport1, *out_ev)
           u(0,0) = u0(0,0);
@@ -500,8 +500,8 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport2, tt_event<T>(0, samplingTimeTag+step/2))
-        WRITE_MULTIPORT(oport2, tt_event<T>(0, samplingTimeTag+step))
+        WRITE_MULTIPORT(oport2, tt_event<unsigned int>(0, samplingTimeTag+step/2))
+        WRITE_MULTIPORT(oport2, tt_event<unsigned int>(0, samplingTimeTag+step))
     }
     
     void clean()

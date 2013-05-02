@@ -390,7 +390,8 @@ SC_MODULE(filter)
     DE::filter<CTTYPE> filter1;
     DE2CT<CTTYPE> de2ct1;
     
-    DE::DE2DE<CTTYPE> inp_sig, smp_sig, out_sig;
+    DE::DE2DE<CTTYPE> inp_sig, out_sig;
+    DE::DE2DE<unsigned int> smp_sig;
     
     //! The constructor requires the module name and the filter parameters
     /*! 
