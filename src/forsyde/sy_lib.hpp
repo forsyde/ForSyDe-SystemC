@@ -13,6 +13,13 @@
 #ifndef SYLIB_H
 #define SYLIB_H
 
+/*! \file sy_helpers.hpp
+ * \brief Implements extra facilities on top of the SY MoC
+ * 
+ *  This file includes the basic process constructors and helper
+ * functions for creating advanced SY processes.
+ */
+
 #include "sy_moc.hpp"
 
 namespace ForSyDe
