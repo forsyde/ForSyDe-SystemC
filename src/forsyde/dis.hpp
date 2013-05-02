@@ -449,6 +449,299 @@ private:
 #endif
 };
 
+//! Process constructor for a SY2SDF domain interfaces
+/*! This class is used to build a domain interfaces which converts an SY 
+ * signal to an SDF one.
+ */
+template<class T>
+class SY2SDF : public process
+{
+public:
+    SY::SY_in<T> iport1;        ///< port for the input channel
+	SDF::SDF_out<T> oport1;     ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented function to it and writes the
+     * results using the output port
+     */
+    SY2SDF(sc_module_name _name     ///< process name
+          ) : process(_name), iport1("iport1"), oport1("oport1")
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << 1;
+        arg_vec.push_back(std::make_tuple("o1toks", ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY2SDF";}
+
+private:
+    
+    // Internal variables
+    T* val;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        val = new T;
+    }
+    
+    void prep()
+    {
+        auto tok = iport1.read();
+        while (is_absent(tok))
+            tok = iport1.read();
+        *val = unsafe_from_abst_ext(tok);
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, *val)
+    }
+    
+    void clean()
+    {
+        delete val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a SDF2SY domain interface
+/*! This class is used to build a domain interface which converts an SDF 
+ * signal to a SY one.
+ */
+template<class T>
+class SDF2SY : public process
+{
+public:
+    SDF::SDF_in<T> iport1;  ///< port for the input channel
+    SY::SY_out<T> oport1;   ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented function to it and writes the
+     * results using the output port
+     */
+    SDF2SY(sc_module_name _name     ///< process name
+          ) : process(_name), iport1("iport1"), oport1("oport1")
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << 1;
+        arg_vec.push_back(std::make_tuple("i1toks", ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SDF2SY";}
+
+private:
+    
+    // Internal variables
+    T* val;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        val = new T;
+    }
+    
+    void prep()
+    {
+        *val = iport1.read();
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, abst_ext<T>(*val))
+    }
+    
+    void clean() {}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a SY2DE domain interfaces
+/*! This class is used to build a domain interfaces which converts an SY 
+ * signal to a DE one.
+ */
+template<class T>
+class SY2DE : public process
+{
+public:
+    SY::SY_in<T> iport1;        ///< port for the input channel
+	DE::DE_out<T> oport1;       ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented function to it and writes the
+     * results using the output port
+     */
+    SY2DE(sc_module_name _name,     ///< process name
+          sc_time sample_period     ///< The unified period length
+          ) : process(_name), iport1("iport1"), oport1("oport1"),
+              sample_period(sample_period)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << sample_period;
+        arg_vec.push_back(std::make_tuple("sample_period", ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY2DE";}
+
+private:
+    sc_time sample_period;
+    
+    // Internal variables
+    abst_ext<T>* tok;
+    T* val;
+    sc_time cur_time;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        tok = new abst_ext<T>();
+        val = new T;
+        cur_time = SC_ZERO_TIME;
+    }
+    
+    void prep()
+    {
+        *tok = iport1.read();
+        if (is_present(*tok))
+            *val = unsafe_from_abst_ext(*tok);
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, tt_event<T>(*val,cur_time))
+        cur_time += sample_period;
+    }
+    
+    void clean()
+    {
+        delete val;
+        delete tok;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a DE2SY domain interface
+/*! This class is used to build a domain interface which converts a DE 
+ * signal to an SY one.
+ */
+template<class T>
+class DE2SY : public process
+{
+public:
+    DE::DE_in<T> iport1;  ///< port for the input channel
+    SY::SY_out<T> oport1;   ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented function to it and writes the
+     * results using the output port
+     */
+    DE2SY(sc_module_name _name,     ///< process name
+          sc_time sample_period     ///< The unified period length
+          ) : process(_name), iport1("iport1"), oport1("oport1"),
+              sample_period(sample_period)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << sample_period;
+        arg_vec.push_back(std::make_tuple("sample_period", ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "DE2SY";}
+
+private:
+    sc_time sample_period;
+    
+    // Internal variables
+    tt_event<T>* tok;
+    T* prev_val;
+    sc_time cur_time;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        tok = new tt_event<T>();
+        prev_val = new T;
+        cur_time = SC_ZERO_TIME;
+        *tok = iport1.read();
+    }
+    
+    void prep()
+    {
+        while (get_time(*tok) <= cur_time)
+        {
+            *prev_val = get_value(*tok);
+            *tok = iport1.read();
+        }
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, abst_ext<T>(*prev_val))
+        cur_time += sample_period;
+    }
+    
+    void clean() {}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
 }
 
 #endif
