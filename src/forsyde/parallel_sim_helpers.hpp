@@ -13,7 +13,7 @@
 #ifndef PARALLEL_SIM_HPP
 #define PARALLEL_SIM_HPP
 
-/*! \file parallel_sim.hpp
+/*! \file parallel_sim_helpers.hpp
  * \brief Implements helper primitives for parallel simulations
  * 
  *  This file includes helper functions which facilliate construction of

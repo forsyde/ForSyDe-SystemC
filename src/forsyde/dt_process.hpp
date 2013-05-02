@@ -13,7 +13,7 @@
 #ifndef DT_PROCESS_HPP
 #define DT_PROCESS_HPP
 
-/*! \file dt_process.h
+/*! \file dt_process.hpp
  * \brief Implements the abstract process in the DT Model of Computation
  * 
  *  This files procides definitions for the signals, ports and the

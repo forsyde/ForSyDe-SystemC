@@ -13,7 +13,7 @@
 #ifndef CT_PROCESS_HPP
 #define CT_PROCESS_HPP
 
-/*! \file ct_process.h
+/*! \file ct_process.hpp
  * \brief Implements the abstract process in the CT Model of Computation
  * 
  *  This files procides definitions for the signals, ports ans the

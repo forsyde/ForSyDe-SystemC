@@ -56,7 +56,7 @@
  *     - Continuous-Time MoC in ForSyDe::CT
  */
 
-/*! \file forsyde.h
+/*! \file forsyde.hpp
  * \brief Exports the library definitions for the ForSyDe-SystemC
  * 
  *  The user only includes this header file. Definitions in the other

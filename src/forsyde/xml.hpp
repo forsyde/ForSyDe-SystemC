@@ -13,7 +13,7 @@
 #ifndef XML_HPP
 #define XML_HPP
 
-/*! \file xml.h
+/*! \file xml.hpp
  * \brief Dumps the system model as the XML+C abstract format.
  * 
  *  This file includes functions which can be used in order to export

@@ -13,7 +13,7 @@
 #ifndef SDF_PROCESS_HPP
 #define SDF_PROCESS_HPP
 
-/*! \file sdf_process.h
+/*! \file sdf_process.hpp
  * \brief Implements the abstract process in the SDF Model of Computation
  * 
  *  This files procides definitions for the signals, ports ans the

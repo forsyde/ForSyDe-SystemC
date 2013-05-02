@@ -14,7 +14,7 @@
 #ifndef ABST_EXT_HPP
 #define ABST_EXT_HPP
 
-/*! \file abst_ext.h
+/*! \file abst_ext.hpp
  * \brief Implements the Absent-extended values
  */
 

@@ -13,7 +13,7 @@
 #ifndef SY_PROCESS_HPP
 #define SY_PROCESS_HPP
 
-/*! \file sy_process.h
+/*! \file sy_process.hpp
  * \brief Implements the abstract process in the synchronous Model of Computation
  * 
  *  This files procides definitions for the signals, ports ans the

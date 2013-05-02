@@ -15,7 +15,7 @@
 #ifndef DIS_HPP
 #define DIS_HPP
 
-/*! \file di.h
+/*! \file di.hpp
  * \brief Implements the domain interfaces between different MoCs
  * 
  *  This file includes the basic process constructors and other

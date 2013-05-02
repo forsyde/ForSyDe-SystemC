@@ -14,7 +14,7 @@
 #ifndef ADAPTIVITY_HPP
 #define ADAPTIVITY_HPP
 
-/*! \file adaptivity.h
+/*! \file adaptivity.hpp
  * \brief Definition of some adaptive processes
  * 
  *  This file includes the basic process constructors and other

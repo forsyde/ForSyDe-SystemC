@@ -14,7 +14,7 @@
 #ifndef ABSSEMANTICS_HPP
 #define ABSSEMANTICS_HPP
 
-/*! \file abssemantics.h
+/*! \file abssemantics.hpp
  * \brief The common abstract semantics for all MoCs.
  * 
  *  The common abstract semantics which is used by other MoCs is
