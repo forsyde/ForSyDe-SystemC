@@ -23,6 +23,7 @@ namespace ForSyDe
 
 using namespace sc_core;
 
+//! Type of the values used in the CT MoC (currently fixed)
 typedef double CTTYPE;
 
 //! The sub-signal type used to construct a CT signal
