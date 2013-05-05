@@ -48,11 +48,11 @@
  * In addition, there is a separate sub-namespace dedicated to each MoC which
  * includes process constructors and other constructs related to that specific
  * MoC.
- * Originally, 4 different MoCs are suported in ForSyDe-SystemC:
+ * There are different MoCs suported in ForSyDe-SystemC:
  *
  *     - Synchronous MoC in ForSyDe::SY
- *     - Untimed MoC (only the Synchronous Dataflow variant) in ForSyDe::SDF
- *     - Discrete-Event MoC in ForSyDe::DE
+ *     - Untimed MoC in ForSyDe::UT and its Synchronous Dataflow variant in ForSyDe::SDF
+ *     - Two timed MoCs Discrete-Event in ForSyDe::DE and Discrete-Time in ForSyDe::DT
  *     - Continuous-Time MoC in ForSyDe::CT
  */
 
