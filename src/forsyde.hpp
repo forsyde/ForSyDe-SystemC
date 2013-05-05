@@ -56,7 +56,7 @@
  *     - Continuous-Time MoC in ForSyDe::CT
  */
 
-/*! \file forsyde.hpp
+/*! \file forsyde.h
  * \brief Exports the library definitions for the ForSyDe-SystemC
  * 
  *  The user only includes this header file. Definitions in the other
@@ -69,40 +69,16 @@
 // include the main SystemC library
 #include <systemc>
 
-#ifdef FORSYDE_INTROSPECTION
-#include "forsyde/types.hpp"
-#endif
-
-// include the abstract semantics
-#include "forsyde/abssemantics.hpp"
-
 // include different MoCs
-#include "forsyde/ut_moc.hpp"
+#include "forsyde/symoc.hpp"
+#include "forsyde/sylib.hpp"
+#include "forsyde/sdfmoc.hpp"
+#include "forsyde/democ.hpp"
+#include "forsyde/ctmoc.hpp"
+#include "forsyde/ctlib.hpp"
 
-#include "forsyde/sy_moc.hpp"
-#include "forsyde/sy_lib.hpp"
-
-#include "forsyde/sdf_moc.hpp"
-
-#include "forsyde/de_moc.hpp"
-
-#include "forsyde/dt_moc.hpp"
-
-#include "forsyde/ct_moc.hpp"
-#include "forsyde/ct_lib.hpp"
-
-// include domain interfaces
 #include "forsyde/dis.hpp"
-#include "forsyde/di_helpers.hpp"
 
 #include "forsyde/adaptivity.hpp"
-
-#ifdef FORSYDE_INTROSPECTION
-#include "forsyde/xml.hpp"
-#endif
-
-#ifdef FORSYDE_PARALLEL_SIM
-#include "forsyde/parallel_sim_helpers.hpp"
-#endif
 
 #endif

@@ -16,18 +16,17 @@
 
 #include <forsyde.hpp>
 
-using namespace ForSyDe;
 using namespace ForSyDe::SY;
 
-void comparator_func(abst_ext<bool>& out1,
-              const abst_ext<int>& a, const abst_ext<int>& b)
+class comparator : public comb2<int,int,bool>
 {
-    int inp1 = a.from_abst_ext(0);
-    int inp2 = b.from_abst_ext(0);
-
-#pragma ForSyDe begin comparator_func  
-    out1 = inp1>inp2 ? true : false;
-#pragma ForSyDe end
-}
+public:
+    comparator(sc_module_name _name) : comb2<int,int,bool>(_name){}
+protected:
+    bool _func(int a, int b)
+    {
+        return a>b ? true : false;
+    }
+};
 
 #endif

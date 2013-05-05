@@ -1,20 +1,31 @@
-/**********************************************************************           
-    * Top.hpp -- the Top process and testbench for the sorter example *
+/**********************************************************************
+    * Top.hpp -- the top module and testbench for the mulacc example  *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Demonstration of a simple program.                     *
+    * Purpose: Demonstration of a simple sequential processes.        *
     *                                                                 *
-    * Usage:   Sorter example                                         *
-    *          inspired by material from Doulos SystemC course        *
+    * Usage:   MulAcc example                                         *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#include "sorter.hpp"
+#include "mulacc.hpp"
 #include <iostream>
 
 using namespace ForSyDe::SY;
+
+class siggen : public source<int>
+{
+public:
+    siggen(sc_module_name _name) : source<int>(_name, 1, 10){}
+protected:
+    int _func(int inp)
+    {
+        return -inp;
+    }
+    
+};
 
 class report : public sink<int>
 {
@@ -30,24 +41,24 @@ protected:
 
 SC_MODULE(Top)
 {
-    sc_fifo<int> srca, srcb, srcc, biggest;
+    sc_fifo<int> srca, srcb, result;
     
-    constant<int> const1, const2, const3;
-    sorter sorter1;
+    constant<int> const1;
+    siggen siggen1;
+    mulacc mulacc1;
     report report1;
     
-    SC_CTOR(Top): const1("const1",5), const2("const2",7), const3("const3",3),
-                  sorter1("sorter1"), report1("report1")
+    SC_CTOR(Top): const1("const1",3), siggen1("siggen1"),
+                  mulacc1("mulacc1"), report1("report1")
     {
         const1.oport(srca);
-        const2.oport(srcb);
-        const3.oport(srcc);
+        siggen1.oport(srcb);
         
-        sorter1.a(srca);
-        sorter1.b(srcb);
-        sorter1.c(srcc);
-        sorter1.biggest(biggest);
+        mulacc1.a(srca);
+        mulacc1.b(srcb);
+        mulacc1.result(result);
         
-        report1.iport(biggest);
+        report1.iport(result);
     }
 };
+

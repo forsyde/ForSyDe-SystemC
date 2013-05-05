@@ -14,14 +14,14 @@
 #ifndef ADAPTIVITY_HPP
 #define ADAPTIVITY_HPP
 
-/*! \file adaptivity.hpp
+/*! \file adaptivity.h
  * \brief Definition of some adaptive processes
  * 
  *  This file includes the basic process constructors and other
  * facilities used for modeling adaptive systems.
  */
 
-#include "sy_moc.hpp"
+#include "symoc.hpp"
 #include <functional>
 
 namespace ForSyDe

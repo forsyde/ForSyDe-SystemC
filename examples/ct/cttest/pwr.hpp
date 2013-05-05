@@ -10,20 +10,17 @@
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef PWR_HPP
-#define PWR_HPP
-
 #include <forsyde.hpp>
 
-using namespace ForSyDe;
 using namespace ForSyDe::CT;
 
-void pwr_func(CTTYPE& out1, const CTTYPE& inp1)
+class pwr : public comb
 {
-#pragma ForSyDe begin pwr_func
-    out1 = inp1 * inp1;
-#pragma ForSyDe end
-}
-
-#endif
-
+public:
+    pwr(sc_module_name _name) : comb(_name) {}
+private:
+    CTTYPE _func(CTTYPE a)
+    {
+        return a * a;
+    }
+};

@@ -1,20 +1,21 @@
 /**********************************************************************           
-    * main.cpp -- the main file and testbench for the tyo SDF example *
+    * main.cpp -- the main file and testbench for the sorter example  *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of a simple program.                     *
     *                                                                 *
-    * Usage:   To SDF example                                         *
+    * Usage:   Sorter example                                         *
+    *          inspired by material from Doulos SystemC course        *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#include "top.hpp"
+#include "Top.hpp"
 
 int sc_main(int argc, char **argv)
 {
-    top top1("top1");
+    Top top("top");
 
     sc_start();
         

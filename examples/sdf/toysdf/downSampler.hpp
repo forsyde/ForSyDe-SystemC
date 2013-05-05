@@ -15,13 +15,20 @@
 
 #include <forsyde.hpp>
 
-void downSampler_func(std::vector<double>& out1,
-                      const std::vector<double>& inp1)
+using namespace ForSyDe::SDF;
+
+class downSampler : public comb<float,float>
 {
-#pragma ForSyDe begin downSampler_func
-    out1[0] = inp1[0];
-    out1[1] = inp1[1];
-#pragma ForSyDe end
-}
+public:
+    downSampler(sc_module_name _name) : comb<float,float>(_name,3,2){}
+protected:
+    std::vector<float> _func(std::vector<float> a)
+    {
+      std::vector<float> ret(2);
+      ret[0] = a[0];
+      ret[1] = a[1];
+      return ret;
+    }
+};
 
 #endif

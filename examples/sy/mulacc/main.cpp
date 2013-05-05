@@ -10,11 +10,11 @@
     * License: BSD3                                                   *
     *******************************************************************/
 
-#include "top.hpp"
+#include "Top.hpp"
 
 int sc_main(int argc, char **argv)
 {
-    top top1("top1");
+    Top top("top");
 
     sc_start();
         

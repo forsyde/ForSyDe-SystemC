@@ -22,17 +22,23 @@ using namespace ForSyDe::SDF;
 
 SC_MODULE(compAvg)
 {
-    SDF_in<double>  iport1;
-    SDF_out<double> oport1;
+    sc_fifo_in<float>  iport;
+    sc_fifo_out<float> oport;
     
-    SDF2SDF<double> din, dout;
+    averager avg1;
+    delayn<float> avginit;
     
-    SC_CTOR(compAvg)
+    sc_fifo<float> din, dout;
+    
+    SC_CTOR(compAvg): avg1("avg1"), avginit("avginit1",0,2)
     {
-        auto averager1 = make_comb2("averager1", averager_func, 2,3,2, oport1, iport1, dout);
-        averager1->oport1(din);
+        avg1.iport1(iport);
+        avg1.iport2(dout);
+        avg1.oport(oport);
+        avg1.oport(din);
         
-        make_delayn("avginit1",0.0,2, dout, din);
+        avginit.iport(din);
+        avginit.oport(dout);
     }
 };
 
