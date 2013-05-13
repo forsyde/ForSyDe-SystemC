@@ -1002,7 +1002,7 @@ public:
      */
     zipN(sc_module_name _name,
          std::vector<unsigned> in_toks)
-          :sdf_process(_name), in_toks(in_toks), oport1("iport1")
+          :sdf_process(_name), in_toks(in_toks), oport1("oport1")
     {
         if (in_toks.size()!=sizeof...(Ts))
             SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
@@ -1080,7 +1080,7 @@ private:
         boundInChans.resize(sizeof...(Ts));    // two output ports
         register_ports(boundInChans, iport);
         boundOutChans.resize(1);     // only one input port
-        boundInChans[0].port = &oport1;
+        boundOutChans[0].port = &oport1;
     }
     
     template<size_t N, class T>
@@ -1130,7 +1130,7 @@ public:
      */
     unzip(sc_module_name _name,
            unsigned int o1toks,      ///< consumption rate for the first output
-           unsigned int i1toks       ///< consumption rate for the first input
+           unsigned int o2toks       ///< consumption rate for the second output
            )
          :sdf_process(_name), iport1("iport1"), oport1("oport1"), oport2("oport2"),
           o1toks(o1toks), o2toks(o2toks)
