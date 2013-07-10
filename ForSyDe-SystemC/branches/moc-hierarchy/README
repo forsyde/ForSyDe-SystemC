@@ -1,0 +1,21 @@
+ ForSyDe's SystemC-embedded Domain Specific Language.
+ ====================================================
+
+DESCRIPTION
+
+ The ForSyDe (Formal System Design) methodology has been developed
+ with the objective to move design of heterogeneous embedded systems
+ to a higher level of abstraction and to bridge the abstraction gap
+ by transformational design refinement.
+ 
+ This library provides the implementation of ForSyDe's modeling
+ framework as a SystemC-embedded Domain Specific Language (DSL). 
+
+ For more information, API documentation, and tutorials please visit the
+ ForSyDe's web page:
+ <http://forsyde.ict.kth.se/>.
+
+
+INSTALLATION
+
+ For information on how to install ForSyDe-SystemC see the INSTALL file.
