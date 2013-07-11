@@ -1388,8 +1388,8 @@ template <class T1, unsigned int N>
 class zipX : public sy_process
 {
 public:
-    std::array<SY_in<T1>,N> iport;        ///< port array for the input channels
-    SY_out<std::array<T1,N>> oport1;        ///< port for the output channel
+    std::array<SY_in<T1>,N> iport;              ///< port array for the input channels
+    SY_out<std::array<abst_ext<T1>,N>> oport1;  ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -1420,7 +1420,7 @@ private:
     void prod()
     {
         typedef std::array<abst_ext<T1>,N> TT;
-        if (std::all_of(ival.begin(), ival.end(), [](abst_ext<T1> ivalx){ivalx->is_absent();}))
+        if (std::all_of(ival.begin(), ival.end(), [](abst_ext<T1> ivalx){return ivalx->is_absent();}))
         {
             WRITE_MULTIPORT(oport1,abst_ext<TT>())  // write to the output 1
         }

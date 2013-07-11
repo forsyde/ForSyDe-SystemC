@@ -54,10 +54,8 @@ public:
 
                                    G = gaussMean+sqrt(gaussVar)*(sqrt(-2.0*log(Q)/Q)*Q1);
                                    out1 = abst_ext<double>(G);
-                               }, abst_ext<double>(0)),
-                gaussVar(gaussVar), gaussMean(gaussMean) {}
+                               }, abst_ext<double>(0)) {}
 private:
-    double gaussVar, gaussMean;
     // state variable:  
     bool shiftreg[64];	// boolean array for the LFSR random number generator
     void initialize()
