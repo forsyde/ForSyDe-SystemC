@@ -64,6 +64,7 @@ public:
         const_moc = (char*)"moc";
         const_type = (char*)"type";
         const_sdf = (char*)"sdf";
+        const_ut = (char*)"ut";
         const_sy = (char*)"sy";
         const_de = (char*)"de";
         const_dt = (char*)"dt";
@@ -188,6 +189,7 @@ public:
         char* xml_pc = xml_doc.allocate_string(pc.c_str());
         char* moc_name;
         if (moc=="SDF") moc_name = const_sdf;
+        else if (moc=="UT") moc_name = const_ut;
         else if (moc=="SY") moc_name = const_sy;
         else if (moc=="DE") moc_name = const_de;
         else if (moc=="DT") moc_name = const_de;
@@ -280,6 +282,7 @@ public:
         allocate_append_attribute(sig_node, const_name, dynamic_cast<sc_object*>(sig)->basename());
         char* moc_name;
         if (sig->moc()=="SDF") moc_name = const_sdf;
+        else if (sig->moc()=="UT") moc_name = const_ut;
         else if (sig->moc()=="SY") moc_name = const_sy;
         else if (sig->moc()=="DE") moc_name = const_de;
         else if (sig->moc()=="DT") moc_name = const_dt;
@@ -331,7 +334,8 @@ private:
     //! Some global constant names
     char *const_name, *const_leaf_process, *const_composite_process, 
          *const_process_network, *const_process_constructor, *const_moc,
-         *const_type, *const_port, *const_sdf, *const_sy, *const_de, *const_dt, *const_ct,
+         *const_type, *const_port,
+         *const_sdf, *const_ut, *const_sy, *const_de, *const_dt, *const_ct,
          *const_port_dir, *const_direction, *const_in, *const_out,
          *const_signal, *const_component_name, *const_argument, *const_value,
          *const_source, *const_source_port, *const_target, *const_target_port,
