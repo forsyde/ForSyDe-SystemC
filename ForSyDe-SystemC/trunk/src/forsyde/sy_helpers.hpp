@@ -192,6 +192,30 @@ inline delay<T>* make_delay(const std::string& pName,
     return p;
 }
 
+//! Helper function to construct a delayn process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename T, template <class> class IIf,
+                        template <class> class OIf>
+inline delayn<T>* make_delayn(const std::string& pName,
+    const abst_ext<T>& initval,
+    const unsigned int& n,
+    OIf<T>& outS,
+    IIf<T>& inpS
+    )
+{
+    auto p = new delayn<T>(pName.c_str(), initval, n);
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct a moore process
 /*! This function is used to construct a moore process (SystemC module) and
  * connect its output and output signals.
