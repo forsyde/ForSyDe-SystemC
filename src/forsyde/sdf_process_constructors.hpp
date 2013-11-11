@@ -801,7 +801,7 @@ private:
     {
         if (itr != in_vec.end())
         {
-            WRITE_MULTIPORT(oport1, in_vec[tok_cnt])
+            WRITE_MULTIPORT(oport1, *itr)
             ++itr;
         }
         else
