@@ -46,12 +46,12 @@ template <class ITYP, class OTYP>
 class apply : public sc_module
 {
 public:
-    sc_fifo_in<ITYP>  iport;        ///< port for the input channel
-    sc_fifo_out<OTYP> oport;        ///< port for the output channel
+    SY_in<ITYP>  iport;        ///< port for the input channel
+    SY_out<OTYP> oport;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<OTYP(const ITYP&)> functype;
-    sc_fifo_in<functype> fport;
+    typedef std::function<abst_ext<OTYP>(const abst_ext<ITYP>&)> functype;
+    SY_in<functype> fport;     ///< port for the function channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -69,18 +69,43 @@ private:
     //! The main and only execution thread of the module
     void worker()
     {
-        ITYP in_val;
-        OTYP out_val;
+        abst_ext<ITYP> in_val;
+        abst_ext<OTYP> out_val;
         functype cur_f;
         while (1)
         {
             in_val = iport.read();  // read from input
-            cur_f = fport.read();  // read the function
+            cur_f = unsafe_from_abst_ext(fport.read());  // read the function
             out_val = cur_f(in_val);// do the calculation
             WRITE_MULTIPORT(oport,out_val);    // write to the output
         }
     }
 };
+
+//! Helper function to construct a comb process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class T0, template <class> class OIf,
+          class T1, template <class> class I1If,
+                    template <class> class FIf>
+inline apply<T0,T1>* make_apply(const std::string& pName,
+    OIf<T0>& outS,
+    I1If<T1>& inp1S,
+    FIf<typename apply<T0,T1>::functype>& fS
+    )
+{
+    auto p = new apply<T0,T1>(pName.c_str());
+    
+    (*p).iport(inp1S);
+    (*p).oport(outS);
+    (*p).fport(fS);
+    
+    return p;
+}
 
 }
 }

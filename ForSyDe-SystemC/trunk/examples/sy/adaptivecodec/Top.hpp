@@ -11,67 +11,53 @@
     *******************************************************************/
 
 #include "codec.hpp"
+
+#include "forsyde.hpp"
+
 #include <iostream>
 
 using namespace ForSyDe::SY;
 using namespace std;
 
-class siggen : public source<int>
+void siggen_func(abst_ext<int>& out1, const abst_ext<int>& inp)
 {
-public:
-    siggen(sc_module_name _name) : source<int>(_name, 1, 10){}
-protected:
-    int _func(int inp)
-    {
-        return inp+1;
-    }
-    
-};
+    int inp1 = from_abst_ext(inp,0);
+#pragma ForSyDe begin siggen_func
+    out1 = inp1 + 1;
+#pragma ForSyDe end
+}
 
-class codegen : public source<int>
+void codegen_func(abst_ext<int>& out1, const abst_ext<int>& inp)
 {
-public:
-    codegen(sc_module_name _name) : source<int>(_name, 1, 10){}
-protected:
-    int _func(int inp)
-    {
-        return inp+1;
-    }
-    
-};
+    int inp1 = from_abst_ext(inp,0);
+#pragma ForSyDe begin siggen_func
+    out1 = inp1 + 1;
+#pragma ForSyDe end
+}
 
-class report : public sink<int>
+void report_func(abst_ext<int> inp1)
 {
-public:
-    report(sc_module_name _name) : sink<int>(_name){}
-protected:
-    void _func(int inp)
-    {
-        std::cout << "output value: " << inp << std::endl;
-    }
-    
-};
+#pragma ForSyDe begin report_func
+    std::cout << "output value: " << inp1 << std::endl;
+#pragma ForSyDe end
+}
 
 SC_MODULE(Top)
 {
-    sc_fifo<int> srcval, srccode, result;
+    SY2SY<int> srcval, srccode, result;
     
-    siggen siggen1;
-    codegen codegen1;
-    codec codec1;
-    report report1;
-    
-    SC_CTOR(Top): siggen1("siggen1"), codegen1("codegen1"),
-                  codec1("codec1"), report1("report1")
+    SC_CTOR(Top)
     {
-        siggen1.oport(srcval);
-        codegen1.oport(srccode);
+        make_source("siggen1", siggen_func, abst_ext<int>(1), 10, srcval);
         
-        codec1.iport(srcval);
-        codec1.code(srccode);
-        codec1.oport(result);
+        make_source("codegen1", codegen_func, abst_ext<int>(1), 10, srccode);
         
-        report1.iport(result);
+        auto codec1 = new codec("codec1");
+        codec1->iport(srcval);
+        codec1->code(srccode);
+        codec1->oport(result);
+        
+        make_sink("report1", report_func, result);
     }
 };
 
