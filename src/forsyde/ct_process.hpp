@@ -32,101 +32,44 @@ namespace CT
 using namespace sc_core;
 
 //! The CT2CT signal used to inter-connect CT processes
-class CT2CT: public sc_fifo<sub_signal>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_channel
-#endif
+class CT2CT: public ForSyDe::signal<double,sub_signal>
 {
 public:
+    CT2CT() : ForSyDe::signal<double,sub_signal>() {}
+    CT2CT(sc_module_name name, unsigned size) : ForSyDe::signal<double,sub_signal>(name, size) {}
 #ifdef FORSYDE_INTROSPECTION
-    //! Returns only the size of the actual type
-    virtual unsigned token_size() const
-    {
-        return sizeof(CTTYPE);
-    }
     
-    //! Returns the name of the actual type
-    virtual const char* token_type() const
-    {
-        return get_type_name<CTTYPE>();
-    }
-    
-    std::string moc() const
+    virtual std::string moc() const
     {
         return "CT";
     }
 #endif
 };
 
+//! The CT::signal is an alias for CT::CT2CT
+using signal = CT2CT;
+
 //! The CT_in port is used for input ports of CT processes
-class CT_in: public sc_fifo_in<sub_signal>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_port
-#endif
+class CT_in: public ForSyDe::in_port<double,sub_signal,signal>
 {
 public:
-    CT_in() : sc_fifo_in<sub_signal>(){}
-    CT_in(const char* name) : sc_fifo_in<sub_signal>(name){}
-#ifdef FORSYDE_INTROSPECTION
-    // NOTE: The following member functions could be overriden easier if
-    //       bind() was declared virtual in the sc_port base classes.
-    //       This will happen in SystemC 2.3, so adapt these accordingly.
-    //! Record the bounded channels
-    void operator()(sc_fifo_in_if<sub_signal>& i)
-    {
-        sc_fifo_in<sub_signal>::operator()(i);
-        static_cast<CT2CT&>(i).iport = this;
-    }
-    
-    //! Record the bounded ports
-    void operator()(CT_in& p)
-    {
-        sc_fifo_in<sub_signal>::operator()(p);
-        p.bound_port = this;
-    }
-    
-    //! Returns the name of the actual type (not abst_ext version)
-    virtual const char* token_type() const
-    {
-        return get_type_name<CTTYPE>();
-    }
-#endif
+    CT_in() : ForSyDe::in_port<double,sub_signal,signal>(){}
+    CT_in(const char* name) : ForSyDe::in_port<double,sub_signal,signal>(name){}
 };
 
+//! The CT::in_port is an alias for CT::CT_in
+using in_port = CT_in;
+
 //! The CT_out port is used for output ports of CT processes
-class CT_out: public sc_fifo_out<sub_signal>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_port
-#endif
+class CT_out: public ForSyDe::out_port<double,sub_signal,signal>
 {
 public:
-    CT_out() : sc_fifo_out<sub_signal>(){}
-    CT_out(const char* name) : sc_fifo_out<sub_signal>(name){}
-#ifdef FORSYDE_INTROSPECTION
-    // NOTE: The following member functions could be overriden easier if
-    //       bind() was declared virtual in the sc_port base classes.
-    //       This will happen in SystemC 2.3, so adapt these accordingly.
-    void operator()(sc_fifo_out_if<sub_signal>& i)
-    {
-        sc_fifo_out<sub_signal>::operator()(i);
-        // Register the port-to-port binding
-        static_cast<CT2CT&>(i).oport = this;
-    }
-    
-    void operator()(CT_out& p)
-    {
-        sc_fifo_out<sub_signal>::operator()(p);
-        // Register the port-to-port binding
-        p.bound_port = this;
-    }
-    
-    //! Returns the name of the actual type (not abst_ext version)
-    virtual const char* token_type() const
-    {
-        return get_type_name<CTTYPE>();
-    }
-#endif
+    CT_out() : ForSyDe::out_port<double,sub_signal,signal>(){}
+    CT_out(const char* name) : ForSyDe::out_port<double,sub_signal,signal>(name){}
 };
+
+//! The CT::out_port is an alias for CT::CT_out
+using out_port = CT_out;
 
 //! Abstract semantics of a process in the CT MoC
 typedef ForSyDe::process ct_process;

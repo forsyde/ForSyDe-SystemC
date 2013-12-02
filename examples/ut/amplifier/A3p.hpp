@@ -17,7 +17,7 @@
 #include <forsyde.hpp>
 #include <numeric>
 
-using namespace ForSyDe::UT;
+using namespace ForSyDe;
 
 void A3p_gamma_func(unsigned int& tokens, const int& state)
 {

@@ -18,21 +18,21 @@
 #include <forsyde.hpp>
 #include "averager.hpp"
 
-using namespace ForSyDe::SDF;
+using namespace ForSyDe;
 
 SC_MODULE(compAvg)
 {
-    SDF_in<double>  iport1;
-    SDF_out<double> oport1;
+    SDF::in_port<double>  iport1;
+    SDF::out_port<double> oport1;
     
-    SDF2SDF<double> din, dout;
+    SDF::signal<double> din, dout;
     
     SC_CTOR(compAvg)
     {
-        auto averager1 = make_comb2("averager1", averager_func, 2,3,2, oport1, iport1, dout);
+        auto averager1 = SDF::make_comb2("averager1", averager_func, 2,3,2, oport1, iport1, dout);
         averager1->oport1(din);
         
-        make_delayn("avginit1",0.0,2, dout, din);
+        SDF::make_delayn("avginit1",0.0,2, dout, din);
     }
 };
 
