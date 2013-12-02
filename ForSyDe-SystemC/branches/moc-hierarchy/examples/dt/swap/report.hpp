@@ -18,7 +18,6 @@
 #include <iostream>
 
 using namespace ForSyDe;
-using namespace ForSyDe::DT;
 
 void report_func(abst_ext<int> inp1)
 {

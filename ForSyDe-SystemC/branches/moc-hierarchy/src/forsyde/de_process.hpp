@@ -33,109 +33,49 @@ using namespace sc_core;
 
 //! The DE2DE signal used to inter-connect DE processes
 template <typename T>
-class DE2DE: public sc_fifo<tt_event<T>>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_channel
-#endif
+class DE2DE: public ForSyDe::signal<T,tt_event<T>>
 {
 public:
+    DE2DE() : ForSyDe::signal<T,tt_event<T>>() {}
+    DE2DE(sc_module_name name, unsigned size) : ForSyDe::signal<T,tt_event<T>>(name, size) {}
 #ifdef FORSYDE_INTROSPECTION
-    typedef T type;
     
-    //! Returns only the size of the actual type (not tt_event version)
-    virtual unsigned token_size() const
-    {
-        return sizeof(T);
-    }
-    
-    //! Returns the name of the actual type (not tt_event version)
-    virtual const char* token_type() const
-    {
-        return get_type_name<T>();
-    }
-    
-    std::string moc() const
+    virtual std::string moc() const
     {
         return "DE";
     }
 #endif
 };
 
+//! The DE::signal is an alias for DE::DE2DE
+template <typename T>
+using signal = DE2DE<T>;
+
 //! The DE_in port is used for input ports of DE processes
 template <typename T>
-class DE_in: public sc_fifo_in<tt_event<T>>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_port
-#endif
+class DE_in: public ForSyDe::in_port<T,tt_event<T>,signal<T>>
 {
 public:
-    DE_in() : sc_fifo_in<tt_event<T>>(){}
-    DE_in(const char* name) : sc_fifo_in<tt_event<T>>(name){}
-#ifdef FORSYDE_INTROSPECTION
-    typedef T type;
-    
-    // NOTE: The following member functions could be overriden easier if
-    //       bind() was declared virtual in the sc_port base classes.
-    //       This will happen in SystemC 2.3, so adapt these accordingly.
-    //! Record the bounded channels
-    void operator()(sc_fifo_in_if<tt_event<T>>& i)
-    {
-        sc_fifo_in<tt_event<T>>::operator()(i);
-        static_cast<DE2DE<T>&>(i).iport = this;
-    }
-    
-    //! Record the bounded ports
-    void operator()(DE_in<T>& p)
-    {
-        sc_fifo_in<tt_event<T>>::operator()(p);
-        p.bound_port = this;
-    }
-    
-    //! Returns the name of the actual type (not tt_event version)
-    virtual const char* token_type() const
-    {
-        return get_type_name<T>();
-    }
-#endif
+    DE_in() : ForSyDe::in_port<T,tt_event<T>,signal<T>>(){}
+    DE_in(const char* name) : ForSyDe::in_port<T,tt_event<T>,signal<T>>(name){}
 };
+
+//! The DE::in_port is an alias for DE::DE_in
+template <typename T>
+using in_port = DE_in<T>;
 
 //! The DE_out port is used for output ports of DE processes
 template <typename T>
-class DE_out: public sc_fifo_out<tt_event<T>>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_port
-#endif
+class DE_out: public ForSyDe::out_port<T,tt_event<T>,signal<T>>
 {
 public:
-    DE_out() : sc_fifo_out<tt_event<T>>(){}
-    DE_out(const char* name) : sc_fifo_out<tt_event<T>>(name){}
-#ifdef FORSYDE_INTROSPECTION
-    typedef T type;
-    
-    // NOTE: The following member functions could be overriden easier if
-    //       bind() was declared virtual in the sc_port base classes.
-    //       This will happen in SystemC 2.3, so adapt these accordingly.
-    void operator()(sc_fifo_out_if<tt_event<T>>& i)
-    {
-        sc_fifo_out<tt_event<T>>::operator()(i);
-        // Register the port-to-port binding
-        static_cast<DE2DE<T>&>(i).oport = this;
-    }
-    
-    void operator()(DE_out<T>& p)
-    {
-        sc_fifo_out<tt_event<T>>::operator()(p);
-        // Register the port-to-port binding
-        p.bound_port = this;
-    }
-    
-    //! Returns the name of the actual type (not tt_event version)
-    virtual const char* token_type() const
-    {
-        return get_type_name<T>();
-    }
-#endif
+    DE_out() : ForSyDe::out_port<T,tt_event<T>,signal<T>>(){}
+    DE_out(const char* name) : ForSyDe::out_port<T,tt_event<T>,signal<T>>(name){}
 };
+
+//! The DE::out_port is an alias for DE::DE_out
+template <typename T>
+using out_port = DE_out<T>;
 
 //! Abstract semantics of a process in the DE MoC
 typedef ForSyDe::process de_process;

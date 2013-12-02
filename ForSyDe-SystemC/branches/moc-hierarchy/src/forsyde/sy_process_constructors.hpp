@@ -1420,7 +1420,8 @@ private:
     void prod()
     {
         typedef std::array<abst_ext<T1>,N> TT;
-        if (std::all_of(ival.begin(), ival.end(), [](abst_ext<T1> ivalx){ivalx->is_absent();}))
+        
+        if (std::all_of(ival.begin(), ival.end(), [](abst_ext<T1> ivalx){ivalx.is_absent();}))
         {
             WRITE_MULTIPORT(oport1,abst_ext<TT>())  // write to the output 1
         }

@@ -17,7 +17,6 @@
 #include <forsyde.hpp>
 
 using namespace ForSyDe;
-using namespace ForSyDe::SY;
 
 void mul_func(abst_ext<int>& out1,
               const abst_ext<int>& a, const abst_ext<int>& b)

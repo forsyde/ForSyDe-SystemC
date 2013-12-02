@@ -50,8 +50,9 @@ public:
     //! Name of the tokens in the channels
     virtual const char* token_type() const = 0;
     
-    //! Size of the tokens in the channels
-    virtual unsigned token_size() const = 0;
+    // TODO: remove if proved not to be needed
+    //~ //! Size of the tokens in the channels
+    //~ virtual unsigned token_size() const = 0;
     
     //! To which MoC does the signal belong
     virtual std::string moc() const = 0;
@@ -63,11 +64,43 @@ public:
     sc_object* oport;
 };
 
+//! A ForSyDe signal is used to inter-connect processes
+template <typename T, typename TokenType>
+class signal: public sc_fifo<TokenType>
+#ifdef FORSYDE_INTROSPECTION
+            , public ForSyDe::introspective_channel
+#endif
+{
+public:
+    signal() : sc_fifo<TokenType>() {}
+    signal(sc_module_name name, unsigned size) : sc_fifo<TokenType>(name, size) {}
+#ifdef FORSYDE_INTROSPECTION
+    typedef T type;
+    
+    // TODO: remove if proved not to be needed
+    //~ //! Returns only the size of the token type
+    //~ virtual unsigned token_size() const
+    //~ {
+        //~ return sizeof(T);
+    //~ }
+    
+    // TODO: remove if proved not to be needed
+    //! Returns the name of the token type
+    virtual const char* token_type() const
+    {
+        return get_type_name<T>();
+    }
+    
+    virtual std::string moc() const = 0;
+#endif
+};
+
 //! This type is used in the process base class to store structural information
 struct PortInfo
 {
     sc_object* port;
-    unsigned toks;
+    // TODO: remove if proved not to be needed
+    //~ unsigned toks;
     std::string portType;
 };
 
@@ -80,6 +113,86 @@ public:
     
     //! Name of the tokens of the port
     virtual const char* token_type() const = 0;
+};
+
+// TODO: this is meant to be a super class for in_ports in all MoCs but it doesn't work yet
+//! The in_port port is used for input ports of ForSyDe processes
+template <typename T, typename TokenType, typename ChanType>
+class in_port: public sc_fifo_in<TokenType>
+#ifdef FORSYDE_INTROSPECTION
+            , public ForSyDe::introspective_port
+#endif
+{
+public:
+    in_port() : sc_fifo_in<TokenType>(){}
+    in_port(const char* name) : sc_fifo_in<TokenType>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    typedef T type;
+    
+    // NOTE: The following member functions could be overriden easier if
+    //       bind() was declared virtual in the sc_port base classes.
+    //       This will happen in SystemC 2.3, so adapt these accordingly.
+    //! Record the bounded channels
+    void operator()(sc_fifo_in_if<TokenType>& i)
+    {
+        sc_fifo_in<TokenType>::operator()(i);
+        static_cast<ChanType&>(i).iport = this;
+    }
+    
+    //! Record the bounded ports
+    void operator()(in_port<T,TokenType,ChanType>& p)
+    {
+        sc_fifo_in<TokenType>::operator()(p);
+        p.bound_port = this;
+    }
+    
+    //! Returns the plain name of the token type
+    virtual const char* token_type() const
+    {
+        return get_type_name<T>();
+    }
+#endif
+};
+
+// TODO: this is meant to be a super class for out_ports in all MoCs but it doesn't work yet
+//! The UT_out port is used for output ports of UT processes
+template <typename T, typename TokenType, typename ChanType>
+class out_port: public sc_fifo_out<TokenType>
+#ifdef FORSYDE_INTROSPECTION
+            , public ForSyDe::introspective_port
+#endif
+{
+public:
+    out_port() : sc_fifo_out<TokenType>(){}
+    out_port(const char* name) : sc_fifo_out<TokenType>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    typedef T type;
+    
+    // NOTE: The following member functions could be overriden easier if
+    //       bind() was declared virtual in the sc_port base classes.
+    //       This will happen in SystemC 2.3, so adapt these accordingly.
+    //! Record the bounded channels
+    void operator()(sc_fifo_out_if<TokenType>& i)
+    {
+        sc_fifo_out<TokenType>::operator()(i);
+        // Register the port-to-port binding
+        static_cast<ChanType&>(i).oport = this;
+    }
+    
+    //! Record the bounded ports
+    void operator()(out_port<T,TokenType,ChanType>& p)
+    {
+        sc_fifo_out<TokenType>::operator()(p);
+        // Register the port-to-port binding
+        p.bound_port = this;
+    }
+    
+    //! Returns the name of the actual type (not abst_ext version)
+    virtual const char* token_type() const
+    {
+        return get_type_name<T>();
+    }
+#endif
 };
 
 //! The process constructor which defines the abstract semantics of execution
