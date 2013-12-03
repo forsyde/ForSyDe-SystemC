@@ -36,9 +36,9 @@ SC_MODULE(Top)
         
         CT::make_filter("filter1", nums, dens, samplingPeriod, filtOut, filtInp);
         
-        CT::make_traceSig("report2", sc_time(100,SC_US), NoiseSrc2);
-        
         CT::make_traceSig("report1", sc_time(100,SC_US), filtOut);
+        
+        CT::make_traceSig("report2", sc_time(100,SC_US), NoiseSrc2);
     }
    
 };

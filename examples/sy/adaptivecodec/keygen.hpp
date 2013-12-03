@@ -17,23 +17,25 @@
 #include <forsyde.hpp>
 #include <tuple>
 
+using namespace ForSyDe;
 using namespace ForSyDe::SY;
 using namespace std;
 
-typedef std::function<int(const int&)> functype;
+typedef std::function<abst_ext<int>(const abst_ext<int>&)> functype;
 
-class keygen : public comb<int,tuple<functype,functype>>
+void keygen_func(abst_ext<tuple<abst_ext<functype>,abst_ext<functype>>>& out1,
+    const abst_ext<int>& inp)
 {
-public:
-    keygen(sc_module_name _name) : comb<int,tuple<functype,functype>>(_name){}
-protected:
-    tuple<functype,functype> _func(int a)
-    {
-        auto key1 = [=](int x){return x+a;};
-        auto key2 = [=](int x){return x-a;};
-        
-        return make_tuple(key1,key2);
-    }
-};
+    int inp1 = from_abst_ext(inp,0);
+#pragma ForSyDe begin siggen_func
+    auto key1 = abst_ext<functype>([=](abst_ext<int> x){
+            return abst_ext<int>(unsafe_from_abst_ext(x)+inp1);
+        });
+    auto key2 = abst_ext<functype>([=](abst_ext<int> x){
+            return abst_ext<int>(unsafe_from_abst_ext(x)-inp1);
+        });
+    out1 = abst_ext<tuple<abst_ext<functype>,abst_ext<functype>>>(make_tuple(key1,key2));
+#pragma ForSyDe end
+}
 
 #endif

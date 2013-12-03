@@ -24,36 +24,23 @@ using namespace std;
 
 SC_MODULE(codec)
 {
-    sc_fifo_in<int>  iport;
-    sc_fifo_in<int>  code;
-    sc_fifo_out<int> oport;
+    SY_in<int>  iport;
+    SY_in<int>  code;
+    SY_out<int> oport;
     
-    apply<int,int> encoder;
-    apply<int,int> decoder;
-    keygen keygen1;
-    unzip<functype,functype> unzip1;
+    SY2SY<int> coded;
+    SY2SY<tuple<abst_ext<functype>,abst_ext<functype>>> keys;
+    SY2SY<functype> key1, key2;
     
-    sc_fifo<int> coded;
-    sc_fifo<tuple<functype,functype>> keys;
-    sc_fifo<functype> key1, key2;
-    
-    SC_CTOR(codec): encoder("encoder"), decoder("decoder"),
-                    keygen1("keygen1"), unzip1("unzip1")
+    SC_CTOR(codec)
     {
-        encoder.iport(iport);
-        encoder.fport(key1);
-        encoder.oport(coded);
+        make_apply("encoder1", coded, iport, key1);
         
-        decoder.iport(coded);
-        decoder.fport(key2);
-        decoder.oport(oport);
+        make_apply("decoder1", oport, coded, key2);
         
-        keygen1.iport(code);
-        keygen1.oport(keys);
+        make_comb("keygen1", keygen_func, keys, code);
         
-        unzip1.iport(keys);
-        unzip1.oport1(key1);
-        unzip1.oport2(key2);
+        make_unzip("unzip1", keys, key1, key2);
     }
 };
 
