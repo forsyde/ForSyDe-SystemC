@@ -17,7 +17,6 @@
 #include <forsyde.hpp>
 
 using namespace ForSyDe;
-using namespace ForSyDe::DE;
 
 void inc_func(int& out1, const int& inp1)
 {

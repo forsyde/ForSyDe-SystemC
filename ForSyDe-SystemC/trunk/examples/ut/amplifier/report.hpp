@@ -17,7 +17,7 @@
 #include <forsyde.hpp>
 #include <iostream>
 
-using namespace ForSyDe::UT;
+using namespace ForSyDe;
 
 void report_func(const int& inp1)
 {

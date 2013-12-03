@@ -1,5 +1,5 @@
 /**********************************************************************           
-    * dt_process.hpp -- The synchronous MoC process                   *
+    * dt_process.hpp -- The discrete-time MoC process                 *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
@@ -33,109 +33,49 @@ using namespace sc_core;
 
 //! The DT2DT signal used to inter-connect DT processes
 template <typename T>
-class DT2DT: public sc_fifo<abst_ext<T>>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_channel
-#endif
+class DT2DT: public ForSyDe::signal<T,abst_ext<T>>
 {
 public:
+    DT2DT() : ForSyDe::signal<T,abst_ext<T>>() {}
+    DT2DT(sc_module_name name, unsigned size) : ForSyDe::signal<T,abst_ext<T>>(name, size) {}
 #ifdef FORSYDE_INTROSPECTION
-    typedef T type;
     
-    //! Returns only the size of the actual type (not abst_ext version)
-    virtual unsigned token_size() const
-    {
-        return sizeof(T);
-    }
-    
-    //! Returns the name of the actual type (not abst_ext version)
-    virtual const char* token_type() const
-    {
-        return get_type_name<T>();
-    }
-    
-    std::string moc() const
+    virtual std::string moc() const
     {
         return "DT";
     }
 #endif
 };
 
+//! The DT::signal is an alias for DT::DT2DT
+template <typename T>
+using signal = DT2DT<T>;
+
 //! The DT_in port is used for input ports of DT processes
 template <typename T>
-class DT_in: public sc_fifo_in<abst_ext<T>>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_port
-#endif
+class DT_in: public ForSyDe::in_port<T,abst_ext<T>,signal<T>>
 {
 public:
-    DT_in() : sc_fifo_in<abst_ext<T>>(){}
-    DT_in(const char* name) : sc_fifo_in<abst_ext<T>>(name){}
-#ifdef FORSYDE_INTROSPECTION
-    typedef T type;
-    
-    // NOTE: The following member functions could be overriden easier if
-    //       bind() was declared virtual in the sc_port base classes.
-    //       This will happen in SystemC 2.3, so adapt these accordingly.
-    //! Record the bounded channels
-    void operator()(sc_fifo_in_if<abst_ext<T>>& i)
-    {
-        sc_fifo_in<abst_ext<T>>::operator()(i);
-        static_cast<DT2DT<T>&>(i).iport = this;
-    }
-    
-    //! Record the bounded ports
-    void operator()(DT_in<T>& p)
-    {
-        sc_fifo_in<abst_ext<T>>::operator()(p);
-        p.bound_port = this;
-    }
-    
-    //! Returns the name of the actual type (not abst_ext version)
-    virtual const char* token_type() const
-    {
-        return get_type_name<T>();
-    }
-#endif
+    DT_in() : ForSyDe::in_port<T,abst_ext<T>,signal<T>>(){}
+    DT_in(const char* name) : ForSyDe::in_port<T,abst_ext<T>,signal<T>>(name){}
 };
+
+//! The DT::in_port is an alias for DT::DT_in
+template <typename T>
+using in_port = DT_in<T>;
 
 //! The DT_out port is used for output ports of DT processes
 template <typename T>
-class DT_out: public sc_fifo_out<abst_ext<T>>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_port
-#endif
+class DT_out: public ForSyDe::out_port<T,abst_ext<T>,signal<T>>
 {
 public:
-    DT_out() : sc_fifo_out<abst_ext<T>>(){}
-    DT_out(const char* name) : sc_fifo_out<abst_ext<T>>(name){}
-#ifdef FORSYDE_INTROSPECTION
-    typedef T type;
-    
-    // NOTE: The following member functions could be overriden easier if
-    //       bind() was declared virtual in the sc_port base classes.
-    //       This will happen in SystemC 2.3, so adapt these accordingly.
-    void operator()(sc_fifo_out_if<abst_ext<T>>& i)
-    {
-        sc_fifo_out<abst_ext<T>>::operator()(i);
-        // Register the port-to-port binding
-        static_cast<DT2DT<T>&>(i).oport = this;
-    }
-    
-    void operator()(DT_out<T>& p)
-    {
-        sc_fifo_out<abst_ext<T>>::operator()(p);
-        // Register the port-to-port binding
-        p.bound_port = this;
-    }
-    
-    //! Returns the name of the actual type (not abst_ext version)
-    virtual const char* token_type() const
-    {
-        return get_type_name<T>();
-    }
-#endif
+    DT_out() : ForSyDe::out_port<T,abst_ext<T>,signal<T>>(){}
+    DT_out(const char* name) : ForSyDe::out_port<T,abst_ext<T>,signal<T>>(name){}
 };
+
+//! The DT::out_port is an alias for DT::DT_out
+template <typename T>
+using out_port = DT_out<T>;
 
 //! Abstract semantics of a process in the DT MoC
 typedef ForSyDe::process dt_process;

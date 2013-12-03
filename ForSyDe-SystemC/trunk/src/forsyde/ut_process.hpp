@@ -32,111 +32,49 @@ using namespace sc_core;
 
 //! The UT2UT signal used to inter-connect UT processes
 template <typename T>
-class UT2UT: public sc_fifo<T>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_channel
-#endif
+class UT2UT: public ForSyDe::signal<T,T>
 {
 public:
-    UT2UT() : sc_fifo<T>() {}
-    UT2UT(sc_module_name name, unsigned size) : sc_fifo<T>(name, size) {}
+    UT2UT() : ForSyDe::signal<T,T>() {}
+    UT2UT(sc_module_name name, unsigned size) : ForSyDe::signal<T,T>(name, size) {}
 #ifdef FORSYDE_INTROSPECTION
-    typedef T type;
     
-    //! Returns only the size of the token type
-    virtual unsigned token_size() const
-    {
-        return sizeof(T);
-    }
-    
-    //! Returns the name of the token type
-    virtual const char* token_type() const
-    {
-        return get_type_name<T>();
-    }
-    
-    std::string moc() const
+    virtual std::string moc() const
     {
         return "UT";
     }
 #endif
 };
 
-//! The SY_in port is used for input ports of SY processes
+//! The UT::signal is an alias for UT::UT2UT
 template <typename T>
-class UT_in: public sc_fifo_in<T>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_port
-#endif
+using signal = UT2UT<T>;
+
+//! The UT_in port is used for input ports of UT processes
+template <typename T>
+class UT_in: public ForSyDe::in_port<T,T,signal<T>>
 {
 public:
-    UT_in() : sc_fifo_in<T>(){}
-    UT_in(const char* name) : sc_fifo_in<T>(name){}
-#ifdef FORSYDE_INTROSPECTION
-    typedef T type;
-    
-    // NOTE: The following member functions could be overriden easier if
-    //       bind() was declared virtual in the sc_port base classes.
-    //       This will happen in SystemC 2.3, so adapt these accordingly.
-    //! Record the bounded channels
-    void operator()(sc_fifo_in_if<T>& i)
-    {
-        sc_fifo_in<T>::operator()(i);
-        static_cast<UT2UT<T>&>(i).iport = this;
-    }
-    
-    //! Record the bounded ports
-    void operator()(UT_in<T>& p)
-    {
-        sc_fifo_in<T>::operator()(p);
-        p.bound_port = this;
-    }
-    
-    //! Returns the name of the token type
-    virtual const char* token_type() const
-    {
-        return get_type_name<T>();
-    }
-#endif
+    UT_in() : ForSyDe::in_port<T,T,signal<T>>(){}
+    UT_in(const char* name) : ForSyDe::in_port<T,T,signal<T>>(name){}
 };
 
-//! The SY_out port is used for output ports of SY processes
+//! The UT::in_port is an alias for UT::UT_in
 template <typename T>
-class UT_out: public sc_fifo_out<T>
-#ifdef FORSYDE_INTROSPECTION
-            , public ForSyDe::introspective_port
-#endif
+using in_port = UT_in<T>;
+
+//! The UT_out port is used for output ports of UT processes
+template <typename T>
+class UT_out: public ForSyDe::out_port<T,T,signal<T>>
 {
 public:
-    UT_out() : sc_fifo_out<T>(){}
-    UT_out(const char* name) : sc_fifo_out<T>(name){}
-#ifdef FORSYDE_INTROSPECTION
-    typedef T type;
-    
-    // NOTE: The following member functions could be overriden easier if
-    //       bind() was declared virtual in the sc_port base classes.
-    //       This will happen in SystemC 2.3, so adapt these accordingly.
-    void operator()(sc_fifo_out_if<T>& i)
-    {
-        sc_fifo_out<T>::operator()(i);
-        // Register the port-to-port binding
-        static_cast<UT2UT<T>&>(i).oport = this;
-    }
-    
-    void operator()(UT_out<T>& p)
-    {
-        sc_fifo_out<T>::operator()(p);
-        // Register the port-to-port binding
-        p.bound_port = this;
-    }
-    
-    //! Returns the name of the actual type (not abst_ext version)
-    virtual const char* token_type() const
-    {
-        return get_type_name<T>();
-    }
-#endif
+    UT_out() : ForSyDe::out_port<T,T,signal<T>>(){}
+    UT_out(const char* name) : ForSyDe::out_port<T,T,signal<T>>(name){}
 };
+
+//! The UT::out_port is an alias for UT::UT_out
+template <typename T>
+using out_port = UT_out<T>;
 
 //! Abstract semantics of a process in the SY MoC
 typedef ForSyDe::process ut_process;

@@ -15,7 +15,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace ForSyDe::DT;
+using namespace ForSyDe;
 
 vector<tuple<unsigned int,int>> in_vec1 = 
     {make_tuple(0,1), make_tuple(1,2), make_tuple(2,3),
@@ -23,15 +23,15 @@ vector<tuple<unsigned int,int>> in_vec1 =
 
 SC_MODULE(top)
 {
-    DT2DT<int> src, result;
+    DT::signal<int> src, result;
     
     SC_CTOR(top)
     {        
-        make_vsource("vsource1", in_vec1, src);
+        DT::make_vsource("vsource1", in_vec1, src);
         
-        make_mealyT("swap1", swap_gamma, swap_ns_func, swap_od_func, 0, result, src);
+        DT::make_mealyT("swap1", swap_gamma, swap_ns_func, swap_od_func, 0, result, src);
         
-        make_sink("report1", report_func, result);
+        DT::make_sink("report1", report_func, result);
     }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()

@@ -17,7 +17,7 @@
 #include <forsyde.hpp>
 #include <algorithm>
 
-using namespace ForSyDe::UT;
+using namespace ForSyDe;
 
 void A2p_func(std::vector<int>& out1,
               const std::vector<std::tuple<std::vector<int>,std::vector<int>>>& inps)
