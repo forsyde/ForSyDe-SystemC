@@ -16,7 +16,7 @@
 
 #include <forsyde.hpp>
 
-using namespace ForSyDe::UT;
+using namespace ForSyDe;
 
 
 void ramp_func(int& out1, const int& inp1)

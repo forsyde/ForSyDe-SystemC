@@ -16,9 +16,9 @@
 
 #include <forsyde.hpp>
 
-using namespace ForSyDe;
 using namespace std;
-using namespace ForSyDe::DT;
+
+using namespace ForSyDe;
 
 void swap_gamma(unsigned int& out1, const int& inp1)
 {

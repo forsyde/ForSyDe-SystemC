@@ -16,7 +16,7 @@
 
 #include <forsyde.hpp>
 
-using namespace ForSyDe::SY;
+using namespace ForSyDe;
 
 
 void siggen_func(abst_ext<int>& out1, const abst_ext<int>& inp)

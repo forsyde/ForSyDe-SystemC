@@ -18,7 +18,6 @@
 #include <iostream>
 
 using namespace ForSyDe;
-using namespace ForSyDe::DE;
 
 void report_func(tt_event<int> inp1)
 {

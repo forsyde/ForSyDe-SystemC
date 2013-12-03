@@ -17,7 +17,6 @@
 #include <forsyde.hpp>
 
 using namespace ForSyDe;
-using namespace ForSyDe::CT;
 
 void add_func(CTTYPE& out1, const CTTYPE& inp1, const CTTYPE& inp2)
 {
