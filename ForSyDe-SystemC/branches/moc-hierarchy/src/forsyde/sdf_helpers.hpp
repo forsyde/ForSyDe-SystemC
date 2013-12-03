@@ -250,6 +250,26 @@ inline source<T>* make_source(std::string pName,
     return p;
 }
 
+//! Helper function to construct a vector source process
+/*! This function is used to construct a vector source (SystemC module) and
+ * connect its output signal.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the output FIFOs.
+ */
+template <class T, template <class> class OIf>
+inline vsource<T>* make_vsource(const std::string& pName,
+    const std::vector<T>& in_vec,
+    OIf<T>& outS
+    )
+{
+    auto p = new vsource<T>(pName.c_str(), in_vec);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct a sink process
 /*! This function is used to construct a sink (SystemC module) and
  * connect its output and output signals.

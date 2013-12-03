@@ -115,7 +115,6 @@ public:
     virtual const char* token_type() const = 0;
 };
 
-// TODO: this is meant to be a super class for in_ports in all MoCs but it doesn't work yet
 //! The in_port port is used for input ports of ForSyDe processes
 template <typename T, typename TokenType, typename ChanType>
 class in_port: public sc_fifo_in<TokenType>
@@ -154,7 +153,6 @@ public:
 #endif
 };
 
-// TODO: this is meant to be a super class for out_ports in all MoCs but it doesn't work yet
 //! The UT_out port is used for output ports of UT processes
 template <typename T, typename TokenType, typename ChanType>
 class out_port: public sc_fifo_out<TokenType>

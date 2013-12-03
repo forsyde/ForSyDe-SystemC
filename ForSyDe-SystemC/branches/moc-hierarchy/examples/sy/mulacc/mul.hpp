@@ -21,8 +21,8 @@ using namespace ForSyDe;
 void mul_func(abst_ext<int>& out1,
               const abst_ext<int>& a, const abst_ext<int>& b)
 {
-    int inp1 = a.from_abst_ext(0);
-    int inp2 = b.from_abst_ext(0);
+    int inp1 = from_abst_ext(a,0);
+    int inp2 = from_abst_ext(b,0);
 
 #pragma ForSyDe begin mul_func  
     out1 = inp1 * inp2;

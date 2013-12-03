@@ -1,9 +1,9 @@
 /**********************************************************************
-    * add.hpp -- an adder process                                     *
+    * siggen.hpp -- a ramp process                                    *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Demonstration of a simple sequential process.          *
+    * Purpose: Demonstration of a simple source process.              *
     *                                                                 *
     * Usage:   MulAcc example                                         *
     *                                                                 *
@@ -21,9 +21,9 @@ using namespace ForSyDe;
 
 void siggen_func(abst_ext<int>& out1, const abst_ext<int>& inp)
 {
-    int inp1 = inp.from_abst_ext(0);
+    int inp1 = from_abst_ext(inp,0);
 #pragma ForSyDe begin siggen_func
-    out1 = -inp1;
+    out1 = inp1 + 1;
 #pragma ForSyDe end
 }
 

@@ -73,7 +73,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::comb";}
+    std::string forsyde_kind() const {return "UT::comb";}
 
 private:
     // consumption rates
@@ -87,23 +87,23 @@ private:
     functype _func;
     
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         i1vals.resize(i1toks);
     }
     
-    virtual void prep()
+    void prep()
     {
         for (auto it=i1vals.begin();it!=i1vals.end();it++)
             *it = iport1.read();
     }
     
-    virtual void exec()
+    void exec()
     {
         _func(o1vals, i1vals);
     }
     
-    virtual void prod()
+    void prod()
     {
         WRITE_VEC_MULTIPORT(oport1, o1vals)
         o1vals.clear();
@@ -112,7 +112,7 @@ private:
     void clean() {}
     
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
@@ -161,7 +161,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::comb2";}
+    std::string forsyde_kind() const {return "UT::comb2";}
 private:
     // consumption rates
     unsigned int i1toks, i2toks;
@@ -175,13 +175,13 @@ private:
     functype _func;
 
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         i1vals.resize(i1toks);
         i2vals.resize(i2toks);
     }
     
-    virtual void prep()
+    void prep()
     {
         for (auto it=i1vals.begin();it!=i1vals.end();it++)
             *it = iport1.read();
@@ -189,21 +189,21 @@ private:
             *it = iport2.read();
     }
     
-    virtual void exec()
+    void exec()
     {
         _func(o1vals, i1vals, i2vals);
     }
     
-    virtual void prod()
+    void prod()
     {
         WRITE_VEC_MULTIPORT(oport1, o1vals)
         o1vals.clear();
     }
     
-    virtual void clean() {}
+    void clean() {}
     
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(2);     // only one input port
         boundInChans[0].port = &iport1;
@@ -258,7 +258,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::comb3";}
+    std::string forsyde_kind() const {return "UT::comb3";}
 private:
     // consumption rates
     unsigned int i1toks, i2toks, i3toks;
@@ -273,14 +273,14 @@ private:
     functype _func;
 
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         i1vals.resize(i1toks);
         i2vals.resize(i2toks);
         i3vals.resize(i3toks);
     }
     
-    virtual void prep()
+    void prep()
     {
         for (auto it=i1vals.begin();it!=i1vals.end();it++)
             *it = iport1.read();
@@ -290,21 +290,21 @@ private:
             *it = iport3.read();
     }
     
-    virtual void exec()
+    void exec()
     {
         _func(o1vals, i1vals, i2vals, i3vals);
     }
     
-    virtual void prod()
+    void prod()
     {
         WRITE_VEC_MULTIPORT(oport1, o1vals)
         o1vals.clear();
     }
     
-    virtual void clean() {}
+    void clean() {}
     
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(3);     // only one input port
         boundInChans[0].port = &iport1;
@@ -365,7 +365,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::comb4";}
+    std::string forsyde_kind() const {return "UT::comb4";}
 private:
     // consumption rates
     unsigned int i1toks, i2toks, i3toks, i4toks;
@@ -381,7 +381,7 @@ private:
     functype _func;
 
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         i1vals.resize(i1toks);
         i2vals.resize(i2toks);
@@ -389,7 +389,7 @@ private:
         i4vals.resize(i4toks);
     }
     
-    virtual void prep()
+    void prep()
     {
         for (auto it=i1vals.begin();it!=i1vals.end();it++)
             *it = iport1.read();
@@ -401,21 +401,21 @@ private:
             *it = iport4.read();
     }
     
-    virtual void exec()
+    void exec()
     {
         _func(o1vals, i1vals, i2vals, i3vals, i4vals);
     }
     
-    virtual void prod()
+    void prod()
     {
         WRITE_VEC_MULTIPORT(oport1, o1vals)
         o1vals.clear();
     }
     
-    virtual void clean() {}
+    void clean() {}
     
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(4);     // only one input port
         boundInChans[0].port = &iport1;
@@ -463,7 +463,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::delay";}
+    std::string forsyde_kind() const {return "UT::delay";}
     
 private:
     // Initial value
@@ -473,30 +473,30 @@ private:
     T* val;
     
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         val = new T;
         WRITE_MULTIPORT(oport1, init_val)
     }
     
-    virtual void prep()
+    void prep()
     {
         *val = iport1.read();
     }
     
-    virtual void exec() {}
+    void exec() {}
     
-    virtual void prod()
+    void prod()
     {
         WRITE_MULTIPORT(oport1, *val)
     }
     
-    virtual void clean()
+    void clean()
     {
         delete val;
     }
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
@@ -541,7 +541,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::delayn";}
+    std::string forsyde_kind() const {return "UT::delayn";}
     
 private:
     // Initial value
@@ -630,7 +630,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const{return "UT::scan";}
+    std::string forsyde_kind() const{return "UT::scan";}
     
 private:
     //! The functions passed to the process constructor
@@ -645,14 +645,14 @@ private:
     ST* nsval;
 
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         stval = new ST;
         *stval = init_st;
         nsval = new ST;
     }
     
-    virtual void prep()
+    void prep()
     {
         unsigned int itoks;
         _gamma_func(itoks, *stval);    // determine how many tokens to read
@@ -661,24 +661,24 @@ private:
             *it = iport1.read();
     }
     
-    virtual void exec()
+    void exec()
     {
         _ns_func(*nsval, *stval, ivals);
         *stval = *nsval;
     }
     
-    virtual void prod()
+    void prod()
     {
         WRITE_MULTIPORT(oport1, *stval)
     }
     
-    virtual void clean()
+    void clean()
     {
         delete stval;
         delete nsval;
     }
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
@@ -731,7 +731,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const{return "UT::scan";}
+    std::string forsyde_kind() const{return "UT::scan";}
     
 private:
     //! The functions passed to the process constructor
@@ -748,7 +748,7 @@ private:
     ST* nsval;
 
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         stval = new ST;
         *stval = init_st;
@@ -757,7 +757,7 @@ private:
         first_run = true;
     }
     
-    virtual void prep()
+    void prep()
     {
         // We do not read anything in the first cycle since we can produce the output.
         if (!first_run)
@@ -770,7 +770,7 @@ private:
         }
     }
     
-    virtual void exec()
+    void exec()
     {
         // Compute only the output in the first iteration.
         if (!first_run)
@@ -784,18 +784,18 @@ private:
         }
     }
     
-    virtual void prod()
+    void prod()
     {
         WRITE_MULTIPORT(oport1, *stval)
     }
     
-    virtual void clean()
+    void clean()
     {
         delete stval;
         delete nsval;
     }
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
@@ -852,7 +852,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const{return "UT::moore";}
+    std::string forsyde_kind() const{return "UT::moore";}
     
 private:
     //! The functions passed to the process constructor
@@ -871,7 +871,7 @@ private:
     std::vector<OT> ovals;
 
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         stval = new ST;
         *stval = init_st;
@@ -880,7 +880,7 @@ private:
         first_run = true;
     }
     
-    virtual void prep()
+    void prep()
     {
         // We do not read anything in the first cycle since we can produce the output.
         if (!first_run)
@@ -893,7 +893,7 @@ private:
         }
     }
     
-    virtual void exec()
+    void exec()
     {
         // Compute only the output in the first iteration.
         if (!first_run)
@@ -909,19 +909,19 @@ private:
         }
     }
     
-    virtual void prod()
+    void prod()
     {
         WRITE_VEC_MULTIPORT(oport1, ovals)
         ovals.clear();
     }
     
-    virtual void clean()
+    void clean()
     {
         delete stval;
         delete nsval;
     }
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
@@ -979,7 +979,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const{return "UT::mealy";}
+    std::string forsyde_kind() const{return "UT::mealy";}
     
 private:
     //! The functions passed to the process constructor
@@ -996,14 +996,14 @@ private:
     std::vector<OT> ovals;
 
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         stval = new ST;
         *stval = init_st;
         nsval = new ST;
     }
     
-    virtual void prep()
+    void prep()
     {
         unsigned int itoks;
         _gamma_func(itoks, *stval);    // determine how many tokens to read
@@ -1012,26 +1012,26 @@ private:
             *it = iport1.read();
     }
     
-    virtual void exec()
+    void exec()
     {
         _ns_func(*nsval, *stval, ivals);
         _od_func(ovals, *stval, ivals);
         *stval = *nsval;
     }
     
-    virtual void prod()
+    void prod()
     {
         WRITE_VEC_MULTIPORT(oport1, ovals)
         ovals.clear();
     }
     
-    virtual void clean()
+    void clean()
     {
         delete stval;
         delete nsval;
     }
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
@@ -1073,7 +1073,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::constant";}
+    std::string forsyde_kind() const {return "UT::constant";}
     
 private:
     T init_val;
@@ -1083,27 +1083,27 @@ private:
     bool infinite;
     
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         if (take==0) infinite = true;
         tok_cnt = 0;
     }
     
-    virtual void prep() {}
+    void prep() {}
     
-    virtual void exec() {}
+    void exec() {}
     
-    virtual void prod()
+    void prod()
     {
         if (tok_cnt++ < take || infinite)
             WRITE_MULTIPORT(oport1, init_val)
         else wait();
     }
     
-    virtual void clean() {}
+    void clean() {}
 
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
@@ -1149,7 +1149,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::source";}
+    std::string forsyde_kind() const {return "UT::source";}
     
 private:
     T init_st;        // The current state
@@ -1163,7 +1163,7 @@ private:
     functype _func;
     
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         cur_st = new T;
         *cur_st = init_st;
@@ -1172,27 +1172,27 @@ private:
         tok_cnt = 1;
     }
     
-    virtual void prep() {}
+    void prep() {}
     
-    virtual void exec()
+    void exec()
     {
         _func(*cur_st, *cur_st);
     }
     
-    virtual void prod()
+    void prod()
     {
         if (tok_cnt++ < take || infinite)
             WRITE_MULTIPORT(oport1, *cur_st)
         else wait();
     }
     
-    virtual void clean()
+    void clean()
     {
         delete cur_st;
     }
     
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
@@ -1269,7 +1269,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::sink";}
+    std::string forsyde_kind() const {return "UT::sink";}
     
 private:
     T* val;         // The current state of the process
@@ -1278,30 +1278,30 @@ private:
     functype _func;
     
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         val = new T;
     }
     
-    virtual void prep()
+    void prep()
     {
         *val = iport1.read();
     }
     
-    virtual void exec()
+    void exec()
     {
         _func(*val);
     }
     
-    virtual void prod() {}
+    void prod() {}
     
-    virtual void clean()
+    void clean()
     {
         delete val;
     }
     
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);    // only one output port
         boundInChans[0].port = &iport1;
@@ -1332,7 +1332,7 @@ public:
     { }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::zip";}
+    std::string forsyde_kind() const {return "UT::zip";}
     
 private:
     unsigned int i1toks, i2toks;
@@ -1340,13 +1340,13 @@ private:
     std::vector<T1> i1vals;
     std::vector<T2> i2vals;
     
-    virtual void init()
+    void init()
     {
         i1vals.resize(i1toks);
         i2vals.resize(i2toks);
     }
     
-    virtual void prep()
+    void prep()
     {
         for (auto it=i1vals.begin();it!=i1vals.end();it++)
             *it = iport1.read();
@@ -1354,17 +1354,17 @@ private:
             *it = iport2.read();
     }
     
-    virtual void exec() {}
+    void exec() {}
     
-    virtual void prod()
+    void prod()
     {
         WRITE_MULTIPORT(oport1,std::make_tuple(i1vals,i2vals))  // write to the output
     }
     
-    virtual void clean() {}
+    void clean() {}
     
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(2);     // two input ports
         boundInChans[0].port = &iport1;
@@ -1403,30 +1403,30 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::zipN";}
+    std::string forsyde_kind() const {return "UT::zipN";}
 private:
     std::vector<unsigned> in_toks;
     // intermediate values
     std::tuple<std::vector<Ts>...>* in_val;
     
-    virtual void init()
+    void init()
     {
         in_val = new std::tuple<std::vector<Ts>...>;
     }
     
-    virtual void prep()
+    void prep()
     {
         *in_val = sc_fifo_tuple_read<Ts...>(iport, in_toks);
     }
     
-    virtual void exec() {}
+    void exec() {}
     
-    virtual void prod()
+    void prod()
     {
         WRITE_MULTIPORT(oport1,*in_val);    // write to the output
     }
     
-    virtual void clean()
+    void clean()
     {
         delete in_val;
     }
@@ -1464,7 +1464,7 @@ private:
     }
 
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(sizeof...(Ts));    // two output ports
         register_ports(boundInChans, iport);
@@ -1522,37 +1522,37 @@ public:
                iport1("iport1"), oport1("oport1"), oport2("oport2") {}
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::unzip";}
+    std::string forsyde_kind() const {return "UT::unzip";}
 private:    
     // intermediate values
     std::tuple<std::vector<T1>,std::vector<T2>>* in_val;
     
-    virtual void init()
+    void init()
     {
         in_val = new std::tuple<std::vector<T1>,std::vector<T2>>;
     }
     
-    virtual void prep()
+    void prep()
     {
         *in_val = iport1.read();
     }
     
-   virtual  void exec() {}
+    void exec() {}
     
-    virtual void prod()
+    void prod()
     {
         
         WRITE_VEC_MULTIPORT(oport1,std::get<0>(*in_val))  // write to the output 1
         WRITE_VEC_MULTIPORT(oport2,std::get<1>(*in_val))  // write to the output 2
     }
     
-    virtual void clean()
+    void clean()
     {
         delete in_val;
     }
     
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
@@ -1581,29 +1581,29 @@ public:
             ) : ut_process(_name), iport1("iport1") {}
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::unzipN";}
+    std::string forsyde_kind() const {return "UT::unzipN";}
 private:
     // intermediate values
     std::tuple<std::vector<Ts>...>* in_val;
     
-    virtual void init()
+    void init()
     {
         in_val = new std::tuple<std::vector<Ts>...>;
     }
     
-    virtual void prep()
+    void prep()
     {
         *in_val = iport1.read();
     }
     
-    virtual void exec() {}
+    void exec() {}
     
-    virtual void prod()
+    void prod()
     {
         fifo_tuple_write<Ts...>(*in_val, oport);
     }
     
-    virtual void clean()
+    void clean()
     {
         delete in_val;
     }
@@ -1639,7 +1639,7 @@ private:
     }
 
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
@@ -1702,36 +1702,36 @@ public:
          : ut_process(_name) { }
     
     //! Specifying from which process constructor is the module built
-    virtual std::string forsyde_kind() const {return "UT::fanout";}
+    std::string forsyde_kind() const {return "UT::fanout";}
     
 private:
     // Inputs and output variables
     T* val;
     
     //Implementing the abstract semantics
-    virtual void init()
+    void init()
     {
         val = new T;
     }
     
-    virtual void prep()
+    void prep()
     {
         *val = iport1.read();
     }
     
-    virtual void exec() {}
+    void exec() {}
     
-    virtual void prod()
+    void prod()
     {
         WRITE_MULTIPORT(oport1, *val)
     }
     
-    virtual void clean()
+    void clean()
     {
         delete val;
     }
 #ifdef FORSYDE_INTROSPECTION
-    virtual void bindInfo()
+    void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
