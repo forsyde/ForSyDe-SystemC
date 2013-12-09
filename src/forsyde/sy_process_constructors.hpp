@@ -1447,12 +1447,12 @@ private:
 //! The zip process with variable number of inputs and one output
 /*! This process "zips" the incoming signals into one signal of tuples.
  */
-template <class... ITYPs>
-class zipN : public sc_module
+template <class... Ts>
+class zipN : public sy_process
 {
 public:
-    std::tuple <sc_fifo_in<ITYPs>...> iport;///< tuple of ports for the input channels
-    sc_fifo_out<std::tuple<ITYPs...> > oport1;///< port for the output channel
+    std::tuple <SY_in<Ts>...> iport;///< tuple of ports for the input channels
+    SY_out<std::tuple<abst_ext<Ts>...> > oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -1460,22 +1460,35 @@ public:
      */
     zipN(const sc_module_name& _name      ///< process name
          )
-         :sc_module(_name)
-    {
-        SC_THREAD(worker);
-    }
+         : sy_process(_name), oport1("oport1")
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::zipN";}
 private:
-    SC_HAS_PROCESS(zipN);
-
-    //! The main and only execution thread of the module
-    void worker()
+    // intermediate values
+    std::tuple<abst_ext<Ts>...>* in_vals;
+    
+    void init()
     {
-        std::tuple<ITYPs...> in_vals;
-        while (1)
-        {
-            in_vals = sc_fifo_tuple_read<ITYPs...>(iport);
-            WRITE_MULTIPORT(oport1,in_vals)    // write to the output
-        }
+        in_vals = new std::tuple<abst_ext<Ts>...>;
+    }
+    
+    void prep()
+    {
+        *in_vals = sc_fifo_tuple_read<Ts...>(iport);
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1,*in_vals)    // write to the output
+    }
+    
+    void clean()
+    {
+        delete in_vals;
     }
     
     template<size_t N,class R,  class T>
@@ -1498,12 +1511,12 @@ private:
     };
 
     template<class... T>
-    std::tuple<T...> sc_fifo_tuple_read(std::tuple<sc_fifo_in<T>...>& ports)
+    std::tuple<abst_ext<T>...> sc_fifo_tuple_read(std::tuple<SY_in<T>...>& ports)
     {
-        std::tuple<T...> ret;
+        std::tuple<abst_ext<T>...> ret;
         fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<T...>,
-                         std::tuple<sc_fifo_in<T>...>>::read(ret,ports);
+                         std::tuple<abst_ext<T>...>,
+                         std::tuple<SY_in<T>...>>::read(ret,ports);
         return ret;
     }
 
