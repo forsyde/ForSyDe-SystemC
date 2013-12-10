@@ -13,22 +13,14 @@
 #ifndef UPSAMPLER_HPP
 #define UPSAMPLER_HPP
 
-#include <forsyde.hpp>
+#include <vector>
 
-using namespace ForSyDe::SDF;
+using namespace std;
 
-class upSampler : public comb<float,float>
+void upSampler_func(vector<float>& out1, const vector<float>& inp1)
 {
-public:
-    upSampler(sc_module_name _name) : comb<float,float>(_name,1,2){}
-protected:
-    std::vector<float> _func(std::vector<float> a)
-    {
-      std::vector<float> ret(2);
-      ret[0] = a[0];
-      ret[1] = a[0];
-      return ret;
-    }
-};
+  out1[0] = inp1[0];
+  out1[1] = inp1[0];
+}
 
 #endif

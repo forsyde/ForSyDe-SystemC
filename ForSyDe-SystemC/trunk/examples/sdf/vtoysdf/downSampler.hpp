@@ -13,22 +13,14 @@
 #ifndef DOWNSAMPLER_HPP
 #define DOWNSAMPLER_HPP
 
-#include <forsyde.hpp>
+#include <vector>
 
-using namespace ForSyDe::SDF;
+using namespace std;
 
-class downSampler : public comb<float,float>
+void downSampler_func(vector<float>& out1, const vector<float>& inp1)
 {
-public:
-    downSampler(sc_module_name _name) : comb<float,float>(_name,3,2){}
-protected:
-    std::vector<float> _func(std::vector<float> a)
-    {
-      std::vector<float> ret(2);
-      ret[0] = a[0];
-      ret[1] = a[1];
-      return ret;
-    }
-};
+  out1[0] = inp1[0];
+  out1[1] = inp1[1];
+}
 
 #endif

@@ -21,39 +21,34 @@
 #include <tuple>
 
 std::vector<uint> itoks = {3,2};
+std::vector<uint> otoks = {2,2};
 
-using namespace ForSyDe::SDF;
+using namespace ForSyDe;
 using namespace std;
 
 SC_MODULE(compAvg)
 {
-    sc_fifo_in<float>  iport;
-    sc_fifo_out<float> oport;
+    SDF::in_port<float>  iport;
+    SDF::out_port<float> oport;
+        
+    SDF::signal<float> din, dout;
+    SDF::signal< tuple<vector<float>,vector<float>> > zi, zo;
     
-    zipN<float,float> zip1;
-    averager avg1;
-    unzipN<float,float> unzip1;
-    delayn<float> avginit;
-    
-    sc_fifo<float> din, dout;
-    sc_fifo< tuple<vector<float>,vector<float>> > zi, zo;
-    
-    SC_CTOR(compAvg): zip1("zip1",itoks), avg1("avg1"), unzip1("unzip1"),
-                      avginit("avginit1",0,2)
+    SC_CTOR(compAvg)
     {
-        get<0>(zip1.iport)(iport);
-        get<1>(zip1.iport)(dout);
-        zip1.oport(zi);
+        auto zip1 = new SDF::zipN<float,float>("zip1",itoks);
+        get<0>(zip1->iport)(iport);
+        get<1>(zip1->iport)(dout);
+        zip1->oport1(zi);
         
-        avg1.iport(zi);
-        avg1.oport(zo);
+        SDF::make_comb("averager1", averager_func, 1, 1, zo, zi);
         
-        unzip1.iport(zo);
-        get<0>(unzip1.oport)(oport);
-        get<1>(unzip1.oport)(din);
+        auto unzip1 = new SDF::unzipN<float,float>("unzip1",otoks);
+        unzip1->iport1(zo);
+        get<0>(unzip1->oport)(oport);
+        get<1>(unzip1->oport)(din);
         
-        avginit.iport(din);
-        avginit.oport(dout);
+        SDF::make_delayn("avginit1", (float)0, 2, dout, din);
     }
 };
 
