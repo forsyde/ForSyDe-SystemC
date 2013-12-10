@@ -10,60 +10,40 @@
     * License: BSD3                                                   *
     *******************************************************************/
 
+#include <forsyde.hpp>
 #include "compAvg.hpp"
 #include "upSampler.hpp"
 #include "downSampler.hpp"
 #include <iostream>
 
-using namespace ForSyDe::SDF;
+using namespace ForSyDe;
 
-class stimuli : public source<float>
+void stimuli_func(float& out1, const float& inp1)
 {
-public:
-    stimuli(sc_module_name _name) : source<float>(_name, 0){}
-protected:
-    float _func(float inp)
-    {
-      return inp+1;
-    }
-};
+  out1 = inp1+1;
+}
 
-class report : public sink<float>
+void report_func(float inp1)
 {
-public:
-    report(sc_module_name _name) : sink<float>(_name){}
-protected:
-    void _func(float inp)
-    {
-        std::cout << "output value: " << inp << std::endl;
-    }
-    
-};
+    std::cout << "output value: " << inp1 << std::endl;
+}
 
 SC_MODULE(Top)
 {
-    sc_fifo<float> src, upsrc, res, downres;
-    
-    stimuli stim1;
-    upSampler us1;
-    downSampler ds1;
-    compAvg ca1;
-    report report1;
-    
-    SC_CTOR(Top): stim1("stim1"), us1("us1"), ds1("ds1"),
-                  ca1("ca1"), report1("report1")
-    {
-        stim1.oport(src);
-      
-        us1.iport(src);
-        us1.oport(upsrc);
-
-        ca1.iport(upsrc);
-        ca1.oport(res);
-
-        ds1.iport(res);
-        ds1.oport(downres);
+    SDF::signal<float> src, upsrc, res, downres;
         
-        report1.iport(downres);
+    SC_CTOR(Top)
+    {
+        SDF::make_source("stimuli1", stimuli_func, (float)0, 100, src);
+      
+        SDF::make_comb("upSampler1", upSampler_func, 2, 1, upsrc, src);
+
+        auto compAvg1 = new compAvg("compAvg1");
+        compAvg1->iport(upsrc);
+        compAvg1->oport(res);
+
+        SDF::make_comb("downSampler1", downSampler_func, 2, 3, downres, res);
+        
+        SDF::make_sink("report1", report_func, downres);
     }
 };
