@@ -1026,7 +1026,7 @@ public:
      */
     zipN(sc_module_name _name,
          std::vector<unsigned> in_toks)
-          :sdf_process(_name), in_toks(in_toks), oport1("oport1")
+          :sdf_process(_name), oport1("oport1"), in_toks(in_toks)
     {
         if (in_toks.size()!=sizeof...(Ts))
             SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
@@ -1226,7 +1226,7 @@ public:
      */
     unzipN(sc_module_name _name,
             std::vector<unsigned> out_toks)
-          :sdf_process(_name), out_toks(out_toks), iport1("iport1")
+          :sdf_process(_name), iport1("iport1"), out_toks(out_toks)
     {
         if (out_toks.size()!=sizeof...(Ts))
             SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
