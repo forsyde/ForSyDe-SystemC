@@ -29,12 +29,12 @@ SC_MODULE(mulacc)
     
     SC_CTOR(mulacc)
     {
-        SY::make_comb2("mul1", mul_func, addi1, a, b);
+        SY::make_scomb2("mul1", mul_func, addi1, a, b);
 
-        auto add1 = SY::make_comb2("add1", add_func, acci, addi1, addi2);
+        auto add1 = SY::make_scomb2("add1", add_func, acci, addi1, addi2);
         add1->oport1(result);
         
-        SY::make_delay("accum", abst_ext<int>(0), addi2, acci);
+        SY::make_sdelay("accum", 0, addi2, acci);
     }
 };
 

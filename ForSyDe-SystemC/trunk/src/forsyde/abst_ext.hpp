@@ -110,5 +110,12 @@ private:
     T value;
 };
 
+//! Check for presence in run time
+/*! This macro is used mainly in the strict version of synchronous
+ * processes to ensure that the received inputs are not absent.
+ */
+#define CHECK_PRESENCE(VAL) \
+    if (is_absent(VAL)) SC_REPORT_ERROR(this->name(),"Unexpected absent value received in");
+
 }
 #endif

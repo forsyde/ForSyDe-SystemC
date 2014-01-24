@@ -23,16 +23,16 @@ SC_MODULE(top)
     
     SC_CTOR(top)
     {
-        SY::make_constant("constant1", abst_ext<int>(3), 10, srca);
+        SY::make_sconstant("constant1", 3, 10, srca);
         
-        SY::make_source("siggen1", siggen_func, abst_ext<int>(1), 10, srcb);
+        SY::make_ssource("siggen1", siggen_func, 1, 10, srcb);
         
         auto mulacc1 = new mulacc("mulacc1");
         mulacc1->a(srca);
         mulacc1->b(srcb);
         mulacc1->result(result);
         
-        SY::make_sink("report1", report_func, result);
+        SY::make_ssink("report1", report_func, result);
     }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()

@@ -19,7 +19,7 @@
 
 using namespace ForSyDe;
 
-void report_func(abst_ext<int> inp1)
+void report_func(int inp1)
 {
 #pragma ForSyDe begin report_func
     std::cout << "output value: " << inp1 << std::endl;
