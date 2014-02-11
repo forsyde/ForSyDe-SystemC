@@ -404,7 +404,7 @@ private:
 //! Process constructor for a combinational process with an array of inputs and one output
 /*! similar to comb with an array of inputs
  */
-template <typename T0, typename T1, unsigned int N>
+template <typename T0, typename T1, std::size_t N>
 class combX : public sy_process
 {
 public:
@@ -1384,7 +1384,7 @@ private:
 //! The zipX process with an array of inputs and one output
 /*! This process "zips" an array of incoming signals into one signal of arrays.
  */
-template <class T1, unsigned int N>
+template <class T1, std::size_t N>
 class zipX : public sy_process
 {
 public:
@@ -1594,7 +1594,7 @@ private:
 //! The unzipX process with one input and an array of outputs
 /*! This process "unzips" a signal of arrays into an array of separate signals
  */
-template <class T1, unsigned int N>
+template <class T1, std::size_t N>
 class unzipX : public sy_process
 {
 public:
