@@ -153,7 +153,7 @@ inline scomb4<T0,T1,T2,T3,T4>* make_scomb4(const std::string& pName,
  */
 template <class T0, template <class> class OIf,
           class T1, template <class> class IIf,
-          unsigned int N>
+          std::size_t N>
 inline scombX<T0,T1,N>* make_scombX(const std::string& pName,
     const typename scombX<T0,T1,N>::functype& _func,
     OIf<T0>& outS,
@@ -164,6 +164,30 @@ inline scombX<T0,T1,N>* make_scombX(const std::string& pName,
 
     for (int i=0;i<N;i++)
     	(*p).iport[i](inpS[i]);
+    (*p).oport1(outS);
+
+    return p;
+}
+
+//! Helper function to construct a strict data parallel comb process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class T0, template <class> class OIf,
+          class T1, template <class> class IIf,
+          std::size_t N>
+inline sdpcomb<T0,T1,N>* make_sdpcomb(const std::string& pName,
+    const typename sdpcomb<T0,T1,N>::functype& _func,
+    OIf<std::array<T0,N>>& outS,
+    IIf<std::array<T1,N>>& inpS
+    )
+{
+    auto p = new sdpcomb<T0,T1,N>(pName.c_str(), _func);
+
+    (*p).iport1(inpS);
     (*p).oport1(outS);
 
     return p;

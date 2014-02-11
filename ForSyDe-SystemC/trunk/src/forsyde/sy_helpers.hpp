@@ -153,7 +153,7 @@ inline comb4<T0,T1,T2,T3,T4>* make_comb4(const std::string& pName,
  */
 template <class T0, template <class> class OIf,
           class T1, template <class> class IIf,
-          unsigned int N>
+          std::size_t N>
 inline combX<T0,T1,N>* make_combX(const std::string& pName,
     const typename combX<T0,T1,N>::functype& _func,
     OIf<T0>& outS,
