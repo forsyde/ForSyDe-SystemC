@@ -169,6 +169,30 @@ inline scombX<T0,T1,N>* make_scombX(const std::string& pName,
     return p;
 }
 
+//! Helper function to construct a strict reduce process
+/*! This function is used to construct a sreduce process (SystemC module)
+ * and connect connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class T0, template <class> class OIf,
+          template <class> class IIf,
+          std::size_t N>
+inline sreduce<T0,N>* make_sreduce(const std::string& pName,
+    const typename sreduce<T0,N>::functype& _func,
+    OIf<T0>& outS,
+    IIf<std::array<T0,N>>& inpS
+    )
+{
+    auto p = new sreduce<T0,N>(pName.c_str(), _func);
+
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+
+    return p;
+}
+
 //! Helper function to construct a strict data parallel comb process
 /*! This function is used to construct a process (SystemC module) and
  * connect its output and output signals.
@@ -394,6 +418,56 @@ inline ssink<T>* make_ssink(const std::string& pName,
     auto p = new ssink<T>(pName.c_str(), _func);
     
     (*p).iport1(inS);
+    
+    return p;
+}
+
+//! Helper function to construct a szip process
+/*! This function is used to construct a strict zip process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <class T1, template <class> class I1If,
+           class T2, template <class> class I2If,
+           template <class> class OIf>
+inline szip<T1,T2>* make_szip(const std::string& pName,
+    OIf<std::tuple<T1,T2>>& outS,
+    I1If<T1>& inp1S,
+    I2If<T2>& inp2S
+    )
+{
+    auto p = new szip<T1,T2>(pName.c_str());
+    
+    (*p).iport1(inp1S);
+    (*p).iport2(inp2S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a sunzip process
+/*! This function is used to construct a strict unzip process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <template <class> class IIf,
+           class T1, template <class> class O1If,
+           class T2, template <class> class O2If>
+inline sunzip<T1,T2>* make_sunzip(const std::string& pName,
+    IIf<std::tuple<T1,T2>>& inpS,
+    O1If<T1>& out1S,
+    O2If<T2>& out2S
+    )
+{
+    auto p = new sunzip<T1,T2>(pName.c_str());
+    
+    (*p).iport1(inpS);
+    (*p).oport1(out1S);
+    (*p).oport2(out2S);
     
     return p;
 }

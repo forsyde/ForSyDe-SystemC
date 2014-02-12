@@ -1,9 +1,9 @@
 /**********************************************************************
-    * report.hpp -- a report process                                  *
+    * add.hpp -- an adder process                                     *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Demonstration of a data parallel model.                *
+    * Purpose: Demonstration of a data parallel application.          *
     *                                                                 *
     * Usage:   datapar example                                        *
     *                                                                 *
@@ -11,19 +11,18 @@
     *******************************************************************/
 
 
-#ifndef REPORT_HPP
-#define REPORT_HPP
+#ifndef ADD_HPP
+#define ADD_HPP
 
 #include <forsyde.hpp>
-#include <array>
-#include <iostream>
 
 using namespace ForSyDe;
 
-void report_func(int inp1)
+void add_func(int& out1, const int& inp1, const int& inp2)
 {
-#pragma ForSyDe begin report_func
-    std::cout << "output value: " << inp1 << std::endl;
+
+#pragma ForSyDe begin add_func 
+    out1 = inp1 + inp2;
 #pragma ForSyDe end
 }
 

@@ -1352,14 +1352,16 @@ private:
     
     void prod()
     {
+        typedef std::tuple<abst_ext<T1>,abst_ext<T2>> TT;
         if (ival1->is_absent() && ival2->is_absent())
         {
-            typedef std::tuple<abst_ext<T1>,abst_ext<T2>> TT;
+            
             WRITE_MULTIPORT(oport1,abst_ext<TT>())  // write to the output 1
         }
         else
         {
-            WRITE_MULTIPORT(oport1,std::make_tuple(*ival1,*ival2))  // write to the output
+            abst_ext<TT> oval(std::make_tuple(*ival1,*ival2));
+            WRITE_MULTIPORT(oport1,oval)  // write to the output
         }
     }
     
@@ -1483,7 +1485,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,*in_vals)    // write to the output
+        WRITE_MULTIPORT(oport1,abst_ext<std::tuple<abst_ext<Ts>...>>(*in_vals))    // write to the output
     }
     
     void clean()
@@ -1569,8 +1571,8 @@ private:
         }
         else
         {
-            WRITE_MULTIPORT(oport1,std::get<0>(in_val->unsafe_from_abst_ext()))  // write to the output 1
-            WRITE_MULTIPORT(oport2,std::get<1>(in_val->unsafe_from_abst_ext()))  // write to the output 2
+            WRITE_MULTIPORT(oport1,abst_ext<T1>(std::get<0>(in_val->unsafe_from_abst_ext())))  // write to the output 1
+            WRITE_MULTIPORT(oport2,abst_ext<T2>(std::get<1>(in_val->unsafe_from_abst_ext())))  // write to the output 2
         }
     }
     
@@ -1638,7 +1640,7 @@ private:
         else
         {
             for (int i=0; i<N; i++)
-                WRITE_MULTIPORT(oport[i],in_val->unsafe_from_abst_ext()[i])  // write to the output i
+                WRITE_MULTIPORT(oport[i],abst_ext<T1>(in_val->unsafe_from_abst_ext()[i]))  // write to the output i
         }
     }
     
@@ -1842,7 +1844,7 @@ private:
     {
         if (samples_took==samples)
         {
-            WRITE_MULTIPORT(oport1, *oval)
+            WRITE_MULTIPORT(oport1, abst_ext<std::vector<abst_ext<T>>>(*oval))
             samples_took = 0;
         }
         else

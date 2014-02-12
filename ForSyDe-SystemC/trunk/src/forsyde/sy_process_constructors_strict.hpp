@@ -501,6 +501,88 @@ private:
 #endif
 };
 
+//! Process constructor for a strict reduce process with an array of inputs and one output
+/*! This process constructor implements the strict version of the well-
+ * known reduce operation, common in data-parallel applications.
+ */
+template <typename T0, std::size_t N>
+class sreduce : public sy_process
+{
+public:
+    SY_in<std::array<T0,N>> iport1;     ///< port for the input channel 1
+    SY_out<T0> oport1;                  ///< port for the output channel
+
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(T0&, const T0&, const T0&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output port
+     */
+    sreduce(const sc_module_name& _name,      ///< process name
+           const functype& _func             ///< function to be passed
+          ) : sy_process(_name), _func(_func)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+#endif
+    }
+
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "SY::sreduce";}
+
+private:
+    // Inputs and output variables
+    T0* oval;
+    std::array<T0,N> ival;
+
+    //! The function passed to the process constructor
+    functype _func;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        oval = new T0;
+    }
+
+    void prep()
+    {
+        auto ival1_temp = iport1.read();
+        CHECK_PRESENCE(ival1_temp);
+        ival = unsafe_from_abst_ext(ival1_temp);
+    }
+
+    void exec()
+    {
+        *oval = ival[0];
+        for (size_t i=1;i<N;i++)
+            _func(*oval, *oval, ival[i]);
+    }
+
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, abst_ext<T0>(*oval))
+    }
+
+    void clean()
+    {
+        delete oval;
+    }
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
 //! A data-parallel process constructor for a strict combinational process with an input and output array type
 /*! similar to comb with an array of inputs
  */
@@ -1260,6 +1342,455 @@ private:
         boundInChans[0].port = &iport1;
     }
 #endif
+};
+
+//! The strict zip process with two inputs and one output
+/*! This process "zips" two incoming signals into one signal of tuples.
+ */
+template <class T1, class T2>
+class szip : public sy_process
+{
+public:
+    SY_in<T1> iport1;        ///< port for the input channel 1
+    SY_in<T2> iport2;        ///< port for the input channel 2
+    SY_out<std::tuple<T1,T2>> oport1;///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * zips them together and writes the results using the output port
+     */
+    szip(const sc_module_name& _name      ///< process name
+        )
+         :sy_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1")
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::szip";}
+    
+private:
+    // intermediate values
+    T1* ival1;
+    T2* ival2;
+    
+    void init()
+    {
+        ival1 = new T1;
+        ival2 = new T2;
+    }
+    
+    void prep()
+    {
+        auto ival1_temp = iport1.read();
+        auto ival2_temp = iport2.read();
+        CHECK_PRESENCE(ival1_temp);
+        CHECK_PRESENCE(ival2_temp);
+        *ival1 = unsafe_from_abst_ext(ival1_temp);
+        *ival2 = unsafe_from_abst_ext(ival2_temp);
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        auto outval = abst_ext<std::tuple<T1,T2>>(std::make_tuple(*ival1,*ival2));
+        WRITE_MULTIPORT(oport1, outval)  // write to the output
+    }
+    
+    void clean()
+    {
+        delete ival1;
+        delete ival2;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(2);     // two input ports
+        boundInChans[0].port = &iport1;
+        boundInChans[1].port = &iport2;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! The strict zipX process with an array of inputs and one output
+/*! This process "zips" an array of incoming signals into one signal of arrays.
+ */
+template <class T1, std::size_t N>
+class szipX : public sy_process
+{
+public:
+    std::array<SY_in<T1>,N> iport;      ///< port array for the input channels
+    SY_out<std::array<T1,N>> oport1;    ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * zips them together and writes the results using the output port
+     */
+    szipX(const sc_module_name& _name      ///< process name
+        )
+         :sy_process(_name), oport1("oport1")
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::szipX";}
+    
+private:
+    // intermediate values
+    std::array<T1,N> ival;
+    
+    void init() {}
+    
+    void prep()
+    {
+        for (int i=0; i<N; i++)
+        {
+            auto ival_temp = iport[i].read();
+            CHECK_PRESENCE(ival_temp);
+            ival[i] = unsafe_from_abst_ext(ival_temp);
+        }
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        auto oval = abst_ext<std::array<T1,N>>(ival);
+        WRITE_MULTIPORT(oport1,oval)  // write to the output
+    }
+    
+    void clean() {}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(N);     // N input ports
+        for (int i=0;i<N;i++)
+            boundInChans[i].port = &iport[i];
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! The strict zip process with variable number of inputs and one output
+/*! This process "zips" the incoming signals into one signal of tuples.
+ */
+template <class... Ts>
+class szipN : public sy_process
+{
+public:
+    std::tuple<SY_in<Ts>...> iport;///< tuple of ports for the input channels
+    SY_out<std::tuple<Ts...> > oport1;///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * zips them together and writes the results using the output port
+     */
+    szipN(const sc_module_name& _name      ///< process name
+         )
+         : sy_process(_name), oport1("oport1")
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::szipN";}
+private:
+    // intermediate values
+    std::tuple<Ts...>* in_vals;
+    
+    void init()
+    {
+        in_vals = new std::tuple<Ts...>;
+    }
+    
+    void prep()
+    {
+        *in_vals = sc_fifo_tuple_read<Ts...>(iport);
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1,abst_ext<std::tuple<Ts...>>(*in_vals))    // write to the output
+    }
+    
+    void clean()
+    {
+        delete in_vals;
+    }
+    
+    template<size_t N,class R,  class T>
+    struct fifo_read_helper
+    {
+        static void read(R& ret, T& t)
+        {
+            fifo_read_helper<N-1,R,T>::read(ret,t);
+            std::get<N>(ret) = std::get<N>(t).read();
+        }
+    };
+
+    template<class R, class T>
+    struct fifo_read_helper<0,R,T>
+    {
+        static void read(R& ret, T& t)
+        {
+            auto ival_temp = std::get<0>(t).read();
+            //~ CHECK_PRESENCE(ival_temp);
+            if (is_absent(ival_temp)) SC_REPORT_ERROR("szipN","Unexpected absent value received in");
+            std::get<0>(ret) = unsafe_from_abst_ext(ival_temp);
+        }
+    };
+
+    template<class... T>
+    std::tuple<T...> sc_fifo_tuple_read(std::tuple<SY_in<T>...>& ports)
+    {
+        std::tuple<T...> ret;
+        fifo_read_helper<sizeof...(T)-1,
+                         std::tuple<T...>,
+                         std::tuple<SY_in<T>...>>::read(ret,ports);
+        return ret;
+    }
+
+};
+
+//! The strict unzip process with one input and two outputs
+/*! This process "unzips" a signal of tuples into two separate signals
+ */
+template <class T1, class T2>
+class sunzip : public sy_process
+{
+public:
+    SY_in<std::tuple<T1,T2>> iport1;///< port for the input channel
+    SY_out<T1> oport1;        ///< port for the output channel 1
+    SY_out<T2> oport2;        ///< port for the output channel 2
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * unzips them and writes the results using the output ports
+     */
+    sunzip(const sc_module_name& _name      ///< process name
+          )
+         :sy_process(_name), iport1("iport1"), oport1("oport1"), oport2("oport2")
+    {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::sunzip";}
+private:
+    // intermediate values
+    abst_ext<std::tuple<T1,T2>>* in_val;
+    
+    void init()
+    {
+        in_val = new abst_ext<std::tuple<T1,T2>>;
+    }
+    
+    void prep()
+    {
+        *in_val = iport1.read();
+        CHECK_PRESENCE(*in_val);
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1,abst_ext<T1>(std::get<0>(*in_val)))  // write to the output 1
+        WRITE_MULTIPORT(oport2,abst_ext<T2>(std::get<1>(*in_val)))  // write to the output 2
+    }
+    
+    void clean()
+    {
+        delete in_val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(2);    // two output ports
+        boundOutChans[0].port = &oport1;
+        boundOutChans[1].port = &oport2;
+    }
+#endif
+};
+
+//! The sunzipX process with one input and an array of outputs
+/*! This process "unzips" a signal of arrays into an array of separate signals
+ */
+template <class T1, std::size_t N>
+class sunzipX : public sy_process
+{
+public:
+    SY_in<std::array<T1,N>> iport1;///< port for the input channel
+    std::array<SY_out<T1>,N> oport;///< port array for the output channels
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * unzips them and writes the results using the output ports
+     */
+    sunzipX(const sc_module_name& _name      ///< process name
+          )
+         :sy_process(_name), iport1("iport1")
+    {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::sunzipX";}
+private:
+    // intermediate values
+    abst_ext<std::array<T1,N>>* in_val;
+    
+    void init()
+    {
+        in_val = new abst_ext<std::array<T1,N>>;
+    }
+    
+    void prep()
+    {
+        *in_val = iport1.read();
+        CHECK_PRESENCE(*in_val);
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        for (int i=0; i<N; i++)
+            WRITE_MULTIPORT(oport[i],abst_ext<T1>(in_val->unsafe_from_abst_ext()[i]))  // write to the output i
+    }
+    
+    void clean()
+    {
+        delete in_val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(N);    // two output ports
+        for (int i=0;i<N;i++)
+            boundOutChans[i].port = &oport[i];
+    }
+#endif
+};
+
+//! The unzip process with one input and variable number of outputs
+/*! This process "unzips" the incoming signal into a tuple of signals.
+ */
+template <class... Ts>
+class sunzipN : public sy_process
+{
+public:
+    SY_in<std::tuple<Ts...>> iport1;///< port for the input channel
+    std::tuple<SY_out<Ts>...> oport;///< tuple of ports for the output channels
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * unzips it and writes the results using the output ports
+     */
+    sunzipN(const sc_module_name& _name      ///< process name
+           )
+          :sy_process(_name), iport1("iport1")
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::sunzipN";}
+private:
+    // intermediate values
+    abst_ext<std::tuple<Ts...>>* in_val;
+    
+    void init()
+    {
+        in_val = new abst_ext<std::tuple<Ts...>>;
+    }
+    
+    void prep()
+    {
+        *in_val = iport1.read();
+        CHECK_PRESENCE(*in_val);
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        fifo_tuple_write<Ts...>(in_val->unsafe_from_abst_ext(), oport);
+    }
+    
+    void clean()
+    {
+        delete in_val;
+    }
+    
+    template<size_t N,class R,  class T>
+    struct fifo_write_helper
+    {
+        static void write(const R& vals, T& t)
+        {
+            fifo_write_helper<N-1,R,T>::write(vals,t);
+            std::get<N>(t).write(std::get<N>(vals));
+        }
+    };
+
+    template<class R, class T>
+    struct fifo_write_helper<0,R,T>
+    {
+        static void write(const R& vals, T& t)
+        {
+            std::get<0>(t).write(std::get<0>(vals));
+        }
+    };
+
+    template<class... T>
+    void fifo_tuple_write(const std::tuple<T...>& vals,
+                             std::tuple<SY_out<T>...>& ports)
+    {
+        fifo_write_helper<sizeof...(T)-1,
+                          std::tuple<T...>,
+                          std::tuple<SY_out<T>...>>::write(vals,ports);
+    }
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(sizeof...(Ts));    // two output ports
+        register_ports(boundOutChans, oport);
+    }
+    
+    template<size_t N, class T>
+    struct register_ports_helper
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            register_ports_helper<N-1,T>::reg_port(boundChans,t);
+            boundChans[N].port = &std::get<N>(t);
+        }
+    };
+
+    template<class T>
+    struct register_ports_helper<0,T>
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            boundChans[0].port = &std::get<0>(t);
+        }
+    };
+
+    template<class... T>
+    void register_ports(std::vector<PortInfo>& boundChans,
+                             std::tuple<SY_out<T>...>& ports)
+    {
+        register_ports_helper<sizeof...(T)-1,
+                              std::tuple<SY_out<T>...>&>::reg_port(boundChans,ports);
+    }
+#endif
+
 };
 
 //! The strict group process with one input and one output
