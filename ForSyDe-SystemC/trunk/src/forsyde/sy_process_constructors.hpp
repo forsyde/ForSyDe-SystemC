@@ -714,17 +714,20 @@ private:
     
     void prep()
     {
-        if (first_run)
-            first_run = false;
-        else
+        if (!first_run)
             *ival = iport1.read();
     }
     
     void exec()
     {
-        _ns_func(*nsval, *stval, *ival);
+        if (first_run)
+            first_run = false;
+        else
+        {
+            _ns_func(*nsval, *stval, *ival);
+            *stval = *nsval;
+        }
         _od_func(*oval, *stval);
-        *stval = *nsval;
     }
     
     void prod()
@@ -826,8 +829,8 @@ private:
     
     void exec()
     {
-        _ns_func(*nsval, *stval, *ival);
         _od_func(*oval, *stval, *ival);
+        _ns_func(*nsval, *stval, *ival);
         *stval = *nsval;
     }
     
