@@ -679,6 +679,75 @@ private:
 #endif
 };
 
+//! Process constructor for a single source process
+/*! This class is used to build a source process with a single event in
+ * its output.
+ * Its main purpose is to be used in test-benches.
+ */
+template <class T>
+class single : public de_process
+{
+public:
+    DE_out<T> oport1;            ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which runs the user-imlpemented function
+     * and writes the result using the output port
+     */
+    single(sc_module_name _name,        ///< The module name
+              T val,                    ///< The constant output value
+              sc_time instant           ///< The instant at which the event happens
+             ) : de_process(_name), oport1("oport1"),
+                 val(val), instant(instant)
+                 
+    {
+#ifdef FORSYDE_INTROSPECTION
+        arg_vec.push_back(std::make_tuple("val", std::to_string(val)));
+        arg_vec.push_back(std::make_tuple("instant", std::to_string(interval.to_double())));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "DE::single";}
+    
+private:
+    T init_val;
+    sc_time interval;
+    
+    unsigned int tok_cnt;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        tok_cnt = 0;
+    }
+    
+    void prep() {}
+    
+    void exec() {}
+    
+    void prod()
+    {
+        if (tok_cnt++ <= 1)
+        {
+            WRITE_MULTIPORT(oport1, tt_event<T>(val, instant))
+            wait(instant - sc_time_stamp());
+        }
+        else wait();
+    }
+    
+    void clean() {}
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+        boundOutChans[0].portType = typeid(T).name();
+    }
+#endif
+};
+
 //! Process constructor for a source process
 /*! This class is used to build a souce process which only has an output.
  * Given an initial state and a function, the process repeatedly applies

@@ -189,6 +189,27 @@ inline constant<T>* make_constant(std::string pName,
     return p;
 }
 
+//! Helper function to construct a single source process
+/*! This function is used to construct a single event process (SystemC
+ * module) and connect its output signal.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the output FIFOs.
+ */
+template <class T, template <class> class OIf>
+inline single<T>* make_single(std::string pName,
+    T val,
+    sc_time instant,
+    OIf<T>& outS
+    )
+{
+    auto p = new single<T>(pName.c_str(), val, instant);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct a source process
 /*! This function is used to construct a source (SystemC module) and
  * connect its output signal.
