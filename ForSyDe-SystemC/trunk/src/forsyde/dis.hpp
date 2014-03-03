@@ -344,6 +344,86 @@ private:
 #endif
 };
 
+//! Process constructor for a CT2DEf domain interface
+/*! This class is used to build a domain interface which converts a CT 
+ * signal to a DE one with fixed sampling rate. It can be used to
+ * implement analog-to-digital converters with fixed sampling rates.
+ */
+template<class T>
+class CT2DEf : public process
+{
+public:
+    CT::CT_in iport1;               ///< port for the input channel
+    DE::DE_out<T> oport1;           ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented function to it and writes the
+     * results using the output port
+     */
+    CT2DEf(sc_module_name _name,    ///< process name
+           sc_time samp_period      ///< sampling period
+          ) : process(_name), iport1("iport1"), oport1("oport1"), samp_period(samp_period)
+    {}
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "CT2DEf";}
+
+private:    
+    // Internal variables
+    //~ std::vector<tt_event<T>> samples; // a queue to be committed
+    sc_time local_time;
+    T out_val;
+    sc_time samp_period, sampling_time;
+    sub_signal subsig1;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        sampling_time = SC_ZERO_TIME;
+        subsig1 = iport1.read();
+        local_time = get_start_time(subsig1);
+        if (sampling_time != local_time)
+            SC_REPORT_ERROR(name(), "Unexpected starting point for start of the input signal");
+        WRITE_MULTIPORT(oport1, tt_event<T>(subsig1(sampling_time), sampling_time))
+        local_time = get_end_time(subsig1);
+        sampling_time += samp_period;
+    }
+    
+    void prep()
+    {
+        while (sampling_time >= local_time)
+        {            
+            subsig1 = iport1.read();
+            local_time = get_end_time(subsig1);
+        }
+    }
+    
+    void exec()
+    {
+        out_val = subsig1(sampling_time);
+        sampling_time += samp_period;
+    }
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1,tt_event<T>(subsig1(sampling_time), sampling_time))
+        wait(sampling_time - sc_time_stamp());
+    }
+    
+    void clean() {}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
 //! Process constructor for a DE2CT domain interfaces
 /*! This class is used to build a domain interfaces which converts a DE 
  * signal to a CT one. It can be used to implement digital-to-analog
