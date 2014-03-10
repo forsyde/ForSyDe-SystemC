@@ -66,7 +66,7 @@ public:
         const_sdf = (char*)"sdf";
         const_ut = (char*)"ut";
         const_sy = (char*)"sy";
-        const_de = (char*)"de";
+        const_dde = (char*)"dde";
         const_dt = (char*)"dt";
         const_ct = (char*)"ct";
         const_port = (char*)"port";
@@ -191,8 +191,8 @@ public:
         if (moc=="SDF") moc_name = const_sdf;
         else if (moc=="UT") moc_name = const_ut;
         else if (moc=="SY") moc_name = const_sy;
-        else if (moc=="DE") moc_name = const_de;
-        else if (moc=="DT") moc_name = const_de;
+        else if (moc=="DDE") moc_name = const_dde;
+        else if (moc=="DT") moc_name = const_dt;
         else if (moc=="CT") moc_name = const_ct;
         else
         {
@@ -284,7 +284,7 @@ public:
         if (sig->moc()=="SDF") moc_name = const_sdf;
         else if (sig->moc()=="UT") moc_name = const_ut;
         else if (sig->moc()=="SY") moc_name = const_sy;
-        else if (sig->moc()=="DE") moc_name = const_de;
+        else if (sig->moc()=="DDE") moc_name = const_dde;
         else if (sig->moc()=="DT") moc_name = const_dt;
         else if (sig->moc()=="CT") moc_name = const_ct;
         else
@@ -335,7 +335,7 @@ private:
     char *const_name, *const_leaf_process, *const_composite_process, 
          *const_process_network, *const_process_constructor, *const_moc,
          *const_type, *const_port,
-         *const_sdf, *const_ut, *const_sy, *const_de, *const_dt, *const_ct,
+         *const_sdf, *const_ut, *const_sy, *const_dde, *const_dt, *const_ct,
          *const_port_dir, *const_direction, *const_in, *const_out,
          *const_signal, *const_component_name, *const_argument, *const_value,
          *const_source, *const_source_port, *const_target, *const_target_port,

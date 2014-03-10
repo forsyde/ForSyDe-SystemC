@@ -1,5 +1,6 @@
 /**********************************************************************           
-    * de_moc.hpp -- The discrete-event (DE) model of computation      *
+    * dde_moc.hpp -- The distributed discrete-event (DDE) model of    *
+    *                   computation                                   *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
@@ -15,28 +16,29 @@
 #define DE_MOC_HPP
 
 /*! \file de_moc.hpp
- * \brief Implements the Discrete-Event (DE) Model of Computation
+ * \brief Implements the Distributed Discrete-Event (DE) Model of Computation
  * 
  *  This file includes the basic process constructors and other
- * facilities used for modeling in the synchronous model of computation.
+ * facilities used for modeling in the distributed discrete-event model
+ * of computation.
  */
 
 #include <functional>
 #include <tuple>
 
 #include "tt_event.hpp"
-#include "de_process.hpp"
-#include "de_process_constructors.hpp"
-#include "de_helpers.hpp"
+#include "dde_process.hpp"
+#include "dde_process_constructors.hpp"
+#include "dde_helpers.hpp"
 
 namespace ForSyDe
 {
 
-//! The namespace for DE MoC
+//! The namespace for DDE MoC
 /*! This namespace includes constructs used for building models in the
- * DE MoC.
+ * DDE MoC.
  */
-namespace DE
+namespace DDE
 {
 
 

@@ -35,7 +35,7 @@ struct tt_event
     //! The default constructor
     tt_event ()
     {
-        value = 0;
+        value = VT();
         time = TT();
     }
     

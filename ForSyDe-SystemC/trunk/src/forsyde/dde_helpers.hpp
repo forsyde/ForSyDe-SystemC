@@ -1,35 +1,35 @@
 /**********************************************************************           
-    * de_helpers.hpp -- Helper primitives in the DE MoC               *
+    * dde_helpers.hpp -- Helper primitives in the DDE MoC             *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Providing helper primitives for modeling in the DE MoC *
+    * Purpose: Providing helper primitives for modeling in the DDE MoC*
     *                                                                 *
     * Usage:   This file is included automatically                    *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef DE_HELPERS_HPP
-#define DE_HELPERS_HPP
+#ifndef DDE_HELPERS_HPP
+#define DDE_HELPERS_HPP
 
-/*! \file de_helpers.hpp
- * \brief Implements helper primitives for modeling in the DE MoC
+/*! \file dde_helpers.hpp
+ * \brief Implements helper primitives for modeling in the DDE MoC
  * 
  *  This file includes helper functions which facilliate construction of
- * processes in the DE MoC
+ * processes in the DDE MoC
  */
 
 #include <functional>
 #include <tuple>
 
 #include "tt_event.hpp"
-#include "de_process_constructors.hpp"
+#include "dde_process_constructors.hpp"
 
 namespace ForSyDe
 {
 
-namespace DE
+namespace DDE
 {
 
 using namespace sc_core;
@@ -83,67 +83,6 @@ inline comb2<T0,T1,T2>* make_comb2(std::string pName,
     return p;
 }
 
-//! Helper function to construct a comb3 process
-/*! This function is used to construct a process (SystemC module) and
- * connect its output and output signals.
- * It provides a more functional style definition of a ForSyDe process.
- * It also removes bilerplate code by using type-inference feature of
- * C++ and automatic binding to the input and output FIFOs.
- */
-//~ template <class T0, template <class> class OIf,
-          //~ class T1, template <class> class I1If,
-          //~ class T2, template <class> class I2If,
-          //~ class T3, template <class> class I3If>
-//~ inline comb3<T0,T1,T2,T3>* make_comb3(std::string pName,
-    //~ typename comb3<T0,T1,T2,T3>::functype _func,
-    //~ OIf<T0>& outS,
-    //~ I1If<T1>& inp1S,
-    //~ I2If<T2>& inp2S,
-    //~ I3If<T3>& inp3S
-    //~ )
-//~ {
-    //~ auto p = new comb3<T0,T1,T2,T3>(pName.c_str(), _func);
-    //~ 
-    //~ (*p).iport1(inp1S);
-    //~ (*p).iport2(inp2S);
-    //~ (*p).iport3(inp3S);
-    //~ (*p).oport1(outS);
-    //~ 
-    //~ return p;
-//~ }
-//~ 
-//~ //! Helper function to construct a comb4 process
-//~ /*! This function is used to construct a process (SystemC module) and
- //~ * connect its output and output signals.
- //~ * It provides a more functional style definition of a ForSyDe process.
- //~ * It also removes bilerplate code by using type-inference feature of
- //~ * C++ and automatic binding to the input and output FIFOs.
- //~ */
-//~ template <class T0, template <class> class OIf,
-          //~ class T1, template <class> class I1If,
-          //~ class T2, template <class> class I2If,
-          //~ class T3, template <class> class I3If,
-          //~ class T4, template <class> class I4If>
-//~ inline comb4<T0,T1,T2,T3,T4>* make_comb4(std::string pName,
-    //~ typename comb4<T0,T1,T2,T3,T4>::functype _func,
-    //~ OIf<T0>& outS,
-    //~ I1If<T1>& inp1S,
-    //~ I2If<T2>& inp2S,
-    //~ I3If<T3>& inp3S,
-    //~ I4If<T4>& inp4S
-    //~ )
-//~ {
-    //~ auto p = new comb4<T0,T1,T2,T3,T4>(pName.c_str(), _func);
-    //~ 
-    //~ (*p).iport1(inp1S);
-    //~ (*p).iport2(inp2S);
-    //~ (*p).iport3(inp3S);
-    //~ (*p).iport4(inp4S);
-    //~ (*p).oport1(outS);
-    //~ 
-    //~ return p;
-//~ }
-
 //! Helper function to construct a delay process
 /*! This function is used to construct a process (SystemC module) and
  * connect its output and output signals.
@@ -163,6 +102,58 @@ inline delay<T>* make_delay(std::string pName,
     auto p = new delay<T>(pName.c_str(), initval, delay_time);
     
     (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+/*! This function is used to construct a mealy process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename IT, typename ST, typename OT,
+           template <class> class IIf,
+           template <class> class OIf>
+inline mealy<IT,ST,OT>* make_smealy(const std::string& pName,
+    const typename mealy<IT,ST,OT>::ns_functype& _ns_func,
+    const typename mealy<IT,ST,OT>::od_functype& _od_func,
+    const ST& init_st,
+    OIf<OT>& outS,
+    IIf<IT>& inpS
+    )
+{
+    auto p = new mealy<IT,ST,OT>(pName.c_str(), _ns_func, _od_func, init_st);
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+/*! This function is used to construct a mealy2 process (SystemC module)
+ * with two inputs and connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename IT1, typename IT2, typename ST, typename OT,
+           template <class> class IIf1, template <class> class IIf2,
+           template <class> class OIf>
+inline mealy2<IT1,IT2,ST,OT>* make_mealy2(const std::string& pName,
+    const typename mealy2<IT1,IT2,ST,OT>::ns_functype& _ns_func,
+    const typename mealy2<IT1,IT2,ST,OT>::od_functype& _od_func,
+    const ST& init_st,
+    OIf<OT>& outS,
+    IIf1<IT1>& inpS1,
+    IIf2<IT2>& inpS2
+    )
+{
+    auto p = new mealy2<IT1,IT2,ST,OT>(pName.c_str(), _ns_func, _od_func, init_st);
+    
+    (*p).iport1(inpS1);
+    (*p).iport2(inpS2);
     (*p).oport1(outS);
     
     return p;
@@ -263,7 +254,7 @@ template <class T1, template <class> class I1If,
            class T2, template <class> class I2If,
            template <class> class OIf>
 inline zip<T1,T2>* make_zip(std::string pName,
-    OIf<std::tuple<abst_ext<T1>,abst_ext<T2>>>& outS,
+    OIf<std::tuple<T1,T2>>& outS,
     I1If<T1>& inp1S,
     I2If<T2>& inp2S
     )
@@ -288,7 +279,7 @@ template <template <class> class IIf,
            class T1, template <class> class O1If,
            class T2, template <class> class O2If>
 inline unzip<T1,T2>* make_unzip(std::string pName,
-    IIf<std::tuple<abst_ext<T1>,abst_ext<T2>>>& inpS,
+    IIf<std::tuple<T1,T2>>& inpS,
     O1If<T1>& out1S,
     O2If<T2>& out2S
     )
