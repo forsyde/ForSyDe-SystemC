@@ -180,27 +180,6 @@ inline constant<T>* make_constant(std::string pName,
     return p;
 }
 
-//! Helper function to construct a single source process
-/*! This function is used to construct a single event process (SystemC
- * module) and connect its output signal.
- * It provides a more functional style definition of a ForSyDe process.
- * It also removes bilerplate code by using type-inference feature of
- * C++ and automatic binding to the output FIFOs.
- */
-template <class T, template <class> class OIf>
-inline single<T>* make_single(std::string pName,
-    T val,
-    sc_time instant,
-    OIf<T>& outS
-    )
-{
-    auto p = new single<T>(pName.c_str(), val, instant);
-    
-    (*p).oport1(outS);
-    
-    return p;
-}
-
 //! Helper function to construct a source process
 /*! This function is used to construct a source (SystemC module) and
  * connect its output signal.
@@ -217,6 +196,27 @@ inline source<T>* make_source(std::string pName,
     )
 {
     auto p = new source<T>(pName.c_str(), _func, initval, take);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a vsource process
+/*! This function is used to construct a source (SystemC module) and
+ * connect its output signal.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the output FIFOs.
+ */
+template <class T, template <class> class OIf>
+inline vsource<T>* make_vsource(std::string pName,  ///< the module name
+    const std::vector<T>& values,                   ///< event values
+    const std::vector<sc_time>& offsets,            ///< event offsets
+    OIf<T>& outS
+    )
+{
+    auto p = new vsource<T>(pName.c_str(), values, offsets);
     
     (*p).oport1(outS);
     
@@ -292,36 +292,6 @@ inline unzip<T1,T2>* make_unzip(std::string pName,
     
     return p;
 }
-
-//! Helper function to construct an unzipN process
-/*! This function is used to construct an unzipN process (SystemC module) and
- * connect its output and output signals.
- * It provides a more functional style definition of a ForSyDe process.
- * It also removes bilerplate code by using type-inference feature of
- * C++ and automatic binding to the input FIFOs.
- */
-//~ template <template <class> class IIf,
-           //~ typename T1, template <typename> typename OIf,
-           //~ typename... Ts>
-//~ inline unzipN<T...>* make_unzipN(std::string pName,
-    //~ IIf<std::tuple<abst_ext<Ts>...>>& inpS,
-    //~ OIf<T1>& outS,
-    //~ OIfs<Ts>&... outsS
-    //~ )
-//~ {
-    //~ make_unzipN(pName, inpS, outsS...);
-    //~ std:get???????????(*p).iport1(inpS);
-    //~ 
-    //~ return p;
-//~ }
-    //~ auto p = new unzip<T1,T2>(pName.c_str());
-    //~ 
-    //~ (*p).iport1(inpS);
-    //~ (*p).oport1(out1S);
-    //~ (*p).oport2(out2S);
-    //~ 
-    //~ return p;
-//~ }
 
 //! Helper function to construct a fanout process
 /*! This function is used to construct a fanout process (SystemC module) and

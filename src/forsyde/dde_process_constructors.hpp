@@ -941,69 +941,6 @@ private:
 #endif
 };
 
-//! Process constructor for a single source process
-/*! This class is used to build a source process with a single event in
- * its output.
- * Its main purpose is to be used in test-benches.
- */
-template <class T>
-class single : public dde_process
-{
-public:
-    DDE_out<T> oport1;            ///< port for the output channel
-
-    //! The constructor requires the module name
-    /*! It creates an SC_THREAD which runs the user-imlpemented function
-     * and writes the result using the output port
-     */
-    single(sc_module_name _name,        ///< The module name
-              T val,                    ///< The constant output value
-              sc_time instant           ///< The instant at which the event happens
-             ) : dde_process(_name), oport1("oport1"),
-                 val(val), instant(instant)
-                 
-    {
-#ifdef FORSYDE_INTROSPECTION
-        arg_vec.push_back(std::make_tuple("val", std::to_string(val)));
-        arg_vec.push_back(std::make_tuple("instant", std::to_string(instant.to_double())));
-#endif
-    }
-    
-    //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DDE::single";}
-    
-private:
-    T val;
-    sc_time instant;
-        
-    //Implementing the abstract semantics
-    void init() {}
-    
-    void prep() {}
-    
-    void exec() {}
-    
-    void prod()
-    {
-        WRITE_MULTIPORT(oport1, tt_event<T>(val, instant))
-        wait(instant - sc_time_stamp());
-        // Promise no more values
-        WRITE_MULTIPORT(oport1, tt_event<T>(T(), sc_max_time()))
-        wait();
-    }
-    
-    void clean() {}
-
-#ifdef FORSYDE_INTROSPECTION
-    void bindInfo()
-    {
-        boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
-    }
-#endif
-};
-
 //! Process constructor for a source process
 /*! This class is used to build a souce process which only has an output.
  * Given an initial state and a function, the process repeatedly applies
@@ -1105,37 +1042,74 @@ private:
  * Given the test bench vector, the process iterates over the emenets
  * of the vector and outputs one value on each evaluation cycle.
  */
-template <class OTYP>
-class vsource : public sc_module
+template <class T>
+class vsource : public dde_process
 {
 public:
-    sc_fifo_out<OTYP> oport1;     ///< port for the output channel
+    DDE_out<T> oport1;     ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which writes the result using the output
      * port.
      */
-    vsource(sc_module_name _name,           ///< The module name
-            const std::vector<OTYP>& invec  ///< Initial vector
-            )
-         :sc_module(_name), in_vec(invec)
+    vsource(sc_module_name _name,                   ///< the module name
+            const std::vector<T>& values,           ///< event values
+            const std::vector<sc_time>& offsets     ///< event offsets
+            ) : dde_process(_name), oport1("oport1"),
+                values(values), offsets(offsets)
     {
-        SC_THREAD(worker);
+        if (values.size()<offsets.size())
+            SC_REPORT_ERROR(name(),"Error matching values and offsets vectors!");
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << values;
+        arg_vec.push_back(std::make_tuple("values", ss.str()));
+        ss.str("");
+        ss << offsets;
+        arg_vec.push_back(std::make_tuple("offsets", ss.str()));
+#endif
     }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "DDE::vsource";}
 private:
-    std::vector<OTYP> in_vec;
-    SC_HAS_PROCESS(vsource);
+    std::vector<T> values;
+    std::vector<sc_time> offsets;
+    size_t iter;
 
-    //! The main and only execution thread of the module
-    void worker()
+    //Implementing the abstract semantics
+    void init()
     {
-        typename std::vector<OTYP>::iterator itr;
-        for (itr=in_vec.begin();itr!=in_vec.end();itr++)
+        iter = 0;
+    }
+    
+    void prep() {}
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, tt_event<T>(values[iter], offsets[iter]))
+        wait(offsets[iter] - sc_time_stamp());
+        iter++;
+        if (iter == values.size())
         {
-            OTYP out_val = *itr;
-            WRITE_MULTIPORT(oport1,out_val)    // write to the output
+            // Promise no more values
+            //~ WRITE_MULTIPORT(oport1, tt_event<T>(T(), sc_max_time()))
+            wait();
         }
     }
+    
+    void clean() {}
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+        boundOutChans[0].portType = typeid(T).name();
+    }
+#endif
 };
 
 //! Process constructor for a sink process
