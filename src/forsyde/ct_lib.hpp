@@ -14,7 +14,7 @@
 #define CTLIB_H
 
 #include "ct_moc.hpp"
-#include "de_moc.hpp"
+#include "dde_moc.hpp"
 #include "dis.hpp"
 
 /*! \file ct_lib.hpp
@@ -364,7 +364,7 @@ template <class OIf>
 inline gaussian* make_gaussian(std::string pName,
     const double& gaussVar,       ///< The variance
     const double& gaussMean,      ///< The mean value
-    sc_time sample_period,         ///< sampling period
+    const sc_time sample_period,         ///< sampling period
     OIf& outS
     )
 {
@@ -378,7 +378,7 @@ inline gaussian* make_gaussian(std::string pName,
 //! Process constructor for implementing a linear filter
 /*! This class is used to build a process which implements a linear
  * in the CT MoC filter based on the numerator and denominator constants.
- * It internally uses a DE filter together with CT2DE and DE2CT domain
+ * It internally uses a DDE filter together with CT2DDE and DDE2CT domain
  * interfaces.
  */
 SC_MODULE(filter)
@@ -386,12 +386,12 @@ SC_MODULE(filter)
     CT_in iport1;           ///< port for the input channel
     CT_out oport1;          ///< port for the output channel;
     
-    CT2DE<CTTYPE> ct2de1;
-    DE::filter<CTTYPE> filter1;
-    DE2CT<CTTYPE> de2ct1;
+    CT2DDE<CTTYPE> ct2de1;
+    DDE::filter<CTTYPE> filter1;
+    DDE2CT<CTTYPE> de2ct1;
     
-    DE::DE2DE<CTTYPE> inp_sig, out_sig;
-    DE::DE2DE<unsigned int> smp_sig;
+    DDE::DDE2DDE<CTTYPE> inp_sig, out_sig;
+    DDE::DDE2DDE<unsigned int> smp_sig;
     
     //! The constructor requires the module name and the filter parameters
     /*! 
@@ -426,13 +426,66 @@ SC_MODULE(filter)
  */
 template <class OIf, class I1If>
 inline filter* make_filter(std::string pName,
-    std::vector<CTTYPE> numerators,  ///< Numerator constants
-    std::vector<CTTYPE> denominators,///< Denominator constants
-    sc_time sample_period,            ///< sampling period
+    const std::vector<CTTYPE> numerators,  ///< Numerator constants
+    const std::vector<CTTYPE> denominators,///< Denominator constants
+    const sc_time sample_period,            ///< sampling period
     OIf& outS,
     I1If& inp1S
     )
 {
+    auto p = new filter(pName.c_str(), numerators, denominators, sample_period);
+    
+    (*p).iport1(inp1S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct an integrator
+/*! This function is used to construct a CT integrator and connect its
+ * input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class I1If>
+inline filter* make_integrator(std::string pName,
+    const sc_time sample_period,            ///< sampling period
+    OIf& outS,
+    I1If& inp1S
+    )
+{
+    std::vector<CTTYPE> numerators = {1.0};
+    std::vector<CTTYPE> denominators = {1.0, 0.0};
+    
+    auto p = new filter(pName.c_str(), numerators, denominators, sample_period);
+    
+    (*p).iport1(inp1S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a PID controller
+/*! This function is used to construct a PID controller and connect its
+ * input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class I1If>
+inline filter* make_pid(std::string pName,
+    const CTTYPE& kp,
+    const CTTYPE& ki,
+    const CTTYPE& kd,
+    const sc_time sample_period,
+    OIf& outS,
+    I1If& inp1S
+    )
+{
+    std::vector<CTTYPE> numerators = {kd,kp,ki};
+    std::vector<CTTYPE> denominators = {0.0,0.0,1.0,0.0};
+    
     auto p = new filter(pName.c_str(), numerators, denominators, sample_period);
     
     (*p).iport1(inp1S);

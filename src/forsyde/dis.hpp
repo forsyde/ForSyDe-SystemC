@@ -212,30 +212,30 @@ private:
 #endif
 };
 
-//! Process constructor for a CT2DE domain interface
+//! Process constructor for a CT2DDE domain interface
 /*! This class is used to build a domain interface which converts an CT 
- * signal to a DE one with adaptive sampling rate. It can be used to
+ * signal to a DDE one with adaptive sampling rate. It can be used to
  * implement analog-to-digital converters with adaptive sampling rates.
  */
 template<class T>
-class CT2DE : public process
+class CT2DDE : public process
 {
 public:
     CT::CT_in iport1;               ///< port for the input channel
-    DE::DE_in<unsigned int> iport2; ///< port for the sampling channel
-    DE::DE_out<T> oport1;           ///< port for the output channel
+    DDE::DDE_in<unsigned int> iport2; ///< port for the sampling channel
+    DDE::DDE_out<T> oport1;           ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented function to it and writes the
      * results using the output port
      */
-    CT2DE(sc_module_name _name       ///< process name
+    CT2DDE(sc_module_name _name       ///< process name
           ) : process(_name), iport1("iport1"), oport1("oport1")
     {}
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "CT2DE";}
+    std::string forsyde_kind() const {return "CT2DDE";}
 
 private:    
     // Internal variables
@@ -344,30 +344,30 @@ private:
 #endif
 };
 
-//! Process constructor for a CT2DEf domain interface
+//! Process constructor for a CT2DDEf domain interface
 /*! This class is used to build a domain interface which converts a CT 
- * signal to a DE one with fixed sampling rate. It can be used to
+ * signal to a DDE one with fixed sampling rate. It can be used to
  * implement analog-to-digital converters with fixed sampling rates.
  */
 template<class T>
-class CT2DEf : public process
+class CT2DDEf : public process
 {
 public:
     CT::CT_in iport1;               ///< port for the input channel
-    DE::DE_out<T> oport1;           ///< port for the output channel
+    DDE::DDE_out<T> oport1;           ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented function to it and writes the
      * results using the output port
      */
-    CT2DEf(sc_module_name _name,    ///< process name
+    CT2DDEf(sc_module_name _name,    ///< process name
            sc_time samp_period      ///< sampling period
           ) : process(_name), iport1("iport1"), oport1("oport1"), samp_period(samp_period)
     {}
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "CT2DEf";}
+    std::string forsyde_kind() const {return "CT2DDEf";}
 
 private:    
     // Internal variables
@@ -424,8 +424,8 @@ private:
 #endif
 };
 
-//! Process constructor for a DE2CT domain interfaces
-/*! This class is used to build a domain interfaces which converts a DE 
+//! Process constructor for a DDE2CT domain interfaces
+/*! This class is used to build a domain interfaces which converts a DDE 
  * signal to a CT one. It can be used to implement digital-to-analog
  * converters. There are two operating modes which can be configured using
  * the initial values of the constructor:
@@ -433,10 +433,10 @@ private:
  * - linear interpolation
  */
 template<class T>
-class DE2CT : public process
+class DDE2CT : public process
 {
 public:
-    DE::DE_in<T> iport1;        ///< port for the input channel
+    DDE::DDE_in<T> iport1;        ///< port for the input channel
 	CT::CT_out oport1;          ///< port for the output channel
 
     //! The constructor requires the module name
@@ -444,7 +444,7 @@ public:
      * applies the user-imlpemented function to it and writes the
      * results using the output port
      */
-    DE2CT(sc_module_name _name,      ///< process name
+    DDE2CT(sc_module_name _name,      ///< process name
           A2DMode op_mode = HOLD    ///< The operation mode
           ) : process(_name), iport1("iport1"), oport1("oport1"),
               op_mode(op_mode)
@@ -457,7 +457,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DE2CT";}
+    std::string forsyde_kind() const {return "DDE2CT";}
 
 private:
 	A2DMode op_mode;
@@ -665,23 +665,23 @@ private:
 #endif
 };
 
-//! Process constructor for a SY2DE domain interfaces
+//! Process constructor for a SY2DDE domain interfaces
 /*! This class is used to build a domain interfaces which converts an SY 
- * signal to a DE one.
+ * signal to a DDE one.
  */
 template<class T>
-class SY2DE : public process
+class SY2DDE : public process
 {
 public:
     SY::SY_in<T> iport1;        ///< port for the input channel
-	DE::DE_out<T> oport1;       ///< port for the output channel
+	DDE::DDE_out<T> oport1;       ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented function to it and writes the
      * results using the output port
      */
-    SY2DE(sc_module_name _name,     ///< process name
+    SY2DDE(sc_module_name _name,     ///< process name
           sc_time sample_period     ///< The unified period length
           ) : process(_name), iport1("iport1"), oport1("oport1"),
               sample_period(sample_period)
@@ -694,7 +694,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "SY2DE";}
+    std::string forsyde_kind() const {return "SY2DDE";}
 
 private:
     sc_time sample_period;
@@ -744,15 +744,15 @@ private:
 #endif
 };
 
-//! Process constructor for a DE2SY domain interface
-/*! This class is used to build a domain interface which converts a DE 
+//! Process constructor for a DDE2SY domain interface
+/*! This class is used to build a domain interface which converts a DDE 
  * signal to an SY one.
  */
 template<class T>
-class DE2SY : public process
+class DDE2SY : public process
 {
 public:
-    DE::DE_in<T> iport1;  ///< port for the input channel
+    DDE::DDE_in<T> iport1;  ///< port for the input channel
     SY::SY_out<T> oport1;   ///< port for the output channel
 
     //! The constructor requires the module name
@@ -760,7 +760,7 @@ public:
      * applies the user-imlpemented function to it and writes the
      * results using the output port
      */
-    DE2SY(sc_module_name _name,     ///< process name
+    DDE2SY(sc_module_name _name,     ///< process name
           sc_time sample_period     ///< The unified period length
           ) : process(_name), iport1("iport1"), oport1("oport1"),
               sample_period(sample_period)
@@ -773,7 +773,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DE2SY";}
+    std::string forsyde_kind() const {return "DDE2SY";}
 
 private:
     sc_time sample_period;

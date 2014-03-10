@@ -76,7 +76,7 @@ inline CT2SY* make_CT2SY(std::string pName,
     return p;
 }
 
-//! Helper function to construct an CT2DE domain interface
+//! Helper function to construct an CT2DDE domain interface
 /*! This function is used to construct a domain interface (SystemC module)
  * from the continuous-time to the discrete-event MoC and connect its
  * input and output signals.
@@ -85,13 +85,13 @@ inline CT2SY* make_CT2SY(std::string pName,
  * C++ and automatic binding to the input and output FIFOs.
  */
 template <class T, template <class> class OIf, class IIf>
-inline CT2DE<T>* make_CT2DE(std::string pName,
+inline CT2DDE<T>* make_CT2DDE(std::string pName,
     OIf<T>& outS,
     IIf& inpS1,
-    DE::in_port<unsigned int> inpS2
+    DDE::in_port<unsigned int> inpS2
     )
 {
-    auto p = new CT2DE<T>(pName.c_str());
+    auto p = new CT2DDE<T>(pName.c_str());
     
     (*p).iport1(inpS1);
     (*p).iport2(inpS2);
@@ -100,7 +100,7 @@ inline CT2DE<T>* make_CT2DE(std::string pName,
     return p;
 }
 
-//! Helper function to construct an CT2DEf domain interface
+//! Helper function to construct an CT2DDEf domain interface
 /*! This function is used to construct a domain interface (SystemC module)
  * from the continuous-time to the discrete-event MoC and connect its
  * input and output signals.
@@ -109,13 +109,13 @@ inline CT2DE<T>* make_CT2DE(std::string pName,
  * C++ and automatic binding to the input and output FIFOs.
  */
 template <class T, template <class> class OIf, class IIf>
-inline CT2DEf<T>* make_CT2DEf(std::string pName,
+inline CT2DDEf<T>* make_CT2DDEf(std::string pName,
     sc_time sampling_period,
     OIf<T>& outS,
     IIf& inpS
     )
 {
-    auto p = new CT2DEf<T>(pName.c_str(), sampling_period);
+    auto p = new CT2DDEf<T>(pName.c_str(), sampling_period);
     
     (*p).iport1(inpS);
     (*p).oport1(outS);
@@ -123,7 +123,7 @@ inline CT2DEf<T>* make_CT2DEf(std::string pName,
     return p;
 }
 
-//! Helper function to construct an DE2CT domain interface
+//! Helper function to construct an DDE2CT domain interface
 /*! This function is used to construct a domain interface (SystemC module)
  * from the discrete-event MoC to the continuous-time and connect its
  * input and output signals.
@@ -132,13 +132,13 @@ inline CT2DEf<T>* make_CT2DEf(std::string pName,
  * C++ and automatic binding to the input and output FIFOs.
  */
 template <class T, class OIf, template <class> class IIf>
-inline DE2CT<T>* make_DE2CT(std::string pName,
+inline DDE2CT<T>* make_DDE2CT(std::string pName,
     A2DMode op_mode,    ///< The operation mode
     OIf& outS,
     IIf<T>& inpS
     )
 {
-    auto p = new DE2CT<T>(pName.c_str(), op_mode);
+    auto p = new DDE2CT<T>(pName.c_str(), op_mode);
     
     (*p).iport1(inpS);
     (*p).oport1(outS);
@@ -190,7 +190,7 @@ inline SDF2SY<T>* make_SDF2SY(std::string pName,
     return p;
 }
 
-//! Helper function to construct an SY2DE domain interface
+//! Helper function to construct an SY2DDE domain interface
 /*! This function is used to construct a domain interface (SystemC module)
  * from the synchronous to discrete-event MoC and connect its
  * input and output signals.
@@ -199,13 +199,13 @@ inline SDF2SY<T>* make_SDF2SY(std::string pName,
  * C++ and automatic binding to the input and output FIFOs.
  */
 template <class T, template <class> class OIf, template <class> class IIf>
-inline SY2DE<T>* make_SY2DE(std::string pName,
+inline SY2DDE<T>* make_SY2DDE(std::string pName,
     sc_time sample_period,    ///< The unified period length
     OIf<T>& outS,
     IIf<T>& inpS
     )
 {
-    auto p = new SY2DE<T>(pName.c_str(), sample_period);
+    auto p = new SY2DDE<T>(pName.c_str(), sample_period);
     
     (*p).iport1(inpS);
     (*p).oport1(outS);
@@ -213,7 +213,7 @@ inline SY2DE<T>* make_SY2DE(std::string pName,
     return p;
 }
 
-//! Helper function to construct an DE2SY domain interface
+//! Helper function to construct an DDE2SY domain interface
 /*! This function is used to construct a domain interface (SystemC module)
  * from the discrete-event MoC to the synchronous and connect its
  * input and output signals.
@@ -222,13 +222,13 @@ inline SY2DE<T>* make_SY2DE(std::string pName,
  * C++ and automatic binding to the input and output FIFOs.
  */
 template <class T, template <class> class OIf, template <class> class IIf>
-inline DE2SY<T>* make_DE2SY(std::string pName,
+inline DDE2SY<T>* make_DDE2SY(std::string pName,
     sc_time sample_period,    ///< The unified period length
     OIf<T>& outS,
     IIf<T>& inpS
     )
 {
-    auto p = new DE2SY<T>(pName.c_str(), sample_period);
+    auto p = new DDE2SY<T>(pName.c_str(), sample_period);
     
     (*p).iport1(inpS);
     (*p).oport1(outS);
