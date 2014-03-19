@@ -34,11 +34,12 @@ using namespace sc_core;
 
 // Auxilliary Macro definitions
 #define WRITE_MULTIPORT(PORT,VAL) \
-    for (int i=0;i<PORT.size();i++) PORT[i]->write(VAL);
+    for (int WMPi=0;WMPi<PORT.size();WMPi++) PORT[WMPi]->write(VAL);
 
 #define WRITE_VEC_MULTIPORT(PORT,VEC) \
-    for (int i=0;i<PORT.size();i++) \
-        for (auto it=VEC.begin();it!=VEC.end();it++) PORT[i]->write(*it);
+    for (int WMPi=0;WMPi<PORT.size();WMPi++) \
+        for (auto WMPit=VEC.begin();WMPit!=VEC.end();WMPit++) \
+            PORT[WMPi]->write(*WMPit);
 
 //! Type of the object bound to a port
 enum bound_type {PORT, CHANNEL};
