@@ -34,7 +34,7 @@ using namespace sc_core;
 
 // Auxilliary Macro definitions
 #define WRITE_MULTIPORT(PORT,VAL) \
-    for (int i=0;i<PORT.size();i++) PORT[i]->write(VAL);
+    for (int WMPi=0;WMPi<PORT.size();WMPi++) PORT[WMPi]->write(VAL);
 
 
 //! Process constructor for a combinational adaptive process with one input and one output
