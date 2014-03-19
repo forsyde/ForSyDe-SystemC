@@ -449,7 +449,7 @@ private:
 
     void prep()
     {
-    	for (unsigned int i=0; i<N; i++)
+    	for (size_t i=0; i<N; i++)
     		ival[i] = iport[i].read();
     }
 
@@ -472,7 +472,7 @@ private:
     void bindInfo()
     {
         boundInChans.resize(N);     // only one input port
-        for (unsigned int i=0; i<N; i++)
+        for (size_t i=0; i<N; i++)
         	boundInChans[i].port = &iport[i];
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
@@ -1416,7 +1416,7 @@ private:
     
     void prep()
     {
-        for (int i=0; i<N; i++)
+        for (size_t i=0; i<N; i++)
             ival[i] = iport[i].read();
     }
     
@@ -1441,7 +1441,7 @@ private:
     void bindInfo()
     {
         boundInChans.resize(N);     // N input ports
-        for (int i=0;i<N;i++)
+        for (size_t i=0;i<N;i++)
             boundInChans[i].port = &iport[i];
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
@@ -1637,12 +1637,12 @@ private:
     {
         if (in_val->is_absent())
         {
-            for (int i=0; i<N; i++)
+            for (size_t i=0; i<N; i++)
                 WRITE_MULTIPORT(oport[i],abst_ext<T1>())  // write to the output i
         }
         else
         {
-            for (int i=0; i<N; i++)
+            for (size_t i=0; i<N; i++)
                 WRITE_MULTIPORT(oport[i],abst_ext<T1>(in_val->unsafe_from_abst_ext()[i]))  // write to the output i
         }
     }
@@ -1658,7 +1658,7 @@ private:
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
         boundOutChans.resize(N);    // two output ports
-        for (int i=0;i<N;i++)
+        for (size_t i=0;i<N;i++)
             boundOutChans[i].port = &oport[i];
     }
 #endif
