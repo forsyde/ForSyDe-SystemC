@@ -506,7 +506,7 @@ private:
  * known reduce operation, common in data-parallel applications.
  */
 template <typename T0, std::size_t N>
-class sreduce : public sy_process
+class sdpreduce : public sy_process
 {
 public:
     SY_in<std::array<T0,N>> iport1;     ///< port for the input channel 1
@@ -520,7 +520,7 @@ public:
      * applies the user-imlpemented function to them and writes the
      * results using the output port
      */
-    sreduce(const sc_module_name& _name,      ///< process name
+    sdpreduce(const sc_module_name& _name,      ///< process name
            const functype& _func             ///< function to be passed
           ) : sy_process(_name), _func(_func)
     {
@@ -532,7 +532,7 @@ public:
     }
 
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const{return "SY::sreduce";}
+    std::string forsyde_kind() const{return "SY::sdpreduce";}
 
 private:
     // Inputs and output variables
@@ -557,9 +557,31 @@ private:
 
     void exec()
     {
-        *oval = ival[0];
+        T0 res = T0();
+        #ifdef FORSYDE_OPENMP  // this can be enhanced with the new delare reduction clause in OpenMP 4.0
+        
+        #pragma omp parallel shared(res) // Create omp threads
+        {
+            T0 val = T0();  // val can be declared as local variable (for each thread) 
+            #pragma omp for nowait
+            for (int i = 0; i < N; ++i)
+            {
+                _func(val, val, ival[i]);
+            }
+            #pragma omp critical
+            {
+                _func(res, res, val);
+            }
+        }
+        
+        #else
+        
+        res = ival[0];
         for (size_t i=1;i<N;i++)
-            _func(*oval, *oval, ival[i]);
+            _func(res, res, ival[i]);
+        
+        #endif
+        *oval = res;
     }
 
     void prod()
@@ -587,7 +609,7 @@ private:
 /*! similar to comb with an array of inputs
  */
 template <typename T0, typename T1, std::size_t N>
-class sdpcomb : public sy_process
+class sdpmap : public sy_process
 {
 public:
     SY_in<std::array<T1,N>> iport1;       ///< port for the input channel 1
@@ -601,7 +623,7 @@ public:
      * applies the user-imlpemented function to each element and writes
      * the results using the output port
      */
-    sdpcomb(const sc_module_name& _name,    ///< process name
+    sdpmap(const sc_module_name& _name,    ///< process name
            const functype& _func            ///< function to be passed
           ) : sy_process(_name), _func(_func)
     {
@@ -613,7 +635,7 @@ public:
     }
 
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const{return "SY::sdpcomb";}
+    std::string forsyde_kind() const{return "SY::sdpmap";}
 
 private:
     // Inputs and output variables
@@ -635,6 +657,9 @@ private:
 
     void exec()
     {
+        #ifdef FORSYDE_OPENMP
+        #pragma omp parallel for
+        #endif
         for (size_t i=0; i<N; i++)
         {
             _func(oval[i], ival[i]);

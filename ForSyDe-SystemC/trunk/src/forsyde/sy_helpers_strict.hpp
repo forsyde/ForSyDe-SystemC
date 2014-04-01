@@ -179,13 +179,13 @@ inline scombX<T0,T1,N>* make_scombX(const std::string& pName,
 template <class T0, template <class> class OIf,
           template <class> class IIf,
           std::size_t N>
-inline sreduce<T0,N>* make_sreduce(const std::string& pName,
-    const typename sreduce<T0,N>::functype& _func,
+inline sdpreduce<T0,N>* make_sdpreduce(const std::string& pName,
+    const typename sdpreduce<T0,N>::functype& _func,
     OIf<T0>& outS,
     IIf<std::array<T0,N>>& inpS
     )
 {
-    auto p = new sreduce<T0,N>(pName.c_str(), _func);
+    auto p = new sdpreduce<T0,N>(pName.c_str(), _func);
 
     (*p).iport1(inpS);
     (*p).oport1(outS);
@@ -203,13 +203,13 @@ inline sreduce<T0,N>* make_sreduce(const std::string& pName,
 template <class T0, template <class> class OIf,
           class T1, template <class> class IIf,
           std::size_t N>
-inline sdpcomb<T0,T1,N>* make_sdpcomb(const std::string& pName,
-    const typename sdpcomb<T0,T1,N>::functype& _func,
+inline sdpmap<T0,T1,N>* make_sdpmap(const std::string& pName,
+    const typename sdpmap<T0,T1,N>::functype& _func,
     OIf<std::array<T0,N>>& outS,
     IIf<std::array<T1,N>>& inpS
     )
 {
-    auto p = new sdpcomb<T0,T1,N>(pName.c_str(), _func);
+    auto p = new sdpmap<T0,T1,N>(pName.c_str(), _func);
 
     (*p).iport1(inpS);
     (*p).oport1(outS);
