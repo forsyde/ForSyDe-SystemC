@@ -1227,7 +1227,7 @@ private:
     
     void prod()
     {
-        auto temp_event = tt_event<std::tuple<T1,T2>>(oval,tc);
+        auto temp_event = ttn_event<std::tuple<abst_ext<T1>,abst_ext<T2>>>(oval,tc);
         WRITE_MULTIPORT(oport1,temp_event)
         wait(tc - sc_time_stamp());
     }
