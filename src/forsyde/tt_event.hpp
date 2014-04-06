@@ -17,6 +17,8 @@
  * \brief Implements the time-tagged events
  */
 
+#include "abst_ext.hpp"
+
 namespace ForSyDe
 {
 
@@ -73,6 +75,10 @@ private:
     VT value;
     TT time;
 };
+
+//! The time-tagged data-type with an absent-extended value representing null values
+template<typename T>
+using ttn_event = tt_event<abst_ext<T>>;
 
 }
 #endif

@@ -16,7 +16,7 @@
 #define DE_MOC_HPP
 
 /*! \file de_moc.hpp
- * \brief Implements the Distributed Discrete-Event (DE) Model of Computation
+ * \brief Implements the Distributed Discrete-Event (DDE) Model of Computation
  * 
  *  This file includes the basic process constructors and other
  * facilities used for modeling in the distributed discrete-event model
