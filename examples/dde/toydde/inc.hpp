@@ -1,24 +1,28 @@
 /**********************************************************************
-    * main.cpp -- the main file and testbench for the toyde example   *
+    * inc.hpp -- an adder process                                     *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Demonstration of a simple DE system.                   *
+    * Purpose: Demonstration of a simple DDE system.                   *
     *                                                                 *
-    * Usage:   ToyDE example                                          *
+    * Usage:   ToyDDE example                                          *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#include "top.hpp"
 
-int sc_main(int argc, char **argv)
+#ifndef INC_HPP
+#define INC_HPP
+
+#include <forsyde.hpp>
+
+using namespace ForSyDe;
+
+void inc_func(int& out1, const int& inp1)
 {
-    top top1("top1");
-
-    sc_start();
-        
-    return 0;
+#pragma ForSyDe begin inc_func 
+    out1 = inp1 + 1;
+#pragma ForSyDe end
 }
 
-
+#endif

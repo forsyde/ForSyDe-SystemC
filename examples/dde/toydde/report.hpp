@@ -3,9 +3,9 @@
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Demonstration of a simple DE system.                   *
+    * Purpose: Demonstration of a simple DDE system.                   *
     *                                                                 *
-    * Usage:   ToyDE example                                          *
+    * Usage:   ToyDDE example                                          *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
