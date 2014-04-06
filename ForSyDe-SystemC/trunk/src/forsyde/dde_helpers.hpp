@@ -93,7 +93,7 @@ inline comb2<T0,T1,T2>* make_comb2(std::string pName,
 template <typename T, template <class> class IIf,
                         template <class> class OIf>
 inline delay<T>* make_delay(std::string pName,
-    T initval,
+    abst_ext<T> initval,
     sc_time delay_time,
     OIf<T>& outS,
     IIf<T>& inpS
@@ -116,7 +116,7 @@ inline delay<T>* make_delay(std::string pName,
 template <typename IT, typename ST, typename OT,
            template <class> class IIf,
            template <class> class OIf>
-inline mealy<IT,ST,OT>* make_smealy(const std::string& pName,
+inline mealy<IT,ST,OT>* make_mealy(const std::string& pName,
     const typename mealy<IT,ST,OT>::ns_functype& _ns_func,
     const typename mealy<IT,ST,OT>::od_functype& _od_func,
     const ST& init_st,
@@ -159,27 +159,6 @@ inline mealy2<IT1,IT2,ST,OT>* make_mealy2(const std::string& pName,
     return p;
 }
 
-//! Helper function to construct a constant source process
-/*! This function is used to construct a constant (SystemC module) and
- * connect its output signal.
- * It provides a more functional style definition of a ForSyDe process.
- * It also removes bilerplate code by using type-inference feature of
- * C++ and automatic binding to the output FIFOs.
- */
-template <class T, template <class> class OIf>
-inline constant<T>* make_constant(std::string pName,
-    T initval,
-    sc_time interval,
-    OIf<T>& outS
-    )
-{
-    auto p = new constant<T>(pName.c_str(), initval, interval);
-    
-    (*p).oport1(outS);
-    
-    return p;
-}
-
 //! Helper function to construct a source process
 /*! This function is used to construct a source (SystemC module) and
  * connect its output signal.
@@ -190,7 +169,7 @@ inline constant<T>* make_constant(std::string pName,
 template <class T, template <class> class OIf>
 inline source<T>* make_source(std::string pName,
     typename source<T>::functype _func,
-    abst_ext<T> initval,
+    ttn_event<T> initval,
     unsigned long long take,
     OIf<T>& outS
     )
@@ -254,7 +233,7 @@ template <class T1, template <class> class I1If,
            class T2, template <class> class I2If,
            template <class> class OIf>
 inline zip<T1,T2>* make_zip(std::string pName,
-    OIf<std::tuple<T1,T2>>& outS,
+    OIf< std::tuple<abst_ext<T1>,abst_ext<T2>> >& outS,
     I1If<T1>& inp1S,
     I2If<T2>& inp2S
     )
@@ -279,7 +258,7 @@ template <template <class> class IIf,
            class T1, template <class> class O1If,
            class T2, template <class> class O2If>
 inline unzip<T1,T2>* make_unzip(std::string pName,
-    IIf<std::tuple<T1,T2>>& inpS,
+    IIf< std::tuple<abst_ext<T1>,abst_ext<T2>> >& inpS,
     O1If<T1>& out1S,
     O2If<T2>& out2S
     )

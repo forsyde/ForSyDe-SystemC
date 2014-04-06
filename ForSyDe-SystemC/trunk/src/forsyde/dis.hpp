@@ -242,7 +242,7 @@ private:
     sub_signal f;
     std::vector<sub_signal > vecCTsignal; // a queue to be committed
     //~ sub_signal in_val;
-    T out_val;
+    abst_ext<T> out_val;
     sc_time samplingT;
     unsigned int samplingType, iter;
     
@@ -258,7 +258,7 @@ private:
     {
         //~ while (cur_time >= get_end_time(in_val)) in_val = iport1.read();
         auto e = iport2.read();
-        samplingType = get_value(e);
+        samplingType = unsafe_from_abst_ext(get_value(e)); // FIXME: what if absent?
         samplingT = get_time(e);
     }
     
@@ -278,14 +278,14 @@ private:
                     vecCTsignal.push_back(f);
             }
             if((samplingT >= get_start_time(f)) && (samplingT < get_end_time(f)))
-                WRITE_MULTIPORT(oport1,tt_event<T>(f(samplingT), samplingT))
+                WRITE_MULTIPORT(oport1,ttn_event<T>(f(samplingT), samplingT))
             else if(samplingT >= get_end_time(f))
             {
                 f = iport1.read();
                 if(samplingType==0)
                     vecCTsignal.push_back(f);
                 if ((samplingT >= get_start_time(f)) && (samplingT < get_end_time(f)))
-                    WRITE_MULTIPORT(oport1,tt_event<T>(f(samplingT), samplingT))
+                    WRITE_MULTIPORT(oport1,ttn_event<T>(f(samplingT), samplingT))
                 else
                 {
                     while(samplingT >= get_end_time(f))
@@ -294,7 +294,7 @@ private:
                         if(samplingType==0)
                             vecCTsignal.push_back(f);
                     }
-                    WRITE_MULTIPORT(oport1,tt_event<T>(f(samplingT), samplingT))
+                    WRITE_MULTIPORT(oport1,ttn_event<T>(f(samplingT), samplingT))
                 }
             }
             else
@@ -306,7 +306,7 @@ private:
                         vecCTsignal.erase(vecCTsignal.begin());
                     else
                     {
-                        WRITE_MULTIPORT(oport1,tt_event<T>(vecCTsignal.front()(samplingT), samplingT))
+                        WRITE_MULTIPORT(oport1,ttn_event<T>(vecCTsignal.front()(samplingT), samplingT))
                         break;
                     }
                 }
@@ -373,7 +373,7 @@ private:
     // Internal variables
     //~ std::vector<tt_event<T>> samples; // a queue to be committed
     sc_time local_time;
-    T out_val;
+    abst_ext<T> out_val;
     sc_time samp_period, sampling_time;
     sub_signal subsig1;
     
@@ -385,7 +385,7 @@ private:
         local_time = get_start_time(subsig1);
         if (sampling_time != local_time)
             SC_REPORT_ERROR(name(), "Unexpected starting point for start of the input signal");
-        WRITE_MULTIPORT(oport1, tt_event<T>(subsig1(sampling_time), sampling_time))
+        WRITE_MULTIPORT(oport1, ttn_event<T>(subsig1(sampling_time), sampling_time))
         local_time = get_end_time(subsig1);
         sampling_time += samp_period;
     }
@@ -401,13 +401,13 @@ private:
     
     void exec()
     {
-        out_val = subsig1(sampling_time);
+        out_val = abst_ext<T>(subsig1(sampling_time));
         sampling_time += samp_period;
     }
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,tt_event<T>(subsig1(sampling_time), sampling_time))
+        WRITE_MULTIPORT(oport1,ttn_event<T>(subsig1(sampling_time), sampling_time))
         wait(sampling_time - sc_time_stamp());
     }
     
@@ -471,7 +471,7 @@ private:
     void init()
     {
         auto in_ev = iport1.read();
-        currentVal = (double)get_value(in_ev);
+        currentVal = (double)unsafe_from_abst_ext(get_value(in_ev));
         currentT = get_time(in_ev);
     }
     
@@ -481,7 +481,7 @@ private:
         previousT = currentT;
         
         auto in_ev = iport1.read();
-        currentVal = (double)get_value(in_ev);
+        currentVal = (double)unsafe_from_abst_ext(get_value(in_ev));
         currentT = get_time(in_ev);
     }
     

@@ -77,8 +77,8 @@ public:
 
 private:
     // Inputs and output variables
-    T0* oval;
-    tt_event<T1>* ival1;
+    abst_ext<T0>* oval;
+    ttn_event<T1>* iev1;
     
     //! The function passed to the process constructor
     functype _func;
@@ -86,34 +86,42 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        oval = new T0;
-        ival1 = new tt_event<T1>();
+        oval = new abst_ext<T0>;
+        iev1 = new ttn_event<T1>;
     }
     
     void prep()
     {
-        *ival1 = iport1.read();
+        *iev1 = iport1.read();
     }
     
     void exec()
     {
-        if (get_time(*ival1)!=sc_max_time())
-            _func(*oval, get_value(*ival1));
+        if (is_present(get_value(*iev1)))
+        {
+            // FIXME: extra defnition of boval on stack
+            T0 boval;
+            _func(boval, unsafe_from_abst_ext(get_value(*iev1)));
+            *oval = boval;
+        }
+        else
+            *oval = abst_ext<T0>();
     }
     
     void prod()
     {
-        auto oev = tt_event<T0>(*oval, get_time(*ival1));
+        auto oev = ttn_event<T0>(*oval, get_time(*iev1));
         WRITE_MULTIPORT(oport1, oev)
-        if (get_time(*ival1)!=sc_max_time())
-            wait(sc_time_stamp() - get_time(oev));
+        // synchronization with kernel time
+        if (get_time(*iev1)!=sc_max_time())
+            wait(get_time(oev) - sc_time_stamp());
         else
             wait();
     }
     
     void clean()
     {
-        delete ival1;
+        delete iev1;
         delete oval;
     }
     
@@ -164,8 +172,10 @@ public:
 private:
     // Inputs and output variables
     T0* oval;
-    tt_event<T1> *next_itok1, *cur_itok1;
-    tt_event<T2> *next_itok2, *cur_itok2;
+    ttn_event<T1> *next_iev1;
+    ttn_event<T2> *next_iev2;
+    T1* cur_ival1;
+    T2* cur_ival2;
     
     // the current time (local time)
     sc_time tc;
@@ -180,10 +190,10 @@ private:
     void init()
     {
         oval = new T0;
-        next_itok1 = new tt_event<T1>;
-        next_itok2 = new tt_event<T2>;
-        cur_itok1 = new tt_event<T1>();
-        cur_itok2 = new tt_event<T2>();
+        next_iev1 = new ttn_event<T1>;
+        next_iev2 = new ttn_event<T2>;
+        cur_ival1 = new T1;
+        cur_ival2 = new T2;
         in1T = in2T = tc = SC_ZERO_TIME;
     }
     
@@ -191,59 +201,63 @@ private:
     {
         if (in1T<in2T)
         {
-            *next_itok1 = iport1.read();  // read from input 1
-            in1T = get_time(*next_itok1);
+            *next_iev1 = iport1.read();  // read from input 1
+            in1T = get_time(*next_iev1);
         }
         else if (in1T>in2T)
         {
-            *next_itok2 = iport2.read();  // read from input 1
-            in2T = get_time(*next_itok2);
+            *next_iev2 = iport2.read();  // read from input 1
+            in2T = get_time(*next_iev2);
         }
         else
         {
-            *next_itok1 = iport1.read();  // read from input 1
-            *next_itok2 = iport2.read();  // read from input 2
-            in1T = get_time(*next_itok1);
-            in2T = get_time(*next_itok2);
+            *next_iev1 = iport1.read();  // read from input 1
+            *next_iev2 = iport2.read();  // read from input 2
+            in1T = get_time(*next_iev1);
+            in2T = get_time(*next_iev2);
         }
         
         // updated channel clocks and the local clock
-        if (get_time(*next_itok1) < get_time(*next_itok2))
+        if (get_time(*next_iev1) < get_time(*next_iev2))
         {
-            *cur_itok1 = *next_itok1;
-            tc = get_time(*cur_itok1);
+            if (is_present(get_value(*next_iev1)))
+                *cur_ival1 = unsafe_from_abst_ext(get_value(*next_iev1));
+            tc = get_time(*next_iev1);
         }
-        else if (get_time(*next_itok1) > get_time(*next_itok2))
+        else if (get_time(*next_iev1) > get_time(*next_iev2))
         {
-            *cur_itok2 = *next_itok2;
-            tc = get_time(*cur_itok2);
+            if (is_present(get_value(*next_iev2)))
+                *cur_ival2 = unsafe_from_abst_ext(get_value(*next_iev2));
+            tc = get_time(*next_iev2);
         }
         else
         {
-            *cur_itok1 = *next_itok1;
-            *cur_itok2 = *next_itok2;
-            tc = get_time(*cur_itok1);
+            if (is_present(get_value(*next_iev1)))
+                *cur_ival1 = unsafe_from_abst_ext(get_value(*next_iev1));
+            if (is_present(get_value(*next_iev2)))
+                *cur_ival2 = unsafe_from_abst_ext(get_value(*next_iev2));
+            tc = get_time(*next_iev1);
         }
     }
     
     void exec()
     {        
-        _func(*oval, get_value(*cur_itok1), get_value(*cur_itok2));
+        _func(*oval, *cur_ival1, *cur_ival2);
     }
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, tt_event<T0>(*oval,tc))
+        WRITE_MULTIPORT(oport1, ttn_event<T0>(*oval,tc))
         wait(tc - sc_time_stamp());
     }
     
     void clean()
     {
         delete oval;
-        delete next_itok1;
-        delete next_itok2;
-        delete cur_itok1;
-        delete cur_itok2;
+        delete next_iev1;
+        delete next_iev2;
+        delete cur_ival1;
+        delete cur_ival2;
     }
     
 #ifdef FORSYDE_INTROSPECTION
@@ -259,10 +273,10 @@ private:
 };
 
 //! Process constructor for a delay element
-/*! This class is used to build a delay element. Given an initial value
- * and a delay time, it inserts this value as the first event in time
- * zero in the output and delays the rest of the events by the delay
- * time.
+/*! This class is used to build a delay element. Given an initial null-
+ * extended value and a delay time, it inserts this value as the first
+ * event in time zero in the output and delays the rest of the events by
+ * the delay time.
  * 
  * It is mandatory to include at least one delay element in all feedback
  * loops since combinational loops are forbidden in ForSyDe.
@@ -280,8 +294,8 @@ public:
      * port.
      */
     delay(sc_module_name _name,     ///< process name
-          T init_val,                ///< initial value
-          sc_time delay_time         ///< delay time
+          abst_ext<T> init_val,     ///< initial value
+          sc_time delay_time        ///< delay time
           ) : dde_process(_name), iport1("iport1"), oport1("oport1"),
               init_val(init_val), delay_time(delay_time)
     {
@@ -296,40 +310,40 @@ public:
     
 private:
     // Initial value and the delay time
-    T init_val;
+    abst_ext<T> init_val;
     sc_time delay_time;
     
     // Inputs and output variables
-    tt_event<T>* val;
+    ttn_event<T>* ev;
     
     //Implementing the abstract semantics
     void init()
     {
-        val = new tt_event<T>;
-        auto oev = tt_event<T>(init_val, SC_ZERO_TIME);
+        ev = new ttn_event<T>;
+        auto oev = ttn_event<T>(init_val, SC_ZERO_TIME);
         WRITE_MULTIPORT(oport1, oev)
         wait(SC_ZERO_TIME);
     }
     
     void prep()
     {
-        *val = iport1.read();
+        *ev = iport1.read();
     }
     
     void exec()
     {
-        set_time(*val, get_time(*val)+delay_time);
+        set_time(*ev, get_time(*ev)+delay_time);
     }
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
-        wait(get_time(*val) - sc_time_stamp());
+        WRITE_MULTIPORT(oport1, *ev)
+        wait(get_time(*ev) - sc_time_stamp());
     }
     
     void clean()
     {
-        delete val;
+        delete ev;
     }
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
@@ -497,8 +511,10 @@ private:
     ST init_st;
     
     // Input, output, current state, and next state variables
-    tt_event<IT1> *next_itok1, *cur_itok1;
-    tt_event<IT2> *next_itok2, *cur_itok2;
+    ttn_event<IT1> *next_iev1;
+    ttn_event<IT2> *next_iev2;
+    IT1* cur_ival1;
+    IT2* cur_ival2;
     ST* stval;
     ST* nsval;
     OT* oval;
@@ -512,10 +528,10 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        next_itok1 = new tt_event<IT1>;
-        next_itok2 = new tt_event<IT2>;
-        cur_itok1 = new tt_event<IT1>();
-        cur_itok2 = new tt_event<IT2>();
+        next_iev1 = new ttn_event<IT1>;
+        next_iev2 = new ttn_event<IT2>;
+        cur_ival1 = new IT1;
+        cur_ival2 = new IT2;
         stval = new ST;
         *stval = init_st;
         nsval = new ST;
@@ -527,60 +543,64 @@ private:
     {
         if (in1T<in2T)
         {
-            *next_itok1 = iport1.read();  // read from input 1
-            in1T = get_time(*next_itok1);
+            *next_iev1 = iport1.read();  // read from input 1
+            in1T = get_time(*next_iev1);
         }
         else if (in1T>in2T)
         {
-            *next_itok2 = iport2.read();  // read from input 1
-            in2T = get_time(*next_itok2);
+            *next_iev2 = iport2.read();  // read from input 1
+            in2T = get_time(*next_iev2);
         }
         else
         {
-            *next_itok1 = iport1.read();  // read from input 1
-            *next_itok2 = iport2.read();  // read from input 2
-            in1T = get_time(*next_itok1);
-            in2T = get_time(*next_itok2);
+            *next_iev1 = iport1.read();  // read from input 1
+            *next_iev2 = iport2.read();  // read from input 2
+            in1T = get_time(*next_iev1);
+            in2T = get_time(*next_iev2);
         }
         
         // updated channel clocks and the local clock
-        if (get_time(*next_itok1) < get_time(*next_itok2))
+        if (get_time(*next_iev1) < get_time(*next_iev2))
         {
-            *cur_itok1 = *next_itok1;
-            tc = get_time(*cur_itok1);
+            if (is_present(get_value(*next_iev1)))
+                *cur_ival1 = unsafe_from_abst_ext(get_value(*next_iev1));
+            tc = get_time(*next_iev1);
         }
-        else if (get_time(*next_itok1) > get_time(*next_itok2))
+        else if (get_time(*next_iev1) > get_time(*next_iev2))
         {
-            *cur_itok2 = *next_itok2;
-            tc = get_time(*cur_itok2);
+            if (is_present(get_value(*next_iev2)))
+                *cur_ival2 = unsafe_from_abst_ext(get_value(*next_iev2));
+            tc = get_time(*next_iev2);
         }
         else
         {
-            *cur_itok1 = *next_itok1;
-            *cur_itok2 = *next_itok2;
-            tc = get_time(*cur_itok1);
+            if (is_present(get_value(*next_iev1)))
+                *cur_ival1 = unsafe_from_abst_ext(get_value(*next_iev1));
+            if (is_present(get_value(*next_iev2)))
+                *cur_ival2 = unsafe_from_abst_ext(get_value(*next_iev2));
+            tc = get_time(*next_iev1);
         }
     }
     
     void exec()
     {        
-        _ns_func(*nsval, *stval, get_value(*cur_itok1), get_value(*cur_itok2));
-        _od_func(*oval, *stval, get_value(*cur_itok1), get_value(*cur_itok2));
+        _ns_func(*nsval, *stval, *cur_ival1, *cur_ival2);
+        _od_func(*oval, *stval, *cur_ival1, *cur_ival2);
         *stval = *nsval;
     }
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, tt_event<OT>(*oval,tc))
+        WRITE_MULTIPORT(oport1, ttn_event<OT>(*oval,tc))
         wait(tc - sc_time_stamp());
     }
     
     void clean()
     {
-        delete next_itok1;
-        delete next_itok2;
-        delete cur_itok1;
-        delete cur_itok2;
+        delete next_iev1;
+        delete next_iev2;
+        delete cur_ival1;
+        delete cur_ival2;
         delete stval;
         delete nsval;
         delete oval;
@@ -671,12 +691,12 @@ private:
     double roundingFactor;
     
     // Output event
-    tt_event<T>* out_ev;
+    ttn_event<T>* out_ev;
     
     //Implementing the abstract semantics
     void init()
     {
-        out_ev = new tt_event<T>;
+        out_ev = new ttn_event<T>;
         
         step = max_step;
         int /*nn = nums.size(),*/ nd = denominators.size();
@@ -701,18 +721,18 @@ private:
         k4 = MatrixDouble(numState,1);
         
         // initial sampling time tag
-        WRITE_MULTIPORT(oport2,tt_event<unsigned int>(0, samplingTimeTag))
+        WRITE_MULTIPORT(oport2,ttn_event<unsigned int>(0, samplingTimeTag))
         // read initial input
         auto in_ev = iport1.read();
-        u(0,0) = get_value(in_ev);
+        u(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-null inputs
         t = get_time(in_ev);
         // calculate and write initial output
         y1 = boost::numeric::ublas::prod(c,x) + boost::numeric::ublas::prod(d,u);
-        *out_ev = tt_event<T>(y1(0,0), t);
+        *out_ev = ttn_event<T>(y1(0,0), t);
         WRITE_MULTIPORT(oport1, *out_ev)
         // step signal
-        WRITE_MULTIPORT(oport2, tt_event<unsigned int>(0, samplingTimeTag+step/2))
-        WRITE_MULTIPORT(oport2, tt_event<unsigned int>(0, samplingTimeTag+step))
+        WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step/2))
+        WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step))
         u_1(0,0) = u(0,0); 
         t_1 = t;
         roundingFactor = 1.0001;
@@ -721,11 +741,11 @@ private:
     void prep()
     {
         auto in_ev = iport1.read();
-        u1(0,0) = get_value(in_ev);
+        u1(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-null inputs
         t = get_time(in_ev);
         
         in_ev = iport1.read();
-        u0(0,0) = get_value(in_ev);
+        u0(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-null inputs
         t2 = get_time(in_ev);
     }
     
@@ -748,8 +768,8 @@ private:
           x = x0;
           samplingTimeTag = t;
           // TODO: move the following line to the prod stage
-          WRITE_MULTIPORT(oport2, tt_event<unsigned int>(1, samplingTimeTag)) // commitment
-          *out_ev = tt_event<T>(y0(0,0), t);
+          WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(1, samplingTimeTag)) // commitment
+          *out_ev = ttn_event<T>(y0(0,0), t);
           WRITE_MULTIPORT(oport1, *out_ev)
           u(0,0) = u0(0,0);
           u_1(0,0) = u(0,0); 
@@ -762,8 +782,8 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport2, tt_event<unsigned int>(0, samplingTimeTag+step/2))
-        WRITE_MULTIPORT(oport2, tt_event<unsigned int>(0, samplingTimeTag+step))
+        WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step/2))
+        WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step))
     }
     
     void clean()
@@ -870,77 +890,6 @@ private:
 #endif
 };
 
-//! Process constructor for a constant source process
-/*! This class is used to build a source process with a constant output
- * and a given period.
- * Its main purpose is to be used in test-benches.
- * 
- * This class can directly be instantiated to build a process.
- */
-template <class T>
-class constant : public dde_process
-{
-public:
-    DDE_out<T> oport1;            ///< port for the output channel
-
-    //! The constructor requires the module name
-    /*! It creates an SC_THREAD which runs the user-imlpemented function
-     * and writes the result using the output port
-     */
-    constant(sc_module_name _name,      ///< The module name
-              T init_val,                ///< The constant output value
-              sc_time interval           ///< The interval for which the output exist (the time of the second and last event)
-             ) : dde_process(_name), oport1("oport1"),
-                 init_val(init_val), interval(interval)
-                 
-    {
-#ifdef FORSYDE_INTROSPECTION
-        arg_vec.push_back(std::make_tuple("init_val", std::to_string(init_val)));
-        arg_vec.push_back(std::make_tuple("interval", std::to_string(interval.to_double())));
-#endif
-    }
-    
-    //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DDE::constant";}
-    
-private:
-    T init_val;
-    sc_time interval;
-    
-    unsigned int tok_cnt;
-    
-    //Implementing the abstract semantics
-    void init()
-    {
-        tok_cnt = 0;
-    }
-    
-    void prep() {}
-    
-    void exec() {}
-    
-    void prod()
-    {
-        if (tok_cnt++ <= 1)
-        {
-            WRITE_MULTIPORT(oport1, tt_event<T>(init_val, sc_time_stamp()))
-            wait(interval - sc_time_stamp());
-        }
-        else wait();
-    }
-    
-    void clean() {}
-
-#ifdef FORSYDE_INTROSPECTION
-    void bindInfo()
-    {
-        boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(T).name();
-    }
-#endif
-};
-
 //! Process constructor for a source process
 /*! This class is used to build a souce process which only has an output.
  * Given an initial state and a function, the process repeatedly applies
@@ -954,7 +903,7 @@ public:
     DDE_out<T> oport1;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(tt_event<T>&, const tt_event<T>&)> functype;
+    typedef std::function<void(ttn_event<T>&, const ttn_event<T>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
@@ -962,10 +911,10 @@ public:
      */
     source(sc_module_name _name,   ///< The module name
            functype _func,         ///< function to be passed
-           tt_event<T> init_val,    ///< Initial state
+           ttn_event<T> init_st,   ///< Initial state
            unsigned long long take=0 ///< number of tokens produced (0 for infinite)
           ) : dde_process(_name), oport1("oport1"),
-              init_st(init_val), take(take), _func(_func)
+              init_st(init_st), take(take), _func(_func)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
@@ -984,10 +933,10 @@ public:
     std::string forsyde_kind() const {return "DDE::source";}
     
 private:
-    tt_event<T> init_st;        // The current state
+    ttn_event<T> init_st;        // The current state
     unsigned long long take;    // Number of tokens produced
     
-    tt_event<T>* cur_st;        // The current state of the process
+    ttn_event<T>* cur_st;        // The current state of the process
     unsigned long long tok_cnt;
     bool infinite;
     
@@ -997,7 +946,7 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        cur_st = new tt_event<T>;
+        cur_st = new ttn_event<T>;
         *cur_st = init_st;
         WRITE_MULTIPORT(oport1, *cur_st)
         wait(get_time(*cur_st) - sc_time_stamp());
@@ -1089,7 +1038,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, tt_event<T>(values[iter], offsets[iter]))
+        WRITE_MULTIPORT(oport1, ttn_event<T>(abst_ext<T>(values[iter]), offsets[iter]))
         wait(offsets[iter] - sc_time_stamp());
         iter++;
         if (iter == values.size())
@@ -1124,7 +1073,7 @@ public:
     DDE_in<T> iport1;         ///< port for the input channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(const tt_event<T>&)> functype;
+    typedef std::function<void(const ttn_event<T>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which runs the user-imlpemented function
@@ -1146,7 +1095,7 @@ public:
     std::string forsyde_kind() const {return "DDE::sink";}
     
 private:
-    tt_event<T>* val;         // The current state of the process
+    ttn_event<T>* val;         // The current state of the process
 
     //! The function passed to the process constructor
     functype _func;
@@ -1154,7 +1103,7 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        val = new tt_event<T>;
+        val = new ttn_event<T>;
     }
     
     void prep()
@@ -1183,53 +1132,6 @@ private:
 #endif
 };
 
-//! Process constructor for a multi-input print process
-/*! This class is used to build a sink process which has a multi-port input.
- * Its main purpose is to be used in test-benches.
- * 
- * The resulting process prints the sampled data as a trace in the
- * standard output.
- */
-template <class ITYP>
-class printSigs : public sc_module
-{
-public:
-    sc_fifo_in<ITYP> iport;         ///< multi-port for the input channel
-
-    //! The constructor requires the module name
-    /*! It creates an SC_THREAD which runs the user-imlpemented function
-     * in each cycle.
-     */
-    printSigs(sc_module_name _name     ///< Process name
-              ):sc_module(_name)
-    {
-        SC_THREAD(worker);
-    }
-
-private:
-    SC_HAS_PROCESS(printSigs);
-
-    //! The main and only execution thread of the module
-    void worker()
-    {
-        // write the header
-        for (int i=0;i<iport.size();i++)
-            std::cout << " " << name() << "(" << i << ")";
-        std::cout << std::endl;
-        // start reading from the ports
-        ITYP in_val[iport.size()];
-        while (1)
-        {
-            for (int i=0;i<iport.size();i++)
-                in_val[i] = iport[i]->read();
-            // print one line
-            for (int i=0;i<iport.size();i++)
-                std::cout << " " << in_val[i];
-            std::cout << std::endl;
-        }
-    }
-};
-
 //! The zip process with two inputs and one output
 /*! This process "zips" two incoming signals into one signal of tuples.
  */
@@ -1239,7 +1141,7 @@ class zip : public dde_process
 public:
     DDE_in<T1> iport1;        ///< port for the input channel 1
     DDE_in<T2> iport2;        ///< port for the input channel 2
-    DDE_out<std::tuple<T1,T2>> oport1;///< port for the output channel
+    DDE_out< std::tuple<abst_ext<T1>,abst_ext<T2>> > oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -1254,8 +1156,9 @@ public:
     
 private:    
     // inputs and output variables
-    tt_event<T1> *next_itok1, *cur_itok1;
-    tt_event<T2> *next_itok2, *cur_itok2;
+    ttn_event<T1> *next_iev1, *cur_iev1;
+    ttn_event<T2> *next_iev2, *cur_iev2;
+    abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> > oval;
         
     // the current time (local time)
     sc_time tc;
@@ -1265,71 +1168,77 @@ private:
     
     void init()
     {
-        next_itok1 = new tt_event<T1>;
-        next_itok2 = new tt_event<T2>;
-        cur_itok1 = new tt_event<T1>();
-        cur_itok2 = new tt_event<T2>();
+        next_iev1 = new ttn_event<T1>;
+        next_iev2 = new ttn_event<T2>;
+        cur_iev1 = new ttn_event<T1>;
+        cur_iev2 = new ttn_event<T2>;
         in1T = in2T = tc = SC_ZERO_TIME;
+        oval = new abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >;
     }
     
     void prep()
     {
         if (in1T<in2T)
         {
-            *next_itok1 = iport1.read();  // read from input 1
-            in1T = get_time(*next_itok1);
+            *next_iev1 = iport1.read();  // read from input 1
+            in1T = get_time(*next_iev1);
         }
         else if (in1T>in2T)
         {
-            *next_itok2 = iport2.read();  // read from input 1
-            in2T = get_time(*next_itok2);
+            *next_iev2 = iport2.read();  // read from input 1
+            in2T = get_time(*next_iev2);
         }
         else
         {
-            *next_itok1 = iport1.read();  // read from input 1
-            *next_itok2 = iport2.read();  // read from input 2
-            in1T = get_time(*next_itok1);
-            in2T = get_time(*next_itok2);
+            *next_iev1 = iport1.read();  // read from input 1
+            *next_iev2 = iport2.read();  // read from input 2
+            in1T = get_time(*next_iev1);
+            in2T = get_time(*next_iev2);
         }
         
         // updated channel clocks and the local clock
-        if (get_time(*next_itok1) < get_time(*next_itok2))
+        if (get_time(*next_iev1) < get_time(*next_iev2))
         {
-            *cur_itok1 = *next_itok1;
-            tc = get_time(*cur_itok1);
+            *cur_iev1 = *next_iev1;
+            tc = get_time(*cur_iev1);
         }
-        else if (get_time(*next_itok1) > get_time(*next_itok2))
+        else if (get_time(*next_iev1) > get_time(*next_iev2))
         {
-            *cur_itok2 = *next_itok2;
-            tc = get_time(*cur_itok2);
+            *cur_iev2 = *next_iev2;
+            tc = get_time(*cur_iev2);
         }
         else
         {
-            *cur_itok1 = *next_itok1;
-            *cur_itok2 = *next_itok2;
-            tc = get_time(*cur_itok1);
+            *cur_iev1 = *next_iev1;
+            *cur_iev2 = *next_iev2;
+            tc = get_time(*cur_iev1);
         }
     }
     
     void exec()
     {
-        
+        if (is_absent(*cur_iev1) && is_absent(*cur_iev2))
+            *oval = abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >();
+        else
+            *oval = abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >(
+                std::make_tuple(get_value(*cur_iev1),get_value(*cur_iev2))
+            );
     }
     
     void prod()
     {
-        auto zipped_vals = std::make_tuple(get_value(*cur_itok1),get_value(*cur_itok2));
-        auto temp_event = tt_event<std::tuple<T1,T2>>(zipped_vals,tc);
+        auto temp_event = tt_event<std::tuple<T1,T2>>(oval,tc);
         WRITE_MULTIPORT(oport1,temp_event)
         wait(tc - sc_time_stamp());
     }
     
     void clean()
     {
-        delete next_itok1;
-        delete next_itok2;
-        delete cur_itok1;
-        delete cur_itok2;
+        delete next_iev1;
+        delete next_iev2;
+        delete cur_iev1;
+        delete cur_iev2;
+        delete oval;
     }
     
 #ifdef FORSYDE_INTROSPECTION
@@ -1342,7 +1251,7 @@ private:
         boundInChans[1].portType = typeid(T2).name();
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
-        boundOutChans[0].portType = typeid(std::tuple<T1,T2>).name();
+        boundOutChans[0].portType = typeid(std::tuple<T1,T2>).name();  // FIXME: shouldn't be abst_ext<Tx> instead of Tx?
     }
 #endif
 };
@@ -1354,7 +1263,7 @@ template <class T1, class T2>
 class unzip : public dde_process
 {
 public:
-    DDE_in<std::tuple<T1,T2>> iport1;///< port for the input channel
+    DDE_in<std::tuple<abst_ext<T1>,abst_ext<T2>>> iport1;///< port for the input channel
     DDE_out<T1> oport1;        ///< port for the output channel 1
     DDE_out<T2> oport2;        ///< port for the output channel 2
 
@@ -1370,30 +1279,48 @@ public:
     std::string forsyde_kind() const {return "DDE::unzip";}
 private:
     // intermediate values
-    tt_event<std::tuple<T1,T2>>* in_val;
+    ttn_event< std::tuple<abst_ext<T1>,abst_ext<T2>> >* in_ev;
+    abst_ext<T1>* out_val1;
+    abst_ext<T2>* out_val2;
     
     void init()
     {
-        in_val = new tt_event<std::tuple<T1,T2>>;
+        in_ev = new ttn_event< std::tuple<abst_ext<T1>,abst_ext<T2>> >;
+        out_val1 = new abst_ext<T1>;
+        out_val2 = new abst_ext<T2>;
     }
     
     void prep()
     {
-        *in_val = iport1.read();
+        *in_ev = iport1.read();
     }
     
-    void exec() {}
+    void exec()
+    {
+        if (is_absent(get_value(*in_ev)))
+        {
+            *out_val1 = abst_ext<T1>();
+            *out_val2 = abst_ext<T2>();
+        }
+        else
+        {
+            *out_val1 = std::get<0>(get_value(*in_ev));
+            *out_val2 = std::get<1>(get_value(*in_ev));
+        }
+    }
     
     void prod()
     {
-        sc_time te(get_time(*in_val));
-        WRITE_MULTIPORT(oport1,tt_event<T1>(std::get<0>(get_value(*in_val)),te))  // write to the output 1
-        WRITE_MULTIPORT(oport2,tt_event<T2>(std::get<1>(get_value(*in_val)),te))  // write to the output 2
+        sc_time te(get_time(*in_ev));
+        WRITE_MULTIPORT(oport1,ttn_event<T1>(out_val1,te))  // write to the output 1
+        WRITE_MULTIPORT(oport2,ttn_event<T2>(out_val2,te))  // write to the output 2
     }
     
     void clean()
     {
-        delete in_val;
+        delete in_ev;
+        delete out_val1;
+        delete out_val2;
     }
     
 #ifdef FORSYDE_INTROSPECTION
@@ -1401,7 +1328,7 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundInChans[0].portType = typeid(std::tuple<T1,T2>).name();
+        boundInChans[0].portType = typeid(std::tuple<T1,T2>).name(); // FIXME: shouldn't be abst_ext<Tx> instead of Tx?
         boundOutChans.resize(2);    // two output ports
         boundOutChans[0].port = &oport1;
         boundOutChans[0].portType = typeid(T1).name();
@@ -1440,12 +1367,12 @@ public:
     
 private:
     // Inputs and output variables
-    tt_event<T>* val;
+    ttn_event<T>* val;
     
     //Implementing the abstract semantics
     void init()
     {
-        val = new tt_event<T>;
+        val = new ttn_event<T>;
     }
     
     void prep()

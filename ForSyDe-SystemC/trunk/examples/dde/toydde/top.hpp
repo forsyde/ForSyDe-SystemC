@@ -23,7 +23,7 @@ SC_MODULE(top)
     
     SC_CTOR(top)
     {
-        DDE::make_delay("delay1", 0, sc_time(10, SC_NS), srca, feedback);
+        DDE::make_delay("delay1", abst_ext<int>(0), sc_time(10, SC_NS), srca, feedback);
         
         auto inc1 = DDE::make_comb("inc1", inc_func, addi1, srca);
         inc1->oport1(feedback);
