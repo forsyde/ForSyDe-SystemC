@@ -1,5 +1,5 @@
 /**********************************************************************
-    * add.hpp -- an adder process                                     *
+    * inc.hpp -- an adder process                                     *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
@@ -11,17 +11,17 @@
     *******************************************************************/
 
 
-#ifndef ADD_HPP
-#define ADD_HPP
+#ifndef INC_HPP
+#define INC_HPP
 
 #include <forsyde.hpp>
 
 using namespace ForSyDe;
 
-void add_func(int& out1, const int& inp1, const int& inp2)
+void inc_func(abst_ext<int>& out1, const int& inp1)
 {
-#pragma ForSyDe begin add_func 
-    out1 = inp1 + inp2;
+#pragma ForSyDe begin inc_func 
+    out1 = abst_ext<int>(inp1 + 1);
 #pragma ForSyDe end
 }
 

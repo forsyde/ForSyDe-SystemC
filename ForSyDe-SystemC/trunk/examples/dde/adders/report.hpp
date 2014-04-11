@@ -1,5 +1,5 @@
 /**********************************************************************
-    * inc.hpp -- an adder process                                     *
+    * report.hpp -- the report process                                *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
@@ -11,17 +11,18 @@
     *******************************************************************/
 
 
-#ifndef INC_HPP
-#define INC_HPP
+#ifndef REPORT_HPP
+#define REPORT_HPP
 
 #include <forsyde.hpp>
+#include <iostream>
 
 using namespace ForSyDe;
 
-void inc_func(int& out1, const int& inp1)
+void report_func(ttn_event<std::tuple<abst_ext<int>,abst_ext<int>>> inp1)
 {
-#pragma ForSyDe begin inc_func 
-    out1 = inp1 + 1;
+#pragma ForSyDe begin report_func
+    std::cout << "output value: " << inp1 << std::endl;
 #pragma ForSyDe end
 }
 

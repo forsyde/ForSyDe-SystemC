@@ -53,7 +53,7 @@ public:
     DDE_out<T0> oport1;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(T0&, const T1&)> functype;
+    typedef std::function<void(abst_ext<T0>&, const T1&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
@@ -98,12 +98,7 @@ private:
     void exec()
     {
         if (is_present(get_value(*iev1)))
-        {
-            // FIXME: extra defnition of boval on stack
-            T0 boval;
-            _func(boval, unsafe_from_abst_ext(get_value(*iev1)));
-            *oval = boval;
-        }
+            _func(*oval, unsafe_from_abst_ext(get_value(*iev1)));
         else
             *oval = abst_ext<T0>();
     }
@@ -113,10 +108,7 @@ private:
         auto oev = ttn_event<T0>(*oval, get_time(*iev1));
         WRITE_MULTIPORT(oport1, oev)
         // synchronization with kernel time
-        if (get_time(*iev1)!=sc_max_time())
-            wait(get_time(oev) - sc_time_stamp());
-        else
-            wait();
+        wait(get_time(oev) - sc_time_stamp());
     }
     
     void clean()
@@ -148,7 +140,7 @@ public:
     DDE_out<T0> oport1;        ///< port for the output channel
     
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(T0&, const T1&, const T2&)> functype;
+    typedef std::function<void(abst_ext<T0>&, const abst_ext<T1>&, const abst_ext<T2>&)> functype;
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
@@ -171,14 +163,14 @@ public:
     std::string forsyde_kind() const {return "DDE::comb2";}
 private:
     // Inputs and output variables
-    T0* oval;
+    abst_ext<T0>* oval;
     ttn_event<T1> *next_iev1;
     ttn_event<T2> *next_iev2;
-    T1* cur_ival1;
-    T2* cur_ival2;
+    abst_ext<T1> *cur_ival1;
+    abst_ext<T2> *cur_ival2;
     
     // the current time (local time)
-    sc_time tc;
+    sc_time tl;
     
     // clocks of the input ports (channel times)
     sc_time in1T, in2T;
@@ -189,66 +181,53 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        oval = new T0;
+        oval = new abst_ext<T0>;
         next_iev1 = new ttn_event<T1>;
         next_iev2 = new ttn_event<T2>;
-        cur_ival1 = new T1;
-        cur_ival2 = new T2;
-        in1T = in2T = tc = SC_ZERO_TIME;
+        cur_ival1 = new abst_ext<T1>;
+        cur_ival2 = new abst_ext<T2>;
+        in1T = in2T = tl = SC_ZERO_TIME;
     }
     
     void prep()
     {
-        if (in1T<in2T)
+        if (in1T == tl)
         {
-            *next_iev1 = iport1.read();  // read from input 1
+            *next_iev1 = iport1.read();
             in1T = get_time(*next_iev1);
         }
-        else if (in1T>in2T)
+        if (in2T == tl)
         {
-            *next_iev2 = iport2.read();  // read from input 1
-            in2T = get_time(*next_iev2);
-        }
-        else
-        {
-            *next_iev1 = iport1.read();  // read from input 1
-            *next_iev2 = iport2.read();  // read from input 2
-            in1T = get_time(*next_iev1);
+            *next_iev2 = iport2.read();
             in2T = get_time(*next_iev2);
         }
         
-        // updated channel clocks and the local clock
-        if (get_time(*next_iev1) < get_time(*next_iev2))
-        {
-            if (is_present(get_value(*next_iev1)))
-                *cur_ival1 = unsafe_from_abst_ext(get_value(*next_iev1));
-            tc = get_time(*next_iev1);
-        }
-        else if (get_time(*next_iev1) > get_time(*next_iev2))
-        {
-            if (is_present(get_value(*next_iev2)))
-                *cur_ival2 = unsafe_from_abst_ext(get_value(*next_iev2));
-            tc = get_time(*next_iev2);
-        }
+        // update channel clocks and the local clock
+        tl = std::min(in1T, in2T);
+        
+        // update current values
+        if (get_time(*next_iev1) == tl)
+            *cur_ival1 = get_value(*next_iev1);
         else
-        {
-            if (is_present(get_value(*next_iev1)))
-                *cur_ival1 = unsafe_from_abst_ext(get_value(*next_iev1));
-            if (is_present(get_value(*next_iev2)))
-                *cur_ival2 = unsafe_from_abst_ext(get_value(*next_iev2));
-            tc = get_time(*next_iev1);
-        }
+            *cur_ival1 = abst_ext<T1>();
+        if (get_time(*next_iev2) == tl)
+            *cur_ival2 = get_value(*next_iev2);
+        else
+            *cur_ival2 = abst_ext<T1>();
     }
     
     void exec()
-    {        
-        _func(*oval, *cur_ival1, *cur_ival2);
+    {
+        if (is_absent(*cur_ival1) && is_absent(*cur_ival2))
+            *oval = abst_ext<T0>();
+        else
+            _func(*oval, *cur_ival1, *cur_ival2);
     }
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, ttn_event<T0>(*oval,tc))
-        wait(tc - sc_time_stamp());
+        WRITE_MULTIPORT(oport1, ttn_event<T0>(*oval,tl))
+        wait(tl - sc_time_stamp());
     }
     
     void clean()
@@ -369,22 +348,23 @@ public:
     DDE_out<OT> oport1;        ///< port for the output channel
     
     //! Type of the next-state function to be passed to the process constructor
-    typedef std::function<void(ST&, const ST&, const IT&)> ns_functype;
+    typedef std::function<void(ST&, const ST&, const ttn_event<IT>&)> ns_functype;
     
     //! Type of the output-decoding function to be passed to the process constructor
-    typedef std::function<void(OT&, const ST&, const IT&)> od_functype;
+    typedef std::function<void(abst_ext<OT>&, const ST&, const ttn_event<IT>&)> od_functype;
     
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented functions to the input and current
      * state and writes the results using the output port
      */
-    mealy(const sc_module_name& _name,      ///< process name
+    mealy(const sc_module_name& _name,  ///< process name
            const ns_functype& _ns_func, ///< The next_state function
            const od_functype& _od_func, ///< The output-decoding function
-           const ST& init_st  ///< Initial state
+           const ST& init_st,           ///< Initial state
+           const sc_time& delay_time    ///< The constant delay for output
           ) : dde_process(_name), _ns_func(_ns_func), _od_func(_od_func),
-              init_st(init_st)
+              init_st(init_st), delay_time(delay_time)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
@@ -394,6 +374,9 @@ public:
         std::stringstream ss;
         ss << init_st;
         arg_vec.push_back(std::make_tuple("init_st",ss.str()));
+        ss.str("");
+        ss << delay_time;
+        arg_vec.push_back(std::make_tuple("delay_time",ss.str()));
 #endif
     }
     
@@ -404,23 +387,26 @@ private:
     //! The functions passed to the process constructor
     ns_functype _ns_func;
     od_functype _od_func;
+    
     // Initial value
     ST init_st;
     
+    sc_time delay_time;
+    
     // Input, output, current state, and next state variables
-    tt_event<IT>* itok;
+    ttn_event<IT>* itok;
     ST* stval;
     ST* nsval;
-    OT* oval;
+    abst_ext<OT>* oval;
 
     //Implementing the abstract semantics
     void init()
     {
-        itok = new tt_event<IT>;
+        itok = new ttn_event<IT>;
         stval = new ST;
         *stval = init_st;
         nsval = new ST;
-        oval = new OT;
+        oval = new abst_ext<OT>;
     }
     
     void prep()
@@ -430,14 +416,14 @@ private:
     
     void exec()
     {
-        _ns_func(*nsval, *stval, get_value(*itok));
-        _od_func(*oval, *stval, get_value(*itok));
+        _ns_func(*nsval, *stval, *itok);
+        _od_func(*oval, *stval, *itok);
         *stval = *nsval;
     }
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, tt_event<OT>(*oval,get_time(*itok)))
+        WRITE_MULTIPORT(oport1, ttn_event<OT>(*oval,get_time(*itok)+delay_time))
     }
     
     void clean()
@@ -472,22 +458,23 @@ public:
     DDE_out<OT> oport1;        ///< port for the output channel
     
     //! Type of the next-state function to be passed to the process constructor
-    typedef std::function<void(ST&, const ST&, const IT1&, const IT2&)> ns_functype;
+    typedef std::function<void(ST&, const ST&, const ttn_event<IT1>&, const ttn_event<IT2>&)> ns_functype;
     
     //! Type of the output-decoding function to be passed to the process constructor
-    typedef std::function<void(OT&, const ST&, const IT1&, const IT2&)> od_functype;
+    typedef std::function<void(abst_ext<OT>&, const ST&, const ttn_event<IT1>&, const ttn_event<IT2>&)> od_functype;
     
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented functions to the input and current
      * state and writes the results using the output port
      */
-    mealy2(const sc_module_name& _name,  ///< process name
+    mealy2(const sc_module_name& _name, ///< process name
            const ns_functype& _ns_func, ///< The next_state function
            const od_functype& _od_func, ///< The output-decoding function
-           const ST& init_st  ///< Initial state
+           const ST& init_st,           ///< Initial state
+           const sc_time& delay_time    ///< The constant delay for output
           ) : dde_process(_name), _ns_func(_ns_func), _od_func(_od_func),
-              init_st(init_st)
+              init_st(init_st), delay_time(delay_time)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
@@ -497,6 +484,9 @@ public:
         std::stringstream ss;
         ss << init_st;
         arg_vec.push_back(std::make_tuple("init_st",ss.str()));
+        ss.str("");
+        ss << delay_time;
+        arg_vec.push_back(std::make_tuple("delay_time",ss.str()));
 #endif
     }
     
@@ -507,20 +497,23 @@ private:
     //! The functions passed to the process constructor
     ns_functype _ns_func;
     od_functype _od_func;
+    
     // Initial value
     ST init_st;
+    
+    sc_time delay_time;
     
     // Input, output, current state, and next state variables
     ttn_event<IT1> *next_iev1;
     ttn_event<IT2> *next_iev2;
-    IT1* cur_ival1;
-    IT2* cur_ival2;
+    abst_ext<IT1> *cur_ival1;
+    abst_ext<IT2> *cur_ival2;
     ST* stval;
     ST* nsval;
-    OT* oval;
+    abst_ext<OT>* oval;
     
     // the current time (local time)
-    sc_time tc;
+    sc_time tl;
 
     // clocks of the input ports (channel times)
     sc_time in1T, in2T;
@@ -530,69 +523,58 @@ private:
     {
         next_iev1 = new ttn_event<IT1>;
         next_iev2 = new ttn_event<IT2>;
-        cur_ival1 = new IT1;
-        cur_ival2 = new IT2;
+        cur_ival1 = new abst_ext<IT1>;
+        cur_ival2 = new abst_ext<IT2>;
         stval = new ST;
         *stval = init_st;
         nsval = new ST;
-        oval = new OT;
-        in1T = in2T = tc = SC_ZERO_TIME;
+        oval = new abst_ext<OT>;
+        in1T = in2T = tl = SC_ZERO_TIME;
     }
     
     void prep()
     {
-        if (in1T<in2T)
+        if (in1T == tl)
         {
-            *next_iev1 = iport1.read();  // read from input 1
+            *next_iev1 = iport1.read();
             in1T = get_time(*next_iev1);
         }
-        else if (in1T>in2T)
+        if (in2T == tl)
         {
-            *next_iev2 = iport2.read();  // read from input 1
-            in2T = get_time(*next_iev2);
-        }
-        else
-        {
-            *next_iev1 = iport1.read();  // read from input 1
-            *next_iev2 = iport2.read();  // read from input 2
-            in1T = get_time(*next_iev1);
+            *next_iev2 = iport2.read();
             in2T = get_time(*next_iev2);
         }
         
-        // updated channel clocks and the local clock
-        if (get_time(*next_iev1) < get_time(*next_iev2))
-        {
-            if (is_present(get_value(*next_iev1)))
-                *cur_ival1 = unsafe_from_abst_ext(get_value(*next_iev1));
-            tc = get_time(*next_iev1);
-        }
-        else if (get_time(*next_iev1) > get_time(*next_iev2))
-        {
-            if (is_present(get_value(*next_iev2)))
-                *cur_ival2 = unsafe_from_abst_ext(get_value(*next_iev2));
-            tc = get_time(*next_iev2);
-        }
+        // update channel clocks and the local clock
+        tl = std::min(in1T, in2T);
+        
+        // update current values
+        if (get_time(*next_iev1) == tl)
+            *cur_ival1 = get_value(*next_iev1);
         else
-        {
-            if (is_present(get_value(*next_iev1)))
-                *cur_ival1 = unsafe_from_abst_ext(get_value(*next_iev1));
-            if (is_present(get_value(*next_iev2)))
-                *cur_ival2 = unsafe_from_abst_ext(get_value(*next_iev2));
-            tc = get_time(*next_iev1);
-        }
+            *cur_ival1 = abst_ext<IT1>();
+        if (get_time(*next_iev2) == tl)
+            *cur_ival2 = get_value(*next_iev2);
+        else
+            *cur_ival2 = abst_ext<IT1>();
     }
     
     void exec()
-    {        
-        _ns_func(*nsval, *stval, *cur_ival1, *cur_ival2);
-        _od_func(*oval, *stval, *cur_ival1, *cur_ival2);
-        *stval = *nsval;
+    {
+        if (is_absent(*cur_ival1) && is_absent(*cur_ival2))
+            *oval = abst_ext<OT>();
+        else
+        {
+            _ns_func(*nsval, *stval, ttn_event<IT1>(*cur_ival1,tl), ttn_event<IT2>(*cur_ival2,tl));
+            _od_func(*oval, *stval, ttn_event<IT1>(*cur_ival1,tl), ttn_event<IT2>(*cur_ival2,tl));
+            *stval = *nsval;
+        }
     }
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, ttn_event<OT>(*oval,tc))
-        wait(tc - sc_time_stamp());
+        WRITE_MULTIPORT(oport1, ttn_event<OT>(*oval,tl+delay_time))
+        wait(tl - sc_time_stamp());
     }
     
     void clean()
@@ -1044,7 +1026,7 @@ private:
         if (iter == values.size())
         {
             // Promise no more values
-            //~ WRITE_MULTIPORT(oport1, tt_event<T>(T(), sc_max_time()))
+            WRITE_MULTIPORT(oport1, ttn_event<T>(abst_ext<T>(), sc_max_time()))
             wait();
         }
     }
@@ -1156,12 +1138,14 @@ public:
     
 private:    
     // inputs and output variables
-    ttn_event<T1> *next_iev1, *cur_iev1;
-    ttn_event<T2> *next_iev2, *cur_iev2;
-    abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> > oval;
+    ttn_event<T1> *next_iev1;
+    ttn_event<T2> *next_iev2;
+    abst_ext<T1> *cur_ival1;
+    abst_ext<T2> *cur_ival2;
+    abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >* oval;
         
     // the current time (local time)
-    sc_time tc;
+    sc_time tl;
     
     // clocks of the input ports (channel times)
     sc_time in1T, in2T;
@@ -1170,74 +1154,62 @@ private:
     {
         next_iev1 = new ttn_event<T1>;
         next_iev2 = new ttn_event<T2>;
-        cur_iev1 = new ttn_event<T1>;
-        cur_iev2 = new ttn_event<T2>;
-        in1T = in2T = tc = SC_ZERO_TIME;
-        oval = new abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >;
+        cur_ival1 = new abst_ext<T1>;
+        cur_ival2 = new abst_ext<T2>;
+        in1T = in2T = tl = SC_ZERO_TIME;
+        oval = new abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >();
     }
     
     void prep()
     {
-        if (in1T<in2T)
+        if (in1T == tl)
         {
-            *next_iev1 = iport1.read();  // read from input 1
+            *next_iev1 = iport1.read();
             in1T = get_time(*next_iev1);
         }
-        else if (in1T>in2T)
+        if (in2T == tl)
         {
-            *next_iev2 = iport2.read();  // read from input 1
-            in2T = get_time(*next_iev2);
-        }
-        else
-        {
-            *next_iev1 = iport1.read();  // read from input 1
-            *next_iev2 = iport2.read();  // read from input 2
-            in1T = get_time(*next_iev1);
+            *next_iev2 = iport2.read();
             in2T = get_time(*next_iev2);
         }
         
-        // updated channel clocks and the local clock
-        if (get_time(*next_iev1) < get_time(*next_iev2))
-        {
-            *cur_iev1 = *next_iev1;
-            tc = get_time(*cur_iev1);
-        }
-        else if (get_time(*next_iev1) > get_time(*next_iev2))
-        {
-            *cur_iev2 = *next_iev2;
-            tc = get_time(*cur_iev2);
-        }
+        // update channel clocks and the local clock
+        tl = std::min(in1T, in2T);
+        
+        // update current values
+        if (get_time(*next_iev1) == tl)
+            *cur_ival1 = get_value(*next_iev1);
         else
-        {
-            *cur_iev1 = *next_iev1;
-            *cur_iev2 = *next_iev2;
-            tc = get_time(*cur_iev1);
-        }
+            *cur_ival1 = abst_ext<T1>();
+        if (get_time(*next_iev2) == tl)
+            *cur_ival2 = get_value(*next_iev2);
+        else
+            *cur_ival2 = abst_ext<T1>();
     }
     
     void exec()
     {
-        if (is_absent(*cur_iev1) && is_absent(*cur_iev2))
-            *oval = abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >();
+        if (is_absent(*cur_ival1) && is_absent(*cur_ival2))
+            oval->set_abst();
         else
             *oval = abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >(
-                std::make_tuple(get_value(*cur_iev1),get_value(*cur_iev2))
+                std::make_tuple(*cur_ival1,*cur_ival2)
             );
     }
     
     void prod()
     {
-        auto temp_event = ttn_event<std::tuple<abst_ext<T1>,abst_ext<T2>>>(oval,tc);
+        auto temp_event = ttn_event<std::tuple<abst_ext<T1>,abst_ext<T2>>>(*oval,tl);
         WRITE_MULTIPORT(oport1,temp_event)
-        wait(tc - sc_time_stamp());
+        wait(tl - sc_time_stamp());
     }
     
     void clean()
     {
         delete next_iev1;
         delete next_iev2;
-        delete cur_iev1;
-        delete cur_iev2;
+        delete cur_ival1;
+        delete cur_ival2;
         delete oval;
     }
     
