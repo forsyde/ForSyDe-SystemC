@@ -1,7 +1,7 @@
 /**********************************************************************           
     * ct_moc.hpp -- The continuous-time model of computation          *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *          Based on the HetMoC library by Jun Zhu (junz@kth.se)   *
     *                                                                 *
     * Purpose: Providing promitive element required for modeling      *

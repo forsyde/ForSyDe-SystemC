@@ -2,7 +2,7 @@
     * sdf_process_constructors.hpp -- Process constructors in the SDF *
     *                                MOC                              *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing basic process constructors for modeling      *
     *          SDF systems in ForSyDe-SystemC                         *

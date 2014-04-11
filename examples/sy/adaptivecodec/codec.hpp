@@ -1,7 +1,7 @@
 /**********************************************************************
     * codec.hpp -- an adaptive encoder/decoder                        *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of a simple adaptive system.             *
     *                                                                 *

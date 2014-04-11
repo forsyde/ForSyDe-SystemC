@@ -2,7 +2,7 @@
     * audio_analyzer.hpp -- analyzes the current bass level and raises*
     *                    a flag when the bass level exceeds a limit.  *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *          the Haskell version from Ingo Sander (ingo@kth.se)     *
     *                                                                 *
     * Purpose: Demonstrating how co-simulation with legacy codes is   *

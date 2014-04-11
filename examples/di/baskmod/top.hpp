@@ -2,7 +2,7 @@
     * top.hpp -- the top module and testbench for the bask_mod example*
     *                                                                 *
     * Author:  Gilmar Beserra (gilmar@kth.se)                         *
-    *          Hosien Attarzadeh (shan2@kth.se)                       *
+    *          Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: A BASK modulator system.                               *
     *                                                                 *

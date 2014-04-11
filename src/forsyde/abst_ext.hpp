@@ -1,7 +1,7 @@
 /**********************************************************************           
     * abst_ext.hpp -- Absent-extended values data-type                *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Extend normal values with their absent-extended        *
     *          version, required by some MoCs (e.g., synhronous)      *

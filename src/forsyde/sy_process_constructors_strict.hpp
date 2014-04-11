@@ -2,7 +2,7 @@
     * sy_process_constructors_strict.hpp -- Strict process            *
     *                                       constructors in the SY MOC*
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing basic process constructors for modeling      *
     *          strict synchronous systems in ForSyDe-SystemC          *

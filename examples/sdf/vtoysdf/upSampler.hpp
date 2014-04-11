@@ -1,7 +1,7 @@
 /**********************************************************************           
     * upSampler.hpp -- a 1:2 up sampler                               *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of a variadic program.                   *
     *                                                                 *

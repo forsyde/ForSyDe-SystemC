@@ -1,7 +1,7 @@
 /**********************************************************************           
     * parallel_sim_helpers.hpp -- Helper primitives for parallel simulation*
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing helper primitives for parallel simulations   *
     *                                                                 *

@@ -1,7 +1,7 @@
 /**********************************************************************           
     * parallel_sim.hpp -- Primitives used for parallel simulation     *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing primitive elements required for simulating   *
     *          ForSyDe models using MPI                               *

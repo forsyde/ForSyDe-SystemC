@@ -1,7 +1,7 @@
 /**********************************************************************           
     * di_helpers.hpp -- Helper primitives for domain interfaces       *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing helper primitives for modeling DIs           *
     *                                                                 *

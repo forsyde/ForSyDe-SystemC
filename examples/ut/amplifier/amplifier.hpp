@@ -1,7 +1,7 @@
 /**********************************************************************
     * amplifier.hpp -- a an adaptive amplifier process                *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *          taken from the book by Axel Jantsch (p. 114-122)       *
     *                                                                 *
     * Purpose: Demonstration of a simple example in the untimed MoC.  *

@@ -1,7 +1,7 @@
 /**********************************************************************           
     * sy_helpers.hpp -- Helper primitives in the SY MoC               *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing helper primitives for modeling in the SY MoC *
     *                                                                 *

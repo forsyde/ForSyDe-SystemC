@@ -3,7 +3,7 @@
     *          library                                                *
     *                                                                 *
     * Authors: Gilmar Besera (gilmar@kth.se)                          *
-    *          Hosien Attarzadeh (shan2@kth.se)                       *
+    *          Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing domain interfaces for ForSyDe-SystemC        *
     *                                                                 *

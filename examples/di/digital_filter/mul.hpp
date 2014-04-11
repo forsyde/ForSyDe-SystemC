@@ -1,7 +1,7 @@
 /**********************************************************************
     * mul.hpp -- a multilpier process                                 *
     *                                                                 *
-    * Authors: Hosien Attarzadeh (shan2@kth.se)                       *
+    * Authors: Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of a heterogeneous system.               *
     *                                                                 *

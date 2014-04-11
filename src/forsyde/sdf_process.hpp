@@ -1,7 +1,7 @@
 /**********************************************************************           
     * sdf_process.hpp -- The SDF MoC process                          *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing the primitives for the SDF MoC               *
     *                                                                 *

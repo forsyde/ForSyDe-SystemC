@@ -1,7 +1,7 @@
 /**********************************************************************           
     * main.cpp -- the main file and testbench for the tyo SDF example *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of a simple program.                     *
     *                                                                 *

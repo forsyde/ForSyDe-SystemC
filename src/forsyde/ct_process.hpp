@@ -1,7 +1,7 @@
 /**********************************************************************           
     * ct_process.hpp -- The CT MoC process                            *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing the primitives for the CT MoC                *
     *                                                                 *

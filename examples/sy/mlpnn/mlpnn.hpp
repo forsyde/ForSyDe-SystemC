@@ -1,7 +1,7 @@
 /**********************************************************************
     * mlpnn.hpp -- A multi-layer perceptron artifivial neural network *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of the vector operations.                *
     *                                                                 *

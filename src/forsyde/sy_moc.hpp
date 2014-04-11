@@ -1,7 +1,7 @@
 /**********************************************************************           
     * sy_moc.hpp -- The synchronous model of computation              *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing promitive element required for modeling      *
     *          synchronous systems in ForSyDe-SystemC                 *
