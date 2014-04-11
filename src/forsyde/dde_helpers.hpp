@@ -120,11 +120,12 @@ inline mealy<IT,ST,OT>* make_mealy(const std::string& pName,
     const typename mealy<IT,ST,OT>::ns_functype& _ns_func,
     const typename mealy<IT,ST,OT>::od_functype& _od_func,
     const ST& init_st,
+    const sc_time& delay_time,
     OIf<OT>& outS,
     IIf<IT>& inpS
     )
 {
-    auto p = new mealy<IT,ST,OT>(pName.c_str(), _ns_func, _od_func, init_st);
+    auto p = new mealy<IT,ST,OT>(pName.c_str(), _ns_func, _od_func, init_st, delay_time);
     
     (*p).iport1(inpS);
     (*p).oport1(outS);
@@ -145,12 +146,13 @@ inline mealy2<IT1,IT2,ST,OT>* make_mealy2(const std::string& pName,
     const typename mealy2<IT1,IT2,ST,OT>::ns_functype& _ns_func,
     const typename mealy2<IT1,IT2,ST,OT>::od_functype& _od_func,
     const ST& init_st,
+    const sc_time& delay_time,
     OIf<OT>& outS,
     IIf1<IT1>& inpS1,
     IIf2<IT2>& inpS2
     )
 {
-    auto p = new mealy2<IT1,IT2,ST,OT>(pName.c_str(), _ns_func, _od_func, init_st);
+    auto p = new mealy2<IT1,IT2,ST,OT>(pName.c_str(), _ns_func, _od_func, init_st, delay_time);
     
     (*p).iport1(inpS1);
     (*p).iport2(inpS2);

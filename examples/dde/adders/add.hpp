@@ -1,5 +1,5 @@
 /**********************************************************************
-    * report.hpp -- the report process                                *
+    * add.hpp -- an adder process                                     *
     *                                                                 *
     * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
@@ -11,18 +11,19 @@
     *******************************************************************/
 
 
-#ifndef REPORT_HPP
-#define REPORT_HPP
+#ifndef ADD_HPP
+#define ADD_HPP
 
 #include <forsyde.hpp>
-#include <iostream>
 
 using namespace ForSyDe;
 
-void report_func(ttn_event<int> inp1)
+void add_func(abst_ext<int>& out1, const abst_ext<int>& inp1, const abst_ext<int>& inp2)
 {
-#pragma ForSyDe begin report_func
-    std::cout << "output value: " << inp1 << std::endl;
+#pragma ForSyDe begin add_func
+    int a = from_abst_ext(inp1,0);
+    int b = from_abst_ext(inp2,0);
+    out1 = abst_ext<int>(a + b);
 #pragma ForSyDe end
 }
 
