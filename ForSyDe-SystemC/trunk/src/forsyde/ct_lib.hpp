@@ -1,7 +1,7 @@
 /**********************************************************************           
     * ct_lib.hpp -- a library of useful processes in the CT MoC       *
     *                                                                 *
-    * Authors:  Hosien Attarzadeh (shan2@kth.se)                      *
+    * Authors:  Hosein Attarzadeh (shan2@kth.se)                      *
     *                                                                 *
     * Purpose: Enriching the CT library.                              *
     *                                                                 *

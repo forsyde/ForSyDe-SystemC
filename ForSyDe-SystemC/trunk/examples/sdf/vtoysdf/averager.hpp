@@ -1,7 +1,7 @@
 /**********************************************************************           
     * averager.h -- an averager with feedback from outside            *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of a variadic program using zip and unzip*
     *                                                                 *

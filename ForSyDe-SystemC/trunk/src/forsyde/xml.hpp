@@ -1,7 +1,7 @@
 /**********************************************************************
     * xml.hpp -- Dumps the system model as the abstract XML+C format  * 
     *                                                                 *
-    * Authors: Hosien Attarzadeh (shan2@kth.se)                       *
+    * Authors: Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Dumps the structure and behavior of a system model     *
     *                                                                 *

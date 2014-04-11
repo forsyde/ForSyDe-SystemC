@@ -2,7 +2,7 @@
     * compAvg.hpp -- A composite process which includes an averager   *
     *          with a delay.                                          *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of a simple program.                     *
     *                                                                 *

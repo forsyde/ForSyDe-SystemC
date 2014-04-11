@@ -2,7 +2,7 @@
     * dde_process_constructors.hpp -- Process constructors in the DDE *
     *                                MOC                              *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing basic process constructors for modeling      *
     *          distributed discrete-event systems in ForSyDe-SystemC  *

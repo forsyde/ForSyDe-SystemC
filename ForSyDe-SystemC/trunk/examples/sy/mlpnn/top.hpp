@@ -1,7 +1,7 @@
 /**********************************************************************
     * top.hpp -- the top level and test bench for the mlpnn example   *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Demonstration of the vector operations.                *
     *                                                                 *

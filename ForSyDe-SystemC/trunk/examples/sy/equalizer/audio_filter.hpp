@@ -2,7 +2,7 @@
     * AudioFilter.h -- Amplify different frequencies of the audio     *
     *                  signal                                         *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *          the Haskell version from Ingo Sander (ingo@kth.se)     *
     *                                                                 *
     * Purpose: Demonstrating how co-simulation with legacy codes is   *

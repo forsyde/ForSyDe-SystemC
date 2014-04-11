@@ -1,7 +1,7 @@
 /**********************************************************************
     * main -- the main file and testbench for the eqializer example   *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *          the Haskell version from Ingo Sander (ingo@kth.se)     *
     *                                                                 *
     * Purpose: Demonstration of co-simulation with exernal models     *

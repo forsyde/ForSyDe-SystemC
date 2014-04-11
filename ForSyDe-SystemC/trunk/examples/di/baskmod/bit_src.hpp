@@ -2,7 +2,7 @@
     * bit_src.hpp -- a random bit generator                           *
     *                                                                 *
     * Author:  Gilmar Beserra (gilmar@kth.se)                         *
-    *          Hosien Attarzadeh (shan2@kth.se)                       *
+    *          Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: A BASK modulator system.                               *
     *                                                                 *

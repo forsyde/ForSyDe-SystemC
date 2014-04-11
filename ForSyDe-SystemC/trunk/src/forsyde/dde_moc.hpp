@@ -2,7 +2,7 @@
     * dde_moc.hpp -- The distributed discrete-event (DDE) model of    *
     *                   computation                                   *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing promitive element required for modeling      *
     *          dicrete-event systems in ForSyDe-SystemC               *

@@ -1,7 +1,7 @@
 /**********************************************************************           
     * dt_moc.hpp -- The discrete-time model of computation            *
     *                                                                 *
-    * Author:  Hosien Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
     * Purpose: Providing promitive element required for modeling      *
     *          discrete-time systems in ForSyDe-SystemC               *
