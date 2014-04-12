@@ -146,7 +146,7 @@ inline comb4<T0,T1,T2,T3,T4>* make_comb4(const std::string& pName,
 
 //! Helper function to construct a combX process
 /*! This function is used to construct a process (SystemC module) and
- * connect its output and output signals.
+ * connect its input and output signals.
  * It provides a more functional style definition of a ForSyDe process.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
@@ -445,6 +445,27 @@ inline zip<T1,T2>* make_zip(const std::string& pName,
     return p;
 }
 
+//! Helper function to construct a zipX process
+/*! This function is used to construct a zip process (SystemC module) and
+ * connect its output signals.
+ * The user binds the inputs manually.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <class T1, std::size_t N,
+           template <class> class OIf>
+inline zipX<T1,N>* make_zipX(const std::string& pName,
+    OIf<std::array<abst_ext<T1>,N>>& outS
+    )
+{
+    auto p = new zipX<T1,N>(pName.c_str());
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct an unzip process
 /*! This function is used to construct an unzip process (SystemC module) and
  * connect its output and output signals.
@@ -470,35 +491,26 @@ inline unzip<T1,T2>* make_unzip(const std::string& pName,
     return p;
 }
 
-//! Helper function to construct an unzipN process
-/*! This function is used to construct an unzipN process (SystemC module) and
- * connect its output and output signals.
+//! Helper function to construct an unzipX process
+/*! This function is used to construct an unzipX process (SystemC module) and
+ * connect its input signal.
+ * The user binds the outputs manually.
  * It provides a more functional style definition of a ForSyDe process.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input FIFOs.
  */
-//~ template <template <class> class IIf,
-           //~ typename T1, template <typename> typename OIf,
-           //~ typename... Ts>
-//~ inline unzipN<T...>* make_unzipN(std::string pName,
-    //~ IIf<std::tuple<abst_ext<Ts>...>>& inpS,
-    //~ OIf<T1>& outS,
-    //~ OIfs<Ts>&... outsS
-    //~ )
-//~ {
-    //~ make_unzipN(pName, inpS, outsS...);
-    //~ std:get???????????(*p).iport1(inpS);
-    //~ 
-    //~ return p;
-//~ }
-    //~ auto p = new unzip<T1,T2>(pName.c_str());
-    //~ 
-    //~ (*p).iport1(inpS);
-    //~ (*p).oport1(out1S);
-    //~ (*p).oport2(out2S);
-    //~ 
-    //~ return p;
-//~ }
+template <template <class> class IIf,
+           class T1, std::size_t N>
+inline unzipX<T1,N>* make_unzipX(const std::string& pName,
+    IIf<std::array<abst_ext<T1>,N>>& inpS
+    )
+{
+    auto p = new unzipX<T1,N>(pName.c_str());
+    
+    (*p).iport1(inpS);
+    
+    return p;
+}
 
 //! Helper function to construct a fanout process
 /*! This function is used to construct a fanout process (SystemC module) and

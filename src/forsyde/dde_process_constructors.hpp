@@ -1228,6 +1228,101 @@ private:
 #endif
 };
 
+//! The zipX process with a vector of inputs and one output
+/*! This process "zips" a vector of incoming signals into one signal of
+ * vector type.
+ */
+template <class T1, std::size_t N>
+class zipX : public dde_process
+{
+public:
+    std::array<DDE_in<T1>,N> iport;    ///< port array for the input channels
+    DDE_out<std::array<abst_ext<T1>,N>> oport1;  ///< port for the output channel
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * zips them together and writes the results using the output port
+     */
+    zipX(sc_module_name _name)
+         :dde_process(_name), oport1("oport1")
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "DDE::zipX";}
+    
+private:    
+    // inputs and output variables
+    std::array<ttn_event<T1>,N> next_ievs;
+    std::array<abst_ext<T1>,N> cur_ivals;
+    abst_ext< std::array<abst_ext<T1>,N> >* oval;
+        
+    // the current time (local time)
+    sc_time tl;
+    
+    // clocks of the input ports (channel times)
+    std::array<sc_time,N> insT;
+    
+    void init()
+    {
+        insT.fill(SC_ZERO_TIME);
+        tl = SC_ZERO_TIME;
+        oval = new abst_ext< std::array<abst_ext<T1>,N> >();
+    }
+    
+    void prep()
+    {
+        for (size_t i=0;i<N;i++)
+            if (insT[i] == tl)
+            {
+                next_ievs[i] = iport[i].read();
+                insT[i] = get_time(next_ievs[i]);
+            }
+        
+        // update channel clocks and the local clock
+        tl = *std::min_element(insT.begin(), insT.end());
+        
+        // update current values
+        for (size_t i=0;i<N;i++)
+            if (get_time(next_ievs[i]) == tl)
+                cur_ivals[i] = get_value(next_ievs[i]);
+            else
+                cur_ivals[i] = abst_ext<T1>();
+    }
+    
+    void exec()
+    {
+        if (std::all_of(cur_ivals.begin(), cur_ivals.end(), [](abst_ext<T1> el){
+            return is_absent(el);
+        }))
+            oval->set_abst();
+        else
+            *oval = abst_ext< std::array<abst_ext<T1>,N> >(cur_ivals);
+    }
+    
+    void prod()
+    {
+        auto temp_event = ttn_event<std::array<abst_ext<T1>,N>>(*oval,tl);
+        WRITE_MULTIPORT(oport1,temp_event)
+        wait(tl - sc_time_stamp());
+    }
+    
+    void clean()
+    {
+        delete oval;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(N);     // N input ports
+        for (size_t i=0;i<N;i++)
+            boundInChans[i].port = &iport[i];
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
 //! The unzip process with one input and two outputs
 /*! This process "unzips" a signal of tuples into two separate signals
  */
@@ -1309,6 +1404,88 @@ private:
     }
 #endif
 };
+
+//! The unzipX process with a vector of outputs and one input
+/*! This process "unzips" a signal of vector type into a vector of
+ * output signals.
+ */
+template <class T1, std::size_t N>
+class unzipX : public dde_process
+{
+public:
+    DDE_in<std::array<abst_ext<T1>,N>> iport1;  ///< port for the input channel
+    std::array<DDE_out<T1>,N> oport;    ///< port array for the output channels
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * zips them together and writes the results using the output port
+     */
+    unzipX(sc_module_name _name)
+         :dde_process(_name), iport1("iport1")
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "DDE::unzipX";}
+    
+private:
+    // intermediate values
+    ttn_event<std::array<abst_ext<T1>,N>>* in_ev;
+    
+    // output events
+    std::array<ttn_event<T1>,N> oevs;
+    
+    sc_time tl;
+    
+    void init()
+    {
+        in_ev = new ttn_event<std::array<abst_ext<T1>,N>>;
+        tl = SC_ZERO_TIME;
+    }
+    
+    void prep()
+    {
+        *in_ev = iport1.read();
+    }
+    
+    void exec()
+    {
+        if (is_absent(*in_ev))
+        {
+            for (size_t i=0; i<N; i++)
+                oevs[i] = ttn_event<T1>(abst_ext<T1>(),tl);
+        }
+        else
+        {
+            for (size_t i=0; i<N; i++)
+                oevs[i] = ttn_event<T1>(unsafe_from_abst_ext(*in_ev)[i]);
+        }
+        tl = get_time(*in_ev);
+    }
+    
+    void prod()
+    {
+        for (size_t i=0; i<N; i++)
+            WRITE_MULTIPORT(oport[i],oevs[i])  // write to the output i
+        wait(tl - sc_time_stamp());
+    }
+    
+    void clean()
+    {
+        delete in_ev;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(N);    // output ports
+        for (size_t i=0;i<N;i++)
+            boundOutChans[i].port = &oport[i];
+    }
+#endif
+};
+
 
 //! Process constructor for a fan-out process with one input and one output
 /*! This class is used to build a fanout processes with one input

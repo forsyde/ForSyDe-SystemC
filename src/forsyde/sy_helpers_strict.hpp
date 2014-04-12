@@ -146,7 +146,7 @@ inline scomb4<T0,T1,T2,T3,T4>* make_scomb4(const std::string& pName,
 
 //! Helper function to construct a strict combX process
 /*! This function is used to construct a process (SystemC module) and
- * connect its output and output signals.
+ * connect its input and output signals.
  * It provides a more functional style definition of a ForSyDe process.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
@@ -447,6 +447,27 @@ inline szip<T1,T2>* make_szip(const std::string& pName,
     return p;
 }
 
+//! Helper function to construct a szipX process
+/*! This function is used to construct a szip process (SystemC module) and
+ * connect its output signal.
+ * The user binds the inputs manually.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <class T1, std::size_t N,
+           template <class> class OIf>
+inline szipX<T1,N>* make_szipX(const std::string& pName,
+    OIf<std::array<T1,N>>& outS
+    )
+{
+    auto p = new szipX<T1,N>(pName.c_str());
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct a sunzip process
 /*! This function is used to construct a strict unzip process (SystemC module) and
  * connect its output and output signals.
@@ -468,6 +489,27 @@ inline sunzip<T1,T2>* make_sunzip(const std::string& pName,
     (*p).iport1(inpS);
     (*p).oport1(out1S);
     (*p).oport2(out2S);
+    
+    return p;
+}
+
+//! Helper function to construct a strict unzipX process
+/*! This function is used to construct a strict unzipX process (SystemC 
+ * module) and connect its input signal.
+ * The user binds the outputs manually.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <template <class> class IIf,
+           class T1, std::size_t N>
+inline unzipX<T1,N>* make_unzipX(const std::string& pName,
+    IIf<std::array<T1,N>>& inpS
+    )
+{
+    auto p = new unzipX<T1,N>(pName.c_str());
+    
+    (*p).iport1(inpS);
     
     return p;
 }

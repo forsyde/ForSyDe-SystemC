@@ -249,6 +249,27 @@ inline zip<T1,T2>* make_zip(std::string pName,
     return p;
 }
 
+//! Helper function to construct a zipX process
+/*! This function is used to construct a zip process (SystemC module) and
+ * connect its output signal.
+ * The user binds the inputs manually.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <class T1, std::size_t N,
+            template <class> class OIf>
+inline zipX<T1,N>* make_zipX(std::string pName,
+    OIf< std::array<abst_ext<T1>,N> >& outS
+    )
+{
+    auto p = new zipX<T1,N>(pName.c_str());
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct an unzip process
 /*! This function is used to construct an unzip process (SystemC module) and
  * connect its output and output signals.
@@ -270,6 +291,27 @@ inline unzip<T1,T2>* make_unzip(std::string pName,
     (*p).iport1(inpS);
     (*p).oport1(out1S);
     (*p).oport2(out2S);
+    
+    return p;
+}
+
+//! Helper function to construct an unzipX process
+/*! This function is used to construct an unzipX process (SystemC module) and
+ * connect its input signal.
+ * The user binds the outputs manually.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <template <class> class IIf,
+           class T1, std::size_t N>
+inline unzipX<T1,N>* make_unzipX(const std::string& pName,
+    IIf<std::array<abst_ext<T1>,N>>& inpS
+    )
+{
+    auto p = new unzipX<T1,N>(pName.c_str());
+    
+    (*p).iport1(inpS);
     
     return p;
 }

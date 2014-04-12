@@ -1699,7 +1699,7 @@ private:
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
-        boundOutChans.resize(N);    // two output ports
+        boundOutChans.resize(N);    // output ports
         for (size_t i=0;i<N;i++)
             boundOutChans[i].port = &oport[i];
     }
