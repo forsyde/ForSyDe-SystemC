@@ -322,9 +322,9 @@ private:
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
-        boundInChans.resize(2);     // only one input port
-        boundInChans[0].port = &iport1;
-        boundInChans[1].port = &iport2;
+        boundInChans.resize(N);     // N input ports
+        for (size_t i=0;i<N;i++)
+            boundInChans[i].port = &iport[i];
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
     }

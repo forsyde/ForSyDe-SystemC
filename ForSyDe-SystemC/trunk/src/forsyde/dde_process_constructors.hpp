@@ -279,8 +279,12 @@ public:
               init_val(init_val), delay_time(delay_time)
     {
 #ifdef FORSYDE_INTROSPECTION
-        arg_vec.push_back(std::make_tuple("init_val", std::to_string(init_val)));
-        arg_vec.push_back(std::make_tuple("delay_time", std::to_string(delay_time.to_double())));
+        std::stringstream ss;
+        ss << init_val;
+        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
+        ss.str("");
+        ss << delay_time;
+        arg_vec.push_back(std::make_tuple("delay_time", ss.str()));
 #endif
     }
     
@@ -903,8 +907,8 @@ public:
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
         std::stringstream ss;
-        ss << init_val;
-        arg_vec.push_back(std::make_tuple("init_val", ss.str()));
+        ss << init_st;
+        arg_vec.push_back(std::make_tuple("init_st", ss.str()));
         ss.str("");
         ss << take;
         arg_vec.push_back(std::make_tuple("take", ss.str()));
