@@ -79,6 +79,29 @@ inline comb2* make_comb2(std::string pName,
     return p;
 }
 
+//! Helper function to construct a combX process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class IIf, std::size_t N>
+inline combX<N>* make_combX(std::string pName,
+    typename combX<N>::functype _func,
+    OIf& outS,
+    std::array<IIf,N>& inpS
+    )
+{
+    auto p = new combX<N>(pName.c_str(), _func);
+    
+    for (int i=0;i<N;i++)
+    	(*p).iport[i](inpS[i]);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct a delay process
 /*! This function is used to construct a process (SystemC module) and
  * connect its input and output signals.
