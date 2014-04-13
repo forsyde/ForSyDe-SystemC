@@ -121,6 +121,7 @@ private:
     void prod()
     {
         WRITE_MULTIPORT(oport1, subsig)
+        wait(get_end_time(subsig) - sc_time_stamp());
         iter++;
     }
     
@@ -278,14 +279,20 @@ private:
                     vecCTsignal.push_back(f);
             }
             if((samplingT >= get_start_time(f)) && (samplingT < get_end_time(f)))
+            {
                 WRITE_MULTIPORT(oport1,ttn_event<T>(f(samplingT), samplingT))
+                wait(samplingT - sc_time_stamp());
+            }
             else if(samplingT >= get_end_time(f))
             {
                 f = iport1.read();
                 if(samplingType==0)
                     vecCTsignal.push_back(f);
                 if ((samplingT >= get_start_time(f)) && (samplingT < get_end_time(f)))
+                {
                     WRITE_MULTIPORT(oport1,ttn_event<T>(f(samplingT), samplingT))
+                    wait(samplingT - sc_time_stamp());
+                }
                 else
                 {
                     while(samplingT >= get_end_time(f))
@@ -295,6 +302,7 @@ private:
                             vecCTsignal.push_back(f);
                     }
                     WRITE_MULTIPORT(oport1,ttn_event<T>(f(samplingT), samplingT))
+                    wait(samplingT - sc_time_stamp());
                 }
             }
             else
@@ -307,6 +315,7 @@ private:
                     else
                     {
                         WRITE_MULTIPORT(oport1,ttn_event<T>(vecCTsignal.front()(samplingT), samplingT))
+                        wait(samplingT - sc_time_stamp());
                         break;
                     }
                 }
@@ -386,6 +395,7 @@ private:
         if (sampling_time != local_time)
             SC_REPORT_ERROR(name(), "Unexpected starting point for start of the input signal");
         WRITE_MULTIPORT(oport1, ttn_event<T>(subsig1(sampling_time), sampling_time))
+        wait(sampling_time - sc_time_stamp());
         local_time = get_end_time(subsig1);
         sampling_time += samp_period;
     }
@@ -514,6 +524,7 @@ private:
     void prod()
     {
         WRITE_MULTIPORT(oport1, subsig)
+        wait(get_end_time(subsig) - sc_time_stamp());
     }
     
     void clean() {}
@@ -724,6 +735,7 @@ private:
     void prod()
     {
         WRITE_MULTIPORT(oport1, tt_event<T>(*val,cur_time))
+        wait(cur_time - sc_time_stamp());
         cur_time += sample_period;
     }
     

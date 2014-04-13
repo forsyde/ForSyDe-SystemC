@@ -57,7 +57,7 @@ public:
      * results using the output port
      */
     comb(sc_module_name _name,      ///< process name
-         functype _func             ///< function to be passed
+         const functype& _func      ///< function to be passed
          ) : ct_process(_name), iport1("iport1"), oport1("oport1"),
              _func(_func)
     {
@@ -89,15 +89,12 @@ private:
     
     void exec()
     {
-        // FIXME: the following intermediate variables shouldn't be necassary
-        //        but generates an error in GCC 4.7
         sub_signal iv1 = ival1;
-        functype _f = _func;
         oval = sub_signal(get_start_time(ival1), get_end_time(ival1),
-                    [iv1,_f](const sc_time& t)
+                    [this,iv1](const sc_time& t)
                     {
                         CTTYPE res;
-                        _f(res, iv1(t));
+                        _func(res, iv1(t));
                         return res;
                     }
                );
@@ -106,6 +103,7 @@ private:
     void prod()
     {
         WRITE_MULTIPORT(oport1, oval)
+        wait(get_end_time(oval) - sc_time_stamp());
     }
     
     void clean(){}
@@ -141,7 +139,7 @@ public:
      * results using the output port
      */
     comb2(sc_module_name _name,      ///< process name
-          functype _func             ///< function to be passed
+          const functype& _func      ///< function to be passed
           ) : ct_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1"),
               _func(_func)
     {
@@ -154,14 +152,17 @@ public:
     
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "CT::comb2";}
-private:
-    enum EvalState {Aligned, SS1Earlier, SS2Earlier} evalSt;
-    sc_time outEndT;
+private:    
+    // Inputs and output sub-signals
+    sub_signal oss;
+    sub_signal iss1;
+    sub_signal iss2;
     
-    // Inputs and output variables
-    sub_signal oval;
-    sub_signal ival1;
-    sub_signal ival2;
+    // the current time (local time) and the next time
+    sc_time tl, tn;
+    
+    // clocks of the input ports (channel times)
+    sc_time in1T, in2T;
     
     //! The function passed to the process constructor
     functype _func;
@@ -169,53 +170,47 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        evalSt = Aligned;
-        outEndT = sc_time(0,SC_SEC);
+        in1T = in2T = tl = tn = SC_ZERO_TIME;
+        set_range(iss1, SC_ZERO_TIME, SC_ZERO_TIME);
+        set_range(iss2, SC_ZERO_TIME, SC_ZERO_TIME);
     }
     
     void prep()
     {
-        if (evalSt==Aligned){
-            ival1 = iport1.read();  // read from input 1
-            ival2 = iport2.read();  // read from input 2
-        }else if (evalSt==SS1Earlier)
-            ival1 = iport1.read();  // read from input 1
-        else ival2 = iport2.read();  // read from input 2
+        if (in1T == tl)
+        {
+            iss1 = iport1.read();
+            in1T = get_end_time(iss1);
+        }
+        if (in2T == tl)
+        {
+            iss2 = iport2.read();
+            in2T = get_end_time(iss2);
+        }
+        
+        // update the next local clock
+        tn = std::min(in1T, in2T);
     }
     
     void exec()
     {
-        sc_time in1EndT = get_end_time(ival1);
-        sc_time in2EndT = get_end_time(ival2);
-        if(in1EndT > in2EndT) {
-            outEndT = in2EndT;
-            evalSt = SS2Earlier;
-        } else if(in1EndT < in2EndT) {
-            outEndT = in1EndT;
-            evalSt = SS1Earlier;
-        } else {
-            outEndT = in1EndT;
-            evalSt = Aligned;
-        }
-        
-        // FIXME: the following intermediate variables shouldn't be necassary
-        //        but generates an error in GCC 4.7
-        sub_signal iv1 = ival1;
-        sub_signal iv2 = ival2;
-        functype _f = _func;
-        oval = sub_signal(std::max(get_start_time(ival1),get_start_time(ival2)),
-                    outEndT, [iv1,iv2,_f](const sc_time& t)
+        sub_signal iv1 = iss1;
+        sub_signal iv2 = iss2;
+        oss = sub_signal(tl, tn, 
+                             [iv1,iv2,this](const sc_time& t)
                              {
                                  CTTYPE res;
-                                 _f(res, iv1(t), iv2(t));
+                                 _func(res, iv1(t), iv2(t));
                                  return res;
                              }
                );
+        tl = tn;
     }
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, oval)
+        WRITE_MULTIPORT(oport1, oss)
+        wait(tl - sc_time_stamp());
     }
     
     void clean(){}
@@ -232,6 +227,109 @@ private:
 #endif
 };
 
+//! Process constructor for a combinational process with an array of inputs and one output
+/*! similar to comb but with an array of inputs
+ */
+template <std::size_t N>
+class combX : public ct_process
+{
+public:
+    std::array<CT_in,N> iport;  ///< port for the input channel array
+    CT_out oport1;              ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(CTTYPE&, const std::array<CTTYPE,N>&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output port
+     */
+    combX(sc_module_name _name,      ///< process name
+          const functype& _func      ///< function to be passed
+          ) : ct_process(_name), oport1("oport1"), _func(_func)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "CT::combX";}
+private:    
+    // Inputs and output sub-signals
+    sub_signal oss;
+    std::array<sub_signal,N> isss;
+    
+    // the current time (local time) and the next time
+    sc_time tl, tn;
+    
+    // clocks of the input ports (channel times)
+    std::array<sc_time,N> insT;
+    
+    //! The function passed to the process constructor
+    functype _func;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        tl = tn = SC_ZERO_TIME;
+        std::fill(insT.begin(), insT.end(), SC_ZERO_TIME);
+        for(sub_signal &iss: isss)
+            set_range(iss, SC_ZERO_TIME, SC_ZERO_TIME);
+    }
+    
+    void prep()
+    {
+        for (size_t i=0;i<N;i++)
+            if (insT[i] == tl)
+            {
+                isss[i] = iport[i].read();
+                insT[i] = get_end_time(isss[i]);
+            }
+        
+        // update the next local clock
+        tn = *std::min_element(insT.begin(), insT.end());
+    }
+    
+    void exec()
+    {
+        std::array<sub_signal,N> temp_isss = isss;
+        oss = sub_signal(tl, tn, 
+                             [temp_isss,this](const sc_time& t)
+                             {
+                                 CTTYPE res;
+                                 std::array<CTTYPE,N> ivs;
+                                 for (size_t i=0;i<N;i++)
+                                    ivs[i] = temp_isss[i](t);
+                                 _func(res, ivs);
+                                 return res;
+                             }
+               );
+        tl = tn;
+    }
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, oss)
+        wait(tl - sc_time_stamp());
+    }
+    
+    void clean(){}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(2);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundInChans[1].port = &iport2;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
 
 //! Process constructor for a delay element
 /*! This class is used to build a process which delays the input CT signal.
@@ -276,13 +374,15 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        // TODO: check if delay_time <= 0
         if (delay_time > sc_time(0,SC_NS))
+        {
             WRITE_MULTIPORT(oport1, 
                 sub_signal(sc_time(0,SC_NS), delay_time, 
                     [](const sc_time& t){return 0;}
                 )
             )
+            wait(delay_time);
+        }
     }
     
     void prep()
@@ -299,6 +399,7 @@ private:
     void prod()
     {
         WRITE_MULTIPORT(oport1, val)
+        wait(get_end_time(val) - sc_time_stamp());
     }
     
     void clean(){}
@@ -354,12 +455,15 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        // TODO: check if delay_time <= 0
-        WRITE_MULTIPORT(oport1, 
-            sub_signal(sc_time(0,SC_NS), delay_time, 
-                [](const sc_time& t){return 0;}
+        if (delay_time > sc_time(0,SC_NS))
+        {
+            WRITE_MULTIPORT(oport1, 
+                sub_signal(sc_time(0,SC_NS), delay_time, 
+                    [](const sc_time& t){return 0;}
+                )
             )
-        )
+            wait(delay_time);
+        }
     }
     
     void prep()
@@ -371,16 +475,14 @@ private:
     {
         set_range(val, get_start_time(val)+delay_time,
                        get_end_time(val)+delay_time);
-        // FIXME: the following intermediate variables shouldn't be necassary
-        //        but generates an error in GCC 4.7
         sub_signal v = val;
-        sc_time dt = delay_time;
-        set_function(val, [v,dt](const sc_time& t){return v(t-dt);});
+        set_function(val, [v,this](const sc_time& t){return v(t-delay_time);});
     }
     
     void prod()
     {
         WRITE_MULTIPORT(oport1, val)
+        wait(get_end_time(val) - sc_time_stamp());
     }
     
     void clean() {}
@@ -438,13 +540,11 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        // FIXME: the following intermediate variables shouldn't be necassary
-        //        but generates an error in GCC 4.7
-        CTTYPE iv = init_val;
         auto ss = sub_signal(sc_time(0,SC_NS), end_time, 
-                        [iv](const sc_time& t){return iv;}
+                        [this](const sc_time& t){return init_val;}
                   );
         WRITE_MULTIPORT(oport1, ss)
+        wait(get_end_time(ss) - sc_time_stamp());
     }
     
     void prep() {}
@@ -514,18 +614,16 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        // FIXME: the following intermediate variables shouldn't be necassary
-        //        but generates an error in GCC 4.7
-        functype _f = _func;
         auto ss = sub_signal(sc_time(0,SC_NS), end_time,
-                                [_f](const sc_time& t)
+                                [this](const sc_time& t)
                                 {
                                     CTTYPE res=0;
-                                    _f(res, t);
+                                    _func(res, t);
                                     return res;
                                 }
                             );
         WRITE_MULTIPORT(oport1, ss)
+        wait(get_end_time(ss) - sc_time_stamp());
     }
     
     void prep() {}
@@ -746,6 +844,7 @@ private:
     void prod()
     {
         WRITE_MULTIPORT(oport1, *val)
+        wait(get_end_time(*val) - sc_time_stamp());
     }
     
     void clean()
