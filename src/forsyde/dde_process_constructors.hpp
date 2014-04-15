@@ -696,8 +696,8 @@ private:
         // State number
         int numState = a.size1();
         assert(a.size1() == a.size2());
-        samplingTimeTag = sc_time(0, SC_NS);;
-        x = zero_matrix<double>(numState,1);;
+        samplingTimeTag = SC_ZERO_TIME;
+        x = zero_matrix<T>(numState,1);
         u = MatrixDouble(1,1), u_1 = MatrixDouble(1,1);
         u0 = u1 = MatrixDouble(1,1);
         y1 = MatrixDouble(1,1);
@@ -779,10 +779,10 @@ private:
     
     // To obtain state space matrices from transfer function.
     // We assume there are non-zero leading coefficients in num and denom.
-    int tf2ss(std::vector<double> & num_, std::vector<double> & den_, MatrixDouble & a, 
+    int tf2ss(std::vector<T> & num_, std::vector<T> & den_, MatrixDouble & a, 
           MatrixDouble & b, MatrixDouble & c, MatrixDouble & d)
     {
-        std::vector<double> num, den;
+        std::vector<T> num, den;
         // sizes checking
         int nn = num_.size(), nd = den_.size();
         if(nn >= nd)
@@ -791,7 +791,7 @@ private:
             << " >= degree(denom) = " << nd << std::endl;
             abort();
         }
-        double dCoef1 = den_.at(0);
+        T dCoef1 = den_.at(0);
         if(nd==1)
         {
             //~ a = NULL, b = NULL, c = NULL;
@@ -821,7 +821,7 @@ private:
                 den.push_back(den_.at(i+1));
         
             // Form A (nd-1)*(nd-1)
-            a = zero_matrix<double> (a.size1(), a.size2());
+            a = zero_matrix<T> (a.size1(), a.size2());
             if(nd > 2)
             {
                 // The eyes (up-right corner) are set to '1'
@@ -836,7 +836,7 @@ private:
                 a(0,0) = 0-den.at(0);
             //
             // Form B (nd-1)*1
-            b = zero_matrix<double> (b.size1(), b.size2());
+            b = zero_matrix<T> (b.size1(), b.size2());
             b(nd-2,0) = 1.0;
             //
             // Form C 1*(nd-1)
@@ -852,7 +852,7 @@ private:
     
     void rkSolver(MatrixDouble a, MatrixDouble b, MatrixDouble c,
                   MatrixDouble d, MatrixDouble u_k, MatrixDouble u_k_1,
-                  MatrixDouble x, double h, MatrixDouble &x_, MatrixDouble &y)
+                  MatrixDouble x, T h, MatrixDouble &x_, MatrixDouble &y)
     {
         // Some helper matrices used in RK solver
         MatrixDouble k1,k2,k3,k4;
@@ -872,6 +872,239 @@ private:
         boundOutChans.resize(2);    // two output ports
         boundOutChans[0].port = &oport1;
         boundOutChans[1].port = &oport2;
+    }
+#endif
+};
+
+//! Process constructor for implementing a linear filter with fixed step size
+/*! This class is used to build a process which implements a linear filter
+ * with fixed step size based on the numerator and denominator constants.
+ */
+template <class T>
+class filterf : public dde_process
+{
+public:
+    DDE_in<T>  iport1;           ///< port for the input channel
+    DDE_out<T> oport1;           ///< port for the output channel
+
+    typedef matrix<T> MatrixDouble;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which inserts the initial element, reads
+     * data from its input port, and writes the results using the output
+     * port.
+     */
+    filterf(sc_module_name _name,           ///< process name
+            std::vector<T> numerators,      ///< Numerator constants
+            std::vector<T> denominators,    ///< Denominator constants
+            sc_time step_size               ///< Step size
+          ) : dde_process(_name), iport1("iport1"), oport1("oport1"),
+              numerators(numerators), denominators(denominators),
+              step_size(step_size)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::stringstream ss;
+        ss << numerators;
+        arg_vec.push_back(std::make_tuple("numerators", ss.str()));
+        ss.str("");
+        ss << denominators;
+        arg_vec.push_back(std::make_tuple("denominators", ss.str()));
+        ss.str("");
+        ss << step_size;
+        arg_vec.push_back(std::make_tuple("step_size", ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "DDE::filterf";}
+    
+private:
+    // Constructor parameters
+    std::vector<T> numerators, denominators;
+    sc_time step_size;
+    
+    // Internal variables
+    sc_time step;
+    sc_time samplingTimeTag; 
+    MatrixDouble a, b, c, d;
+    // states
+    MatrixDouble x, x_1;
+    // current and previous input/time.
+    MatrixDouble u, u_1;
+    sc_time t, t_1, h;
+    // output
+    MatrixDouble y;
+    // Some helper matrices used in RK solver
+    MatrixDouble k1,k2,k3,k4;
+    // to prevent rounding error
+    double roundingFactor;
+    
+    // Output event
+    ttn_event<T>* out_ev;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        out_ev = new ttn_event<T>;
+        
+        int /*nn = nums.size(),*/ nd = denominators.size();
+        a = MatrixDouble(nd-1,nd-1);
+        b = MatrixDouble(nd-1,1);
+        c = MatrixDouble(1,nd-1);
+        d = MatrixDouble(1,1);
+    
+        tf2ss(numerators,denominators,a,b,c,d);
+        
+        // State number
+        int numState = a.size1();
+        assert(a.size1() == a.size2());
+        x = zero_matrix<T>(numState,1), x_1 = zero_matrix<T>(numState,1);
+        u = MatrixDouble(1,1), u_1 = MatrixDouble(1,1);
+        y = MatrixDouble(1,1);
+        k1 = MatrixDouble(numState,1);
+        k2 = MatrixDouble(numState,1);
+        k3 = MatrixDouble(numState,1);
+        k4 = MatrixDouble(numState,1);
+        
+        // read initial input
+        auto in_ev = iport1.read();
+        u(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-absent inputs
+        t = get_time(in_ev);
+        // calculate and write initial output
+        y = boost::numeric::ublas::prod(c,x) + boost::numeric::ublas::prod(d,u);
+        *out_ev = ttn_event<T>(y(0,0), t);
+        WRITE_MULTIPORT(oport1, *out_ev)
+        wait(t - sc_time_stamp());
+        u_1(0,0) = u(0,0); 
+        t_1 = t;
+        roundingFactor = 1.0001;
+    }
+    
+    void prep()
+    {
+        auto in_ev = iport1.read();
+        u(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-absent inputs
+        t = get_time(in_ev);
+    }
+    
+    void exec()
+    {
+        // 1st step error estimation
+        h = t - t_1;
+        rkSolver(a, b, c, d, u, u_1, x_1, h.to_seconds(), x, y);
+        *out_ev = ttn_event<T>(y(0,0), t);
+        
+
+    }
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, *out_ev)
+        wait(t - sc_time_stamp());
+        x_1 = x;
+        u_1(0,0) = u(0,0); 
+        t_1 = t;
+    }
+    
+    void clean()
+    {
+        delete out_ev;
+    }
+    
+    // To obtain state space matrices from transfer function.
+    // We assume there are non-zero leading coefficients in num and denom.
+    int tf2ss(std::vector<T> & num_, std::vector<T> & den_, MatrixDouble & a, 
+          MatrixDouble & b, MatrixDouble & c, MatrixDouble & d)
+    {
+        std::vector<T> num, den;
+        // sizes checking
+        int nn = num_.size(), nd = den_.size();
+        if(nn >= nd)
+        {
+            std::cerr << "ERROR: " << "degree(num) = " << nn
+            << " >= degree(denom) = " << nd << std::endl;
+            abort();
+        }
+        T dCoef1 = den_.at(0);
+        if(nd==1)
+        {
+            //~ a = NULL, b = NULL, c = NULL;
+            d = MatrixDouble(1,1);
+            d(0,0) = num_.at(0)/dCoef1;
+        }
+        else
+        {
+            if ((nd - nn) > 0)
+            {
+                // Pad num so that degree(num) == degree(denom)
+                for(int i=0; i<nd; i++)
+                {
+                    if(i<(nd-nn))
+                        num.push_back(0.0);
+                    else
+                        num.push_back(num_.at(i-nd+nn));
+                }
+            }
+        
+            // Normalizing w.r.t the leading coefficient of denominator
+            for(unsigned int i=0; i<num.size(); i++)
+                num.at(i) /= dCoef1;
+            for(unsigned int i=0; i<den_.size(); i++)
+                den_.at(i) /= dCoef1;
+            for(unsigned int i=0; i<(den_.size()-1); i++)
+                den.push_back(den_.at(i+1));
+        
+            // Form A (nd-1)*(nd-1)
+            a = zero_matrix<T> (a.size1(), a.size2());
+            if(nd > 2)
+            {
+                // The eyes (up-right corner) are set to '1'
+                for(int i=0; i<(nd-2); i++)
+                    for(int j=0; j<(nd-1); j++)
+                        if((j-i)==1) a(i,j) = 1.0;
+                // The lower row(s)
+                for(int j=0; j<(nd-1); j++)
+                    a(nd-2,j) = 0-den.at(nd-2-j);
+            }
+            else
+                a(0,0) = 0-den.at(0);
+            //
+            // Form B (nd-1)*1
+            b = zero_matrix<T> (b.size1(), b.size2());
+            b(nd-2,0) = 1.0;
+            //
+            // Form C 1*(nd-1)
+            for(int j=0; j< nd-1; j++)
+                c(0,nd-2-j) = num.at(j+1) - num.at(0)*den.at(j);
+            //
+            // Form D 1*1
+            d(0,0) = num.at(0);
+        }
+        
+        return 0;
+    }
+    
+    void rkSolver(MatrixDouble a, MatrixDouble b, MatrixDouble c,
+                  MatrixDouble d, MatrixDouble u_k, MatrixDouble u_k_1,
+                  MatrixDouble x, T h, MatrixDouble &x_, MatrixDouble &y)
+    {
+        // Some helper matrices used in RK solver
+        MatrixDouble k1,k2,k3,k4;
+        k1 = boost::numeric::ublas::prod(a,x) + boost::numeric::ublas::prod(b,u_k_1);
+        k2 = boost::numeric::ublas::prod(a,(x+k1*(h/2.0))) + boost::numeric::ublas::prod(b,(u_k_1 + u_k)) * 0.5;
+        k3 = boost::numeric::ublas::prod(a,(x+k2*(h/2.0))) + boost::numeric::ublas::prod(b,(u_k_1 + u_k)) * 0.5;
+        k4 = boost::numeric::ublas::prod(a,(x+k3*h)) + boost::numeric::ublas::prod(b,u_k);
+        x_ = x + (k1 + 2.0*k2 + 2.0*k3 + k4) * (h/6.0);
+        y = boost::numeric::ublas::prod(c,x_) + boost::numeric::ublas::prod(d,u_k);
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(1);    // two output ports
+        boundOutChans[0].port = &oport1;
     }
 #endif
 };

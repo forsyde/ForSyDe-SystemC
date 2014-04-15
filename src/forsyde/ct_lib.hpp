@@ -441,6 +441,70 @@ inline filter* make_filter(std::string pName,
     return p;
 }
 
+//! Process constructor for implementing a linear filter with fixed step
+/*! This class is used to build a process which implements a linear
+ * in the CT MoC filter with fixed step based on the numerator and
+ * denominator constants.
+ * It internally uses a DDE filter together with CT2DDEf and DDE2CT
+ * MoC interfaces.
+ */
+SC_MODULE(filterf)
+{
+    CT_in iport1;           ///< port for the input channel
+    CT_out oport1;          ///< port for the output channel;
+    
+    CT2DDEf<CTTYPE> ct2de1;
+    DDE::filterf<CTTYPE> filter1;
+    DDE2CT<CTTYPE> de2ct1;
+    
+    DDE::DDE2DDE<CTTYPE> inp_sig, out_sig;
+    
+    //! The constructor requires the module name and the filter parameters
+    /*! 
+     */
+    filterf(sc_module_name _name,            ///< Process name
+           std::vector<CTTYPE> numerators,  ///< Numerator constants
+           std::vector<CTTYPE> denominators,///< Denominator constants
+           sc_time sample_period             ///< sampling period
+          ) : sc_module(_name), ct2de1("ct2de1", sample_period),
+              filter1("filter1", numerators, denominators, sample_period),
+              de2ct1("de2ct1", HOLD)
+    {
+        ct2de1.iport1(iport1);
+        ct2de1.oport1(inp_sig);
+        
+        filter1.iport1(inp_sig);
+        filter1.oport1(out_sig);
+        
+        de2ct1.iport1(out_sig);
+        de2ct1.oport1(oport1);
+    }
+};
+
+//! Helper function to construct a linear process with fixed step size
+/*! This function is used to construct a CT filter and connect its
+ * input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class I1If>
+inline filterf* make_filterf(std::string pName,
+    const std::vector<CTTYPE> numerators,  ///< Numerator constants
+    const std::vector<CTTYPE> denominators,///< Denominator constants
+    const sc_time sample_period,            ///< sampling period
+    OIf& outS,
+    I1If& inp1S
+    )
+{
+    auto p = new filterf(pName.c_str(), numerators, denominators, sample_period);
+    
+    (*p).iport1(inp1S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct an integrator
 /*! This function is used to construct a CT integrator and connect its
  * input and output signals.
