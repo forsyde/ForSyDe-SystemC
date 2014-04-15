@@ -79,13 +79,12 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        currentVal = (CTTYPE)from_abst_ext(iport1.read(), previousVal);
+        currentVal = previousVal = 0;
         iter = 0;
     }
     
     void prep()
     {
-        previousVal = currentVal;
         currentVal = (CTTYPE)from_abst_ext(iport1.read(), previousVal);
     }
     
@@ -94,8 +93,6 @@ private:
         set_range(subsig, sample_period*iter, sample_period*(iter+1));
         if(op_mode==HOLD)
         {
-            // FIXME: the following intermediate variables shouldn't be necassary
-            //        but generates an error in GCC 4.7
             CTTYPE pv = previousVal;
             set_function(subsig,[pv](const sc_time& t)
                                 {
@@ -106,8 +103,6 @@ private:
         else 
         {
             CTTYPE dv = currentVal - previousVal;
-            // FIXME: the following intermediate variables shouldn't be necassary
-            //        but generates an error in GCC 4.7
             CTTYPE pv = previousVal;
             unsigned long itr = iter;
             sc_time sp = sample_period;
@@ -123,6 +118,7 @@ private:
         WRITE_MULTIPORT(oport1, subsig)
         wait(get_end_time(subsig) - sc_time_stamp());
         iter++;
+        previousVal = currentVal;
     }
     
     void clean() {}
@@ -173,31 +169,35 @@ private:
     sc_time sample_period;
     
     // Internal variables
-    sub_signal in_val;
+    sub_signal in_ss;
     CTTYPE out_val;
-    sc_time cur_time;
+    sc_time local_time, sampling_time;
     
     //Implementing the abstract semantics
     void init()
     {
-        in_val = iport1.read();
-        cur_time = get_start_time(in_val);
+        local_time = sampling_time = SC_ZERO_TIME;
     }
     
     void prep()
     {
-        while (cur_time >= get_end_time(in_val)) in_val = iport1.read();
+        while (sampling_time >= local_time)
+        {
+            in_ss = iport1.read();
+            local_time = get_end_time(in_ss);
+        }
     }
     
     void exec()
     {
-        out_val = in_val(cur_time);
+        out_val = in_ss(sampling_time);
     }
     
     void prod()
     {
         WRITE_MULTIPORT(oport1, out_val)
-        cur_time += sample_period;
+        wait(sampling_time - sc_time_stamp());
+        sampling_time += sample_period;
     }
     
     void clean() {}
@@ -380,45 +380,36 @@ public:
 
 private:    
     // Internal variables
-    //~ std::vector<tt_event<T>> samples; // a queue to be committed
-    sc_time local_time;
+    sc_time samp_period;
     abst_ext<T> out_val;
-    sc_time samp_period, sampling_time;
-    sub_signal subsig1;
+    sc_time local_time, sampling_time;
+    sub_signal in_ss;
     
     //Implementing the abstract semantics
     void init()
     {
-        sampling_time = SC_ZERO_TIME;
-        subsig1 = iport1.read();
-        local_time = get_start_time(subsig1);
-        if (sampling_time != local_time)
-            SC_REPORT_ERROR(name(), "Unexpected starting point for start of the input signal");
-        WRITE_MULTIPORT(oport1, ttn_event<T>(subsig1(sampling_time), sampling_time))
-        wait(sampling_time - sc_time_stamp());
-        local_time = get_end_time(subsig1);
-        sampling_time += samp_period;
+        local_time = sampling_time = SC_ZERO_TIME;
     }
     
     void prep()
     {
         while (sampling_time >= local_time)
         {            
-            subsig1 = iport1.read();
-            local_time = get_end_time(subsig1);
+            in_ss = iport1.read();
+            local_time = get_end_time(in_ss);
         }
     }
     
     void exec()
     {
-        out_val = abst_ext<T>(subsig1(sampling_time));
-        sampling_time += samp_period;
+        out_val = abst_ext<T>(in_ss(sampling_time));
     }
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,ttn_event<T>(subsig1(sampling_time), sampling_time))
+        WRITE_MULTIPORT(oport1,ttn_event<T>(out_val, sampling_time))
         wait(sampling_time - sc_time_stamp());
+        sampling_time += samp_period;
     }
     
     void clean() {}
@@ -480,6 +471,9 @@ private:
     //Implementing the abstract semantics
     void init()
     {
+        previousVal = currentVal = 0;
+        previousT = currentT = SC_ZERO_TIME;
+        
         auto in_ev = iport1.read();
         currentVal = (double)unsafe_from_abst_ext(get_value(in_ev));
         currentT = get_time(in_ev);
@@ -487,11 +481,8 @@ private:
     
     void prep()
     {
-        previousVal = currentVal;
-        previousT = currentT;
-        
         auto in_ev = iport1.read();
-        currentVal = (double)unsafe_from_abst_ext(get_value(in_ev));
+        currentVal = (double)from_abst_ext(get_value(in_ev), previousVal);
         currentT = get_time(in_ev);
     }
     
@@ -500,8 +491,6 @@ private:
         set_range(subsig, previousT, currentT);
         if(op_mode==HOLD)
         {
-            // FIXME: the following intermediate variables shouldn't be necassary
-            //        but generates an error in GCC 4.7
             CTTYPE pv = previousVal;
             set_function(subsig,[=](sc_time t){
 						return pv;
@@ -511,8 +500,6 @@ private:
         {
             CTTYPE dv = currentVal - previousVal;
             sc_time dt = currentT - previousT;
-            // FIXME: the following intermediate variables shouldn't be necassary
-            //        but generates an error in GCC 4.7
             sc_time pt = previousT;
             CTTYPE pv = previousVal;
             set_function(subsig,[=](sc_time t)->CTTYPE{
@@ -525,6 +512,8 @@ private:
     {
         WRITE_MULTIPORT(oport1, subsig)
         wait(get_end_time(subsig) - sc_time_stamp());
+        previousVal = currentVal;
+        previousT = currentT;
     }
     
     void clean() {}
