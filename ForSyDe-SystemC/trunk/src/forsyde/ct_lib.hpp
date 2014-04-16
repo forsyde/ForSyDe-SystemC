@@ -467,7 +467,7 @@ SC_MODULE(filterf)
            std::vector<CTTYPE> denominators,///< Denominator constants
            sc_time sample_period             ///< sampling period
           ) : sc_module(_name), ct2de1("ct2de1", sample_period),
-              filter1("filter1", numerators, denominators, sample_period),
+              filter1("filter1", numerators, denominators),
               de2ct1("de2ct1", HOLD)
     {
         ct2de1.iport1(iport1);
@@ -530,27 +530,92 @@ inline filter* make_integrator(std::string pName,
     return p;
 }
 
-//! Helper function to construct a PID controller
-/*! This function is used to construct a PID controller and connect its
- * input and output signals.
+//! Helper function to construct an integrator with fixed step size
+/*! This function is used to construct a CT integrator with fixed step
+ * size and connect its input and output signals.
  * It provides a more functional style definition of a ForSyDe process.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
 template <class OIf, class I1If>
-inline filter* make_pid(std::string pName,
-    const CTTYPE& kp,
-    const CTTYPE& ki,
-    const CTTYPE& kd,
-    const sc_time sample_period,
+inline filterf* make_integratorf(std::string pName,
+    const sc_time sample_period,            ///< sampling period
     OIf& outS,
     I1If& inp1S
     )
 {
-    std::vector<CTTYPE> numerators = {kd,kp,ki};
-    std::vector<CTTYPE> denominators = {0.0,0.0,1.0,0.0};
+    std::vector<CTTYPE> numerators = {1.0};
+    std::vector<CTTYPE> denominators = {1.0, 0.0};
     
-    auto p = new filter(pName.c_str(), numerators, denominators, sample_period);
+    auto p = new filterf(pName.c_str(), numerators, denominators, sample_period);
+    
+    (*p).iport1(inp1S);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Process constructor for implementing a PI controller with fixed step
+/*! This class is used to build a PI controller with fixed step size
+ * based on the proportional and integral gain parameters.
+ * It internally uses a scale, an integrator and an adder.
+ */
+SC_MODULE(pif)
+{
+    CT_in iport1;           ///< port for the input channel
+    CT_out oport1;          ///< port for the output channel;
+    
+    fanout fanout1;
+    scale scale1;
+    filterf integrator1;
+    add add1;
+    
+    signal fan2p, fan2i, p2add, i2add;
+    
+    //! The constructor requires the module name and the gains
+    /*! 
+     */
+    pif(sc_module_name _name,       ///< Process name
+           const CTTYPE& kp,        ///< Numerator constants
+           const CTTYPE& ki,        ///< Denominator constants
+           sc_time sample_period    ///< sampling period
+          ) : sc_module(_name), fanout1("fanout1"), scale1("scale1", kp),
+              integrator1("integrator1", {ki}, {1,0}, sample_period),
+              add1("add1")
+    {
+        fanout1.iport1(iport1);
+        fanout1.oport1(fan2p);
+        fanout1.oport1(fan2i);
+        
+        scale1.iport1(fan2p);
+        scale1.oport1(p2add);
+        
+        integrator1.iport1(fan2i);
+        integrator1.oport1(i2add);
+        
+        add1.iport1(p2add);
+        add1.iport2(i2add);
+        add1.oport1(oport1);
+    }
+};
+
+//! Helper function to construct a PI controller with fixed step size
+/*! This function is used to construct a PI controller with fixed step
+ * size and connect its input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class OIf, class I1If>
+inline pif* make_pif(std::string pName,
+    const CTTYPE& kp,
+    const CTTYPE& ki,
+    const sc_time sample_period,
+    OIf& outS,
+    I1If& inp1S
+    )
+{    
+    auto p = new pif(pName.c_str(), kp, ki, sample_period);
     
     (*p).iport1(inp1S);
     (*p).oport1(outS);

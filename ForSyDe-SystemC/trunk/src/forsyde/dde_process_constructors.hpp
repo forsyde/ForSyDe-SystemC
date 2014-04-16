@@ -896,11 +896,9 @@ public:
      */
     filterf(sc_module_name _name,           ///< process name
             std::vector<T> numerators,      ///< Numerator constants
-            std::vector<T> denominators,    ///< Denominator constants
-            sc_time step_size               ///< Step size
+            std::vector<T> denominators     ///< Denominator constants
           ) : dde_process(_name), iport1("iport1"), oport1("oport1"),
-              numerators(numerators), denominators(denominators),
-              step_size(step_size)
+              numerators(numerators), denominators(denominators)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::stringstream ss;
@@ -909,9 +907,6 @@ public:
         ss.str("");
         ss << denominators;
         arg_vec.push_back(std::make_tuple("denominators", ss.str()));
-        ss.str("");
-        ss << step_size;
-        arg_vec.push_back(std::make_tuple("step_size", ss.str()));
 #endif
     }
     
@@ -921,11 +916,8 @@ public:
 private:
     // Constructor parameters
     std::vector<T> numerators, denominators;
-    sc_time step_size;
     
     // Internal variables
-    sc_time step;
-    sc_time samplingTimeTag; 
     MatrixDouble a, b, c, d;
     // states
     MatrixDouble x, x_1;
@@ -936,8 +928,6 @@ private:
     MatrixDouble y;
     // Some helper matrices used in RK solver
     MatrixDouble k1,k2,k3,k4;
-    // to prevent rounding error
-    double roundingFactor;
     
     // Output event
     ttn_event<T>* out_ev;
@@ -977,7 +967,6 @@ private:
         wait(t - sc_time_stamp());
         u_1(0,0) = u(0,0); 
         t_1 = t;
-        roundingFactor = 1.0001;
     }
     
     void prep()
@@ -993,8 +982,6 @@ private:
         h = t - t_1;
         rkSolver(a, b, c, d, u, u_1, x_1, h.to_seconds(), x, y);
         *out_ev = ttn_event<T>(y(0,0), t);
-        
-
     }
     
     void prod()
