@@ -473,10 +473,6 @@ private:
     {
         previousVal = currentVal = 0;
         previousT = currentT = SC_ZERO_TIME;
-        
-        auto in_ev = iport1.read();
-        currentVal = (double)unsafe_from_abst_ext(get_value(in_ev));
-        currentT = get_time(in_ev);
     }
     
     void prep()
