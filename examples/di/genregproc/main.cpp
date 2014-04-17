@@ -19,7 +19,7 @@ int sc_main(int argc, char **argv)
 {
     top top("top");
 
-    sc_start();
+    sc_start(30,SC_SEC);
         
     return 0;
 }

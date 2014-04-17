@@ -50,9 +50,9 @@ SC_MODULE(controller)
         
         make_DDE2CT("de2ct1", HOLD, err_ct, err);
         
-        CT::make_pif("pi1", 2.0, 1.0, sc_time(1,SC_MS), drive_ct, err_ct);
+        CT::make_pif("pi1", 2.0, 1.0, sc_time(100,SC_MS), drive_ct, err_ct);
         
-        make_CT2DDEf("ct2de1", sc_time(1, SC_MS), drive, drive_ct);
+        make_CT2DDEf("ct2de1", sc_time(100, SC_MS), drive, drive_ct);
         
 	}
 };

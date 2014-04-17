@@ -28,7 +28,7 @@ using namespace ForSyDe;
 SC_MODULE(top)
 {
     DDE::signal<bool> on_off, fault;
-	DDE::signal<double> load_impedance, voltage_controller, voltage_pd, voltage_pd2, voltage_pd3,voltage_pd4,
+	DDE::signal<double> load_impedance, voltage_controller, voltage_pd3,voltage_pd4,
         voltage_expression, voltage_plot, drive_discgen, drive_plot;
 		
 	SC_CTOR(top)
@@ -45,19 +45,19 @@ SC_MODULE(top)
 		supervisor1->load_impedance(load_impedance);
                 
         auto discrete_generator1 = new discrete_generator(
-            "discrete_generator1", 5.0, 1.0, sc_time(1, SC_MS)
+            "discrete_generator1", 5.0, 1.0, sc_time(100, SC_MS)
         );
         discrete_generator1->drive(drive_discgen);
 		discrete_generator1->load_impedance(load_impedance);
         discrete_generator1->voltage(voltage_pd3);
         
-        // the following two delays should be more than 6ms and each cannot be very small
+        // the following two delays should be there and the second one needs to be more than 3*sample_time
         auto voltage_delay3 = DDE::make_delay(
-            "voltage_delay3", abst_ext<double>(),sc_time(2.1, SC_MS),
+            "voltage_delay3", abst_ext<double>(),sc_time(100, SC_MS),
             voltage_pd4, voltage_pd3
         );
         auto voltage_delay4 = DDE::make_delay(
-            "voltage_delay4", abst_ext<double>(), sc_time(4, SC_MS),
+            "voltage_delay4", abst_ext<double>(), sc_time(400, SC_MS),
             voltage_controller, voltage_pd4
         );
         voltage_delay4->oport1(voltage_expression);
