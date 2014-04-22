@@ -501,7 +501,87 @@ private:
 #endif
 };
 
-//! Process constructor for a strict reduce process with an array of inputs and one output
+//! A data-parallel process constructor for a strict combinational process with input and output array types
+/*! similar to comb with an array of inputs
+ */
+template <typename T0, typename T1, std::size_t N>
+class sdpmap : public sy_process
+{
+public:
+    SY_in<std::array<T1,N>> iport1;       ///< port for the input channel 1
+    SY_out<std::array<T0,N>> oport1;        ///< port for the output channel
+
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(T0&, const T1&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented function to each element and writes
+     * the results using the output port
+     */
+    sdpmap(const sc_module_name& _name,    ///< process name
+           const functype& _func            ///< function to be passed
+          ) : sy_process(_name), _func(_func)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+#endif
+    }
+
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "SY::sdpmap";}
+
+private:
+    // Inputs and output variables
+    std::array<T0,N> oval;
+    std::array<T1,N> ival;
+
+    //! The function passed to the process constructor
+    functype _func;
+
+    //Implementing the abstract semantics
+    void init() {}
+
+    void prep()
+    {
+        auto ival_temp = iport1.read();
+        CHECK_PRESENCE(ival_temp);
+        ival = unsafe_from_abst_ext(ival_temp);
+    }
+
+    void exec()
+    {
+        #ifdef FORSYDE_OPENMP
+        #pragma omp parallel for
+        #endif
+        for (size_t i=0; i<N; i++)
+        {
+            _func(oval[i], ival[i]);
+        }
+    }
+
+    void prod()
+    {
+        auto tempval = abst_ext<std::array<T0,N>>(oval);
+        WRITE_MULTIPORT(oport1, tempval)
+    }
+
+    void clean() {}
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);     // only one input port
+        boundInChans[0].port = &iport1;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! A data-parallel process constructor for a strict reduce process with an array of inputs and one output
 /*! This process constructor implements the strict version of the well-
  * known reduce operation, common in data-parallel applications.
  */
@@ -605,65 +685,70 @@ private:
 #endif
 };
 
-//! A data-parallel process constructor for a strict combinational process with an input and output array type
-/*! similar to comb with an array of inputs
+//! A data-parallel process constructor for a strict scan process with input and output array types
+/*! This process constructor implements the strict version of the well-
+ * known scan operation, common in data-parallel applications.
+ * For the special case of the addition operation, it is called all
+ * partial sums or sum-prefix in the literature.
  */
 template <typename T0, typename T1, std::size_t N>
-class sdpmap : public sy_process
+class sdpscan : public sy_process
 {
 public:
     SY_in<std::array<T1,N>> iport1;       ///< port for the input channel 1
     SY_out<std::array<T0,N>> oport1;        ///< port for the output channel
 
     //! Type of the function to be passed to the process constructor
-    typedef std::function<void(T0&, const T1&)> functype;
+    typedef std::function<void(T0&, const T0&, const T1&)> functype;
 
     //! The constructor requires the module name
-    /*! It creates an SC_THREAD which reads data from its input port,
-     * applies the user-imlpemented function to each element and writes
-     * the results using the output port
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output port
      */
-    sdpmap(const sc_module_name& _name,    ///< process name
-           const functype& _func            ///< function to be passed
-          ) : sy_process(_name), _func(_func)
+    sdpscan(const sc_module_name& _name,      ///< process name
+           const functype& _func,             ///< function to be passed
+           const T0& init_res                 ///< initial value for running result
+          ) : sy_process(_name), _func(_func), init_res(init_res)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+        std::stringstream ss;
+        ss << init_res;
+        arg_vec.push_back(std::make_tuple("init_res",ss.str()));
 #endif
     }
 
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const{return "SY::sdpmap";}
+    std::string forsyde_kind() const{return "SY::sdpscan";}
 
 private:
     // Inputs and output variables
     std::array<T0,N> oval;
-    std::array<T1,N> ival;
+    std::array<T0,N> ival;
 
     //! The function passed to the process constructor
     functype _func;
+    
+    T0 init_res;
 
     //Implementing the abstract semantics
     void init() {}
 
     void prep()
     {
-        auto ival_temp = iport1.read();
-        CHECK_PRESENCE(ival_temp);
-        ival = unsafe_from_abst_ext(ival_temp);
+        auto ival1_temp = iport1.read();
+        CHECK_PRESENCE(ival1_temp);
+        ival = unsafe_from_abst_ext(ival1_temp);
     }
 
     void exec()
     {
-        #ifdef FORSYDE_OPENMP
-        #pragma omp parallel for
-        #endif
-        for (size_t i=0; i<N; i++)
-        {
-            _func(oval[i], ival[i]);
-        }
+        _func(oval[0], init_res, ival[0]);
+        for (size_t i=1;i<N;i++)
+            _func(oval[i], oval[i-1], ival[i]);
     }
 
     void prod()

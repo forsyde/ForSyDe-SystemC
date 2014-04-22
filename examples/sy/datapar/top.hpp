@@ -24,7 +24,7 @@ std::array<int,10000> inpval;
 
 SC_MODULE(top)
 {
-    SY::signal<std::array<int,10000>> srca, srcb;
+    SY::signal<std::array<int,10000>> srca, srcb, scanned;
     SY::signal<int> result;
     
     SC_CTOR(top)
@@ -34,7 +34,9 @@ SC_MODULE(top)
         
         SY::make_sdpmap("inc1", inc_func, srcb, srca);
         
-        SY::make_sdpreduce("add1", add_func, result, srcb);
+        SY::make_sdpscan("add1", add_func, 0, scanned, srcb);
+        
+        SY::make_sdpreduce("add2", add_func, result, scanned);
         
         SY::make_ssink("report1", report_func, result);
     }
