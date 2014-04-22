@@ -169,6 +169,30 @@ inline scombX<T0,T1,N>* make_scombX(const std::string& pName,
     return p;
 }
 
+//! Helper function to construct a strict data parallel comb process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class T0, template <class> class OIf,
+          class T1, template <class> class IIf,
+          std::size_t N>
+inline sdpmap<T0,T1,N>* make_sdpmap(const std::string& pName,
+    const typename sdpmap<T0,T1,N>::functype& _func,
+    OIf<std::array<T0,N>>& outS,
+    IIf<std::array<T1,N>>& inpS
+    )
+{
+    auto p = new sdpmap<T0,T1,N>(pName.c_str(), _func);
+
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+
+    return p;
+}
+
 //! Helper function to construct a strict reduce process
 /*! This function is used to construct a sreduce process (SystemC module)
  * and connect connect its output and output signals.
@@ -193,7 +217,7 @@ inline sdpreduce<T0,N>* make_sdpreduce(const std::string& pName,
     return p;
 }
 
-//! Helper function to construct a strict data parallel comb process
+//! Helper function to construct a strict data parallel scan process
 /*! This function is used to construct a process (SystemC module) and
  * connect its output and output signals.
  * It provides a more functional style definition of a ForSyDe process.
@@ -203,13 +227,14 @@ inline sdpreduce<T0,N>* make_sdpreduce(const std::string& pName,
 template <class T0, template <class> class OIf,
           class T1, template <class> class IIf,
           std::size_t N>
-inline sdpmap<T0,T1,N>* make_sdpmap(const std::string& pName,
-    const typename sdpmap<T0,T1,N>::functype& _func,
+inline sdpscan<T0,T1,N>* make_sdpscan(const std::string& pName,
+    const typename sdpscan<T0,T1,N>::functype& _func,
+    const T0& init_res,
     OIf<std::array<T0,N>>& outS,
     IIf<std::array<T1,N>>& inpS
     )
 {
-    auto p = new sdpmap<T0,T1,N>(pName.c_str(), _func);
+    auto p = new sdpscan<T0,T1,N>(pName.c_str(), _func, init_res);
 
     (*p).iport1(inpS);
     (*p).oport1(outS);
