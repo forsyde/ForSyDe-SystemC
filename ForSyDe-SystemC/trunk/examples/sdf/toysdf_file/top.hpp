@@ -39,7 +39,7 @@ SC_MODULE(top)
 
         SDF::make_comb("downSampler1", downSampler_func, 2, 3, downres, res);
         
-        SDF::make_zip("zip1", 2, 1, zipped_res, src2, downres);
+        SDF::make_zip("zip1", 4, 3, zipped_res, src2, downres);
         
         SDF::make_file_sink("report1", report_func, "output.txt", zipped_res);
     }
