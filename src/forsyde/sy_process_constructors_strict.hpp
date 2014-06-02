@@ -155,7 +155,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "SY::wcomb2";}
+    std::string forsyde_kind() const {return "SY::scomb2";}
 private:
     // Inputs and output variables
     T0* oval;
