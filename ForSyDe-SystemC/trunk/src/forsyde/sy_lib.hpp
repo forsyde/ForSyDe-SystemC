@@ -84,6 +84,27 @@ private:
   }
 };
 
+//! Helper function to construct a Gaussian randome wave generator
+/*! This function is used to construct a Gaussian (SystemC module) and
+ * connect its output signal.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the output FIFOs.
+ */
+template <template <class> class OIf>
+inline gaussian* make_gaussian(const std::string& pName,
+    const double& gaussVar,    ///< The variance
+    const double& gaussMean,   ///< The mean value
+    OIf<double>& outS
+    )
+{
+    auto p = new gaussian(pName.c_str(), gaussVar, gaussMean);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 }
 }
 #endif

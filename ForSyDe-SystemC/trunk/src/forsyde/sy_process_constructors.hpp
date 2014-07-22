@@ -685,12 +685,11 @@ public:
     std::string forsyde_kind() const{return "SY::moore";}
     
 private:
-    // Initial value
-    ST init_st;
-    
     //! The functions passed to the process constructor
     ns_functype _ns_func;
     od_functype _od_func;
+    // Initial value
+    ST init_st;
     
     bool first_run;
     
@@ -1174,6 +1173,97 @@ private:
 #endif
 };
 
+//! Process constructor for a file_source process
+/*! This class is used to build a souce process which only has an output.
+ * Given a file name and a function, the process repeatedly reads lines
+ * from the text file and applies the function to convert it to a value
+ * which will be written to the output.
+ * It can be used in test-benches.
+ */
+template <class T>
+class file_source : public sy_process
+{
+public:
+    SY_out<T> oport1;        ///< port for the output channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(abst_ext<T>&, const std::string&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which runs the user-imlpemented function
+     * and writes the result using the output port
+     */
+    file_source(sc_module_name _name,   ///< process name
+           functype _func,              ///< function to be passed
+           std::string file_name        ///< the file name
+          ) : sy_process(_name), oport1("oport1"),
+              file_name(file_name), _func(_func)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+        arg_vec.push_back(std::make_tuple("file_name", file_name));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::file_source";}
+    
+private:
+    std::string file_name;
+    
+    std::string cur_str;        // The current string read from the input
+    std::ifstream ifs;
+    abst_ext<T>* cur_val;
+    
+    //! The function passed to the process constructor
+    functype _func;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        cur_val = new abst_ext<T>;
+        ifs.open(file_name);
+        if (!ifs.is_open())
+        {
+            SC_REPORT_ERROR(name(),"cannot open the file.");
+        }
+    }
+    
+    void prep()
+    {
+        if (!getline(ifs,cur_str))
+        {
+            wait();
+        }
+    }
+    
+    void exec()
+    {
+        _func(*cur_val, cur_str);
+    }
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1, *cur_val)
+    }
+    
+    void clean()
+    {
+        ifs.close();
+        delete cur_val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
 //! Process constructor for a source process with vector input
 /*! This class is used to build a souce process which only has an output.
  * Given the test bench vector, the process iterates over the emenets
@@ -1300,6 +1390,94 @@ private:
     void clean()
     {
         delete val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(1);    // only one output port
+        boundInChans[0].port = &iport1;
+    }
+#endif
+};
+
+//! Process constructor for a file_sink process
+/*! This class is used to build a file_sink process which only has an input.
+ * Its main purpose is to be used in test-benches. The process repeatedly
+ * passes the current input to a given function to generate a string and
+ * write the string to a new line of an output file.
+ */
+template <class T>
+class file_sink : public sy_process
+{
+public:
+    SY_in<T> iport1;         ///< port for the input channel
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(std::string&, const abst_ext<T>&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which runs the user-imlpemented function
+     * in each cycle.
+     */
+    file_sink(sc_module_name _name, ///< process name
+         functype _func,            ///< function to be passed
+         std::string file_name      ///< the file name
+        ) : sy_process(_name), iport1("iport1"), file_name(file_name),
+            _func(_func)
+            
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+        arg_vec.push_back(std::make_tuple("file_name", file_name));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SY::file_sink";}
+    
+private:
+    std::string file_name;
+    
+    std::string ostr;        // The current string to be written to the output
+    std::ofstream ofs;
+    abst_ext<T>* cur_val;         // The current state of the process
+
+    //! The function passed to the process constructor
+    functype _func;
+    
+    //Implementing the abstract semantics
+    void init()
+    {
+        cur_val = new abst_ext<T>;
+        ofs.open(file_name);
+        if (!ofs.is_open())
+        {
+            SC_REPORT_ERROR(name(),"cannot open the file.");
+        }
+    }
+    
+    void prep()
+    {
+        *cur_val = iport1.read();
+    }
+    
+    void exec()
+    {
+        _func(ostr, *cur_val);
+    }
+    
+    void prod()
+    {
+        ofs << ostr << std::endl;
+    }
+    
+    void clean()
+    {
+        ofs.close();
+        delete cur_val;
     }
     
 #ifdef FORSYDE_INTROSPECTION

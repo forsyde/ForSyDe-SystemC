@@ -380,6 +380,27 @@ inline source<T>* make_source(const std::string& pName,
     return p;
 }
 
+//! Helper function to construct a file_source process
+/*! This function is used to construct a file_source (SystemC module) and
+ * connect its output signal.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the output FIFOs.
+ */
+template <class T, template <class> class OIf>
+inline file_source<T>* make_file_source(std::string pName,
+    typename file_source<T>::functype _func,
+    std::string file_name,
+    OIf<T>& outS
+    )
+{
+    auto p = new file_source<T>(pName.c_str(), _func, file_name);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
 //! Helper function to construct a vector source process
 /*! This function is used to construct a vector source (SystemC module) and
  * connect its output signal.
@@ -414,6 +435,27 @@ inline sink<T>* make_sink(const std::string& pName,
     )
 {
     auto p = new sink<T>(pName.c_str(), _func);
+    
+    (*p).iport1(inS);
+    
+    return p;
+}
+
+//! Helper function to construct a file_sink process
+/*! This function is used to construct a file_sink (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <class T, template <class> class IIf>
+inline file_sink<T>* make_file_sink(std::string pName,
+    typename file_sink<T>::functype _func,
+    std::string file_name,
+    IIf<T>& inS
+    )
+{
+    auto p = new file_sink<T>(pName.c_str(), _func, file_name);
     
     (*p).iport1(inS);
     
