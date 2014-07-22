@@ -979,12 +979,11 @@ public:
     std::string forsyde_kind() const{return "SY::smoore";}
     
 private:
-    // Initial value
-    ST init_st;
-    
     //! The functions passed to the process constructor
     ns_functype _ns_func;
     od_functype _od_func;
+    // Initial value
+    ST init_st;
     
     bool first_run;
     
