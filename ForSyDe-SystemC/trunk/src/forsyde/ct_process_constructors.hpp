@@ -476,7 +476,10 @@ private:
         set_range(val, get_start_time(val)+delay_time,
                        get_end_time(val)+delay_time);
         sub_signal v = val;
-        set_function(val, [v,this](const sc_time& t){return v(t-delay_time);});
+        set_function(val, [v,this](const sc_time& t){
+                return get_function(v)(t-delay_time);
+            }
+        );
     }
     
     void prod()

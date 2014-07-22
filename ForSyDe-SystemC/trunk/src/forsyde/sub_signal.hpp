@@ -132,7 +132,7 @@ public:
     friend std::ostream& operator<< (std::ostream& os, sub_signal &subSig)
     {
         os << "(" << get_start_time(subSig) << ", " 
-           << get_end_time(subSig) << " -> f" << std::endl;
+           << get_end_time(subSig) << ") -> f";
         return os;
     }
 private:
