@@ -91,9 +91,9 @@
 #include "forsyde/ct_moc.hpp"
 #include "forsyde/ct_lib.hpp"
 
-// include domain interfaces
-#include "forsyde/dis.hpp"
-#include "forsyde/di_helpers.hpp"
+// include MoC interfaces
+#include "forsyde/mis.hpp"
+#include "forsyde/mi_helpers.hpp"
 
 #include "forsyde/adaptivity.hpp"
 

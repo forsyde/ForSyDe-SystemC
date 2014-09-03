@@ -1,39 +1,39 @@
 /**********************************************************************           
-    * di_helpers.hpp -- Helper primitives for domain interfaces       *
+    * mi_helpers.hpp -- Helper primitives for MoC interfaces          *
     *                                                                 *
     * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Providing helper primitives for modeling DIs           *
+    * Purpose: Providing helper primitives for modeling MIs           *
     *                                                                 *
     * Usage:   This file is included automatically                    *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef DI_HELPERS_HPP
-#define DI_HELPERS_HPP
+#ifndef MI_HELPERS_HPP
+#define MI_HELPERS_HPP
 
-/*! \file di_helpers.hpp
- * \brief Implements helper primitives for modeling with DIs
+/*! \file mi_helpers.hpp
+ * \brief Implements helper primitives for modeling with MIs
  * 
  *  This file includes helper functions which facilliate construction of
- * domain interfaces
+ * MoC interfaces
  */
 
 #include <functional>
 
-#include "dis.hpp"
+#include "mis.hpp"
 
 namespace ForSyDe
 {
 
 using namespace sc_core;
 
-//! Helper function to construct an SY2CT domain interface
-/*! This function is used to construct a domain interface (SystemC module)
+//! Helper function to construct an SY2CT MoC interface
+/*! This function is used to construct a MoC interface (SystemC module)
  * from the synchronous to the continuous-time MoC and connect its input
  * and output signals.
- * It provides a more functional style definition of a ForSyDe DI.
+ * It provides a more functional style definition of a ForSyDe MI.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
@@ -53,11 +53,11 @@ inline SY2CT* make_SY2CT(std::string pName,
     return p;
 }
 
-//! Helper function to construct an CT2SY domain interface
-/*! This function is used to construct a domain interface (SystemC module)
+//! Helper function to construct an CT2SY MoC interface
+/*! This function is used to construct a MoC interface (SystemC module)
  * from the continuous-time to the synchronous MoC and connect its input
  * and output signals.
- * It provides a more functional style definition of a ForSyDe DI.
+ * It provides a more functional style definition of a ForSyDe MI.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
@@ -76,11 +76,11 @@ inline CT2SY* make_CT2SY(std::string pName,
     return p;
 }
 
-//! Helper function to construct an CT2DDE domain interface
-/*! This function is used to construct a domain interface (SystemC module)
+//! Helper function to construct an CT2DDE MoC interface
+/*! This function is used to construct a MoC interface (SystemC module)
  * from the continuous-time to the discrete-event MoC and connect its
  * input and output signals.
- * It provides a more functional style definition of a ForSyDe DI.
+ * It provides a more functional style definition of a ForSyDe MI.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
@@ -100,11 +100,11 @@ inline CT2DDE<T>* make_CT2DDE(std::string pName,
     return p;
 }
 
-//! Helper function to construct an CT2DDEf domain interface
-/*! This function is used to construct a domain interface (SystemC module)
+//! Helper function to construct an CT2DDEf MoC interface
+/*! This function is used to construct a MoC interface (SystemC module)
  * from the continuous-time to the discrete-event MoC and connect its
  * input and output signals.
- * It provides a more functional style definition of a ForSyDe DI.
+ * It provides a more functional style definition of a ForSyDe MI.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
@@ -123,11 +123,11 @@ inline CT2DDEf<T>* make_CT2DDEf(std::string pName,
     return p;
 }
 
-//! Helper function to construct an DDE2CT domain interface
-/*! This function is used to construct a domain interface (SystemC module)
+//! Helper function to construct an DDE2CT MoC interface
+/*! This function is used to construct a MoC interface (SystemC module)
  * from the discrete-event MoC to the continuous-time and connect its
  * input and output signals.
- * It provides a more functional style definition of a ForSyDe DI.
+ * It provides a more functional style definition of a ForSyDe MI.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
@@ -146,11 +146,11 @@ inline DDE2CT<T>* make_DDE2CT(std::string pName,
     return p;
 }
 
-//! Helper function to construct an SY2SDF domain interface
-/*! This function is used to construct a domain interface (SystemC module)
+//! Helper function to construct an SY2SDF MoC interface
+/*! This function is used to construct a MoC interface (SystemC module)
  * from the synchronous to synchronous dataflow MoC and connect its
  * input and output signals.
- * It provides a more functional style definition of a ForSyDe DI.
+ * It provides a more functional style definition of a ForSyDe MI.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
@@ -168,11 +168,11 @@ inline SY2SDF<T>* make_SY2SDF(std::string pName,
     return p;
 }
 
-//! Helper function to construct an SDF2SY domain interface
-/*! This function is used to construct a domain interface (SystemC module)
+//! Helper function to construct an SDF2SY MoC interface
+/*! This function is used to construct a MoC interface (SystemC module)
  * from the synchronous dataflow MoC to the synchronous and connect its
  * input and output signals.
- * It provides a more functional style definition of a ForSyDe DI.
+ * It provides a more functional style definition of a ForSyDe MI.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
@@ -190,11 +190,11 @@ inline SDF2SY<T>* make_SDF2SY(std::string pName,
     return p;
 }
 
-//! Helper function to construct an SY2DDE domain interface
-/*! This function is used to construct a domain interface (SystemC module)
+//! Helper function to construct an SY2DDE MoC interface
+/*! This function is used to construct a MoC interface (SystemC module)
  * from the synchronous to discrete-event MoC and connect its
  * input and output signals.
- * It provides a more functional style definition of a ForSyDe DI.
+ * It provides a more functional style definition of a ForSyDe MI.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */
@@ -213,11 +213,11 @@ inline SY2DDE<T>* make_SY2DDE(std::string pName,
     return p;
 }
 
-//! Helper function to construct an DDE2SY domain interface
-/*! This function is used to construct a domain interface (SystemC module)
+//! Helper function to construct an DDE2SY MoC interface
+/*! This function is used to construct a MoC interface (SystemC module)
  * from the discrete-event MoC to the synchronous and connect its
  * input and output signals.
- * It provides a more functional style definition of a ForSyDe DI.
+ * It provides a more functional style definition of a ForSyDe MI.
  * It also removes bilerplate code by using type-inference feature of
  * C++ and automatic binding to the input and output FIFOs.
  */

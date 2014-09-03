@@ -1,25 +1,25 @@
 /**********************************************************************
-    * dis.hpp -- domain interfaces for the SystemC map of the ForSyDe *
+    * mis.hpp -- MoC interfaces for the SystemC map of the ForSyDe    *
     *          library                                                *
     *                                                                 *
     * Authors: Gilmar Besera (gilmar@kth.se)                          *
     *          Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
-    * Purpose: Providing domain interfaces for ForSyDe-SystemC        *
+    * Purpose: Providing MoC interfaces for ForSyDe-SystemC           *
     *                                                                 *
     * Usage:   This file is included automatically                    *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef DIS_HPP
-#define DIS_HPP
+#ifndef MIS_HPP
+#define MIS_HPP
 
-/*! \file dis.hpp
- * \brief Implements the domain interfaces between different MoCs
+/*! \file mis.hpp
+ * \brief Implements the MoC interfaces between different MoCs
  * 
  *  This file includes the basic process constructors and other
- * facilities used for creating domain interfaces between different MoCs.
+ * facilities used for creating MoC interfaces between different MoCs.
  */
 
 namespace ForSyDe
@@ -29,8 +29,8 @@ using namespace sc_core;
 //! Operation modes for the SY2CT converter
 enum A2DMode {LINEAR, HOLD};
 
-//! Process constructor for a SY2CT domain interfaces
-/*! This class is used to build a domain interfaces which converts an SY 
+//! Process constructor for a SY2CT MoC interfaces
+/*! This class is used to build a MoC interface which converts an SY 
  * signal to a CT one. It can be used to implement digital-to-analog
  * converters. There are two operating modes which can be configured using
  * the initial values of the constructor:
@@ -134,8 +134,8 @@ private:
 #endif
 };
 
-//! Process constructor for a CT2SY domain interface
-/*! This class is used to build a domain interface which converts an CT 
+//! Process constructor for a CT2SY MoC interface
+/*! This class is used to build a MoC interface which converts an CT 
  * signal to a SY one with fixed sampling rate. It can be used to implement 
  * analog-to-digital converters.
  */
@@ -213,8 +213,8 @@ private:
 #endif
 };
 
-//! Process constructor for a CT2DDE domain interface
-/*! This class is used to build a domain interface which converts an CT 
+//! Process constructor for a CT2DDE MoC interface
+/*! This class is used to build a MoC interface which converts an CT 
  * signal to a DDE one with adaptive sampling rate. It can be used to
  * implement analog-to-digital converters with adaptive sampling rates.
  */
@@ -353,8 +353,8 @@ private:
 #endif
 };
 
-//! Process constructor for a CT2DDEf domain interface
-/*! This class is used to build a domain interface which converts a CT 
+//! Process constructor for a CT2DDEf MoC interface
+/*! This class is used to build a MoC interface which converts a CT 
  * signal to a DDE one with fixed sampling rate. It can be used to
  * implement analog-to-digital converters with fixed sampling rates.
  */
@@ -425,8 +425,8 @@ private:
 #endif
 };
 
-//! Process constructor for a DDE2CT domain interfaces
-/*! This class is used to build a domain interfaces which converts a DDE 
+//! Process constructor for a DDE2CT MoC interfaces
+/*! This class is used to build a MoC interfaces which converts a DDE 
  * signal to a CT one. It can be used to implement digital-to-analog
  * converters. There are two operating modes which can be configured using
  * the initial values of the constructor:
@@ -525,8 +525,8 @@ private:
 #endif
 };
 
-//! Process constructor for a SY2SDF domain interfaces
-/*! This class is used to build a domain interfaces which converts an SY 
+//! Process constructor for a SY2SDF MoC interfaces
+/*! This class is used to build a MoC interface which converts an SY 
  * signal to an SDF one.
  */
 template<class T>
@@ -596,8 +596,8 @@ private:
 #endif
 };
 
-//! Process constructor for a SDF2SY domain interface
-/*! This class is used to build a domain interface which converts an SDF 
+//! Process constructor for a SDF2SY MoC interface
+/*! This class is used to build a MoC interface which converts an SDF 
  * signal to a SY one.
  */
 template<class T>
@@ -661,8 +661,8 @@ private:
 #endif
 };
 
-//! Process constructor for a SY2DDE domain interfaces
-/*! This class is used to build a domain interfaces which converts an SY 
+//! Process constructor for a SY2DDE MoC interfaces
+/*! This class is used to build a MoC interface which converts an SY 
  * signal to a DDE one.
  */
 template<class T>
@@ -741,8 +741,8 @@ private:
 #endif
 };
 
-//! Process constructor for a DDE2SY domain interface
-/*! This class is used to build a domain interface which converts a DDE 
+//! Process constructor for a DDE2SY MoC interface
+/*! This class is used to build a MoC interface which converts a DDE 
  * signal to an SY one.
  */
 template<class T>
