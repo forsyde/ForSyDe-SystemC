@@ -15,7 +15,7 @@
 
 #include "ct_moc.hpp"
 #include "dde_moc.hpp"
-#include "dis.hpp"
+#include "mis.hpp"
 
 /*! \file ct_lib.hpp
  * \brief Implements extra facilities on top of the CT MoC
@@ -378,7 +378,7 @@ inline gaussian* make_gaussian(std::string pName,
 //! Process constructor for implementing a linear filter
 /*! This class is used to build a process which implements a linear
  * in the CT MoC filter based on the numerator and denominator constants.
- * It internally uses a DDE filter together with CT2DDE and DDE2CT domain
+ * It internally uses a DDE filter together with CT2DDE and DDE2CT MoC
  * interfaces.
  */
 SC_MODULE(filter)
