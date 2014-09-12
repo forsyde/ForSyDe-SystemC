@@ -65,7 +65,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "SY2CT";}
+    std::string forsyde_kind() const {return "MI::SY2CT";}
 
 private:
     sc_time sample_period;
@@ -163,7 +163,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "CT2SY";}
+    std::string forsyde_kind() const {return "MI::CT2SY";}
 
 private:
     sc_time sample_period;
@@ -236,7 +236,7 @@ public:
     {}
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "CT2DDE";}
+    std::string forsyde_kind() const {return "MI::CT2DDE";}
 
 private:    
     // Internal variables
@@ -376,7 +376,7 @@ public:
     {}
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "CT2DDEf";}
+    std::string forsyde_kind() const {return "MI::CT2DDEf";}
 
 private:    
     // Internal variables
@@ -458,7 +458,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DDE2CT";}
+    std::string forsyde_kind() const {return "MI::DDE2CT";}
 
 private:
 	A2DMode op_mode;
@@ -552,7 +552,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "SY2SDF";}
+    std::string forsyde_kind() const {return "MI::SY2SDF";}
 
 private:
     
@@ -623,7 +623,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "SDF2SY";}
+    std::string forsyde_kind() const {return "MI::SDF2SY";}
 
 private:
     
@@ -690,7 +690,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "SY2DDE";}
+    std::string forsyde_kind() const {return "MI::SY2DDE";}
 
 private:
     sc_time sample_period;
@@ -770,7 +770,7 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DDE2SY";}
+    std::string forsyde_kind() const {return "MI::DDE2SY";}
 
 private:
     sc_time sample_period;

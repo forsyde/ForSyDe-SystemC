@@ -69,6 +69,7 @@ public:
         const_dde = (char*)"dde";
         const_dt = (char*)"dt";
         const_ct = (char*)"ct";
+        const_mi = (char*)"mi";
         const_port = (char*)"port";
         const_port_dir = (char*)"port_dir";
         const_direction = (char*)"direction";
@@ -194,6 +195,7 @@ public:
         else if (moc=="DDE") moc_name = const_dde;
         else if (moc=="DT") moc_name = const_dt;
         else if (moc=="CT") moc_name = const_ct;
+        else if (moc=="MI") moc_name = const_mi;
         else
         {
             SC_REPORT_ERROR("XML Backend", "MoC could not be deduced from kind.");
@@ -335,7 +337,7 @@ private:
     char *const_name, *const_leaf_process, *const_composite_process, 
          *const_process_network, *const_process_constructor, *const_moc,
          *const_type, *const_port,
-         *const_sdf, *const_ut, *const_sy, *const_dde, *const_dt, *const_ct,
+         *const_sdf, *const_ut, *const_sy, *const_dde, *const_dt, *const_ct, *const_mi,
          *const_port_dir, *const_direction, *const_in, *const_out,
          *const_signal, *const_component_name, *const_argument, *const_value,
          *const_source, *const_source_port, *const_target, *const_target_port,
