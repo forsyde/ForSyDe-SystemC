@@ -29,7 +29,7 @@ SC_MODULE(top)
 {
     DDE::signal<bool> on_off, fault;
 	DDE::signal<double> load_impedance, voltage_controller, voltage_pd3,voltage_pd4,
-        voltage_expression, voltage_plot, drive_discgen, drive_plot;
+        voltage_expression, voltage_plot, drive_discgen;//, drive_plot;
 		
 	SC_CTOR(top)
 	{
@@ -77,4 +77,11 @@ SC_MODULE(top)
 		
 		DDE::make_sink("report1", report_func, voltage_plot);
 	}
+#ifdef FORSYDE_INTROSPECTION
+    void start_of_simulation()
+    {
+        ForSyDe::XMLExport dumper("gen/");
+        dumper.traverse(this);
+    }
+#endif
 };

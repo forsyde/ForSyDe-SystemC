@@ -23,7 +23,7 @@ SC_MODULE(sweep_ctrl)
     SY::out_port<int>       smpl_en;  // Sample enable signal
     SY::out_port<double>    th;       // Threshold
 
-    SY::signal<int>         sc_in, sc_out, ac_in, ac_out, a2_in, a2_out;
+    SY::signal<int>         sc_in, ac_in, ac_out, a2_in;//, a2_out, sc_out;
     
     /*
      * Constructor for the sweep controller top module
@@ -63,7 +63,7 @@ SC_MODULE(sweep_ctrl)
     )
     {
         double val = std::get<0>(st);
-        int x = std::get<0>(st);
+        int x = std::get<1>(st);
         
         if(inp)
         {
@@ -112,7 +112,7 @@ SC_MODULE(sweep_ctrl)
         out = (inp1 && inp2) ? 1 : 0;
     }
     
-    static void report_func(int inp)
+    static void report_func(const int& inp)
     {
         std::cout << " output value: " << inp << std::endl;
     }

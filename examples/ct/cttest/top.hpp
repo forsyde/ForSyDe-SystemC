@@ -26,7 +26,7 @@ void abssin_func(CTTYPE& out1, const sc_time& inp1)
 
 SC_MODULE(top)
 {
-    CT2CT src1, src2, src3, des1, des2;
+    CT2CT src1, src2, src3, des1, des2, del;
     
     SC_CTOR(top)
     {
@@ -36,7 +36,9 @@ SC_MODULE(top)
         
         make_comb2("add1", add_func, des1, src2, src3);
         
-        make_comb("pwr1", pwr_func, des2, des1);
+        make_shift("shift1", sc_time(.3, SC_SEC), del, des1);
+
+        make_comb("pwr1", pwr_func, des2, del);
         
         make_traceSig("report1", sc_time(10,SC_MS), src1);
         
