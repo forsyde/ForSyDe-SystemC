@@ -72,7 +72,7 @@ SC_MODULE(sampler_counter)
         }
     }
     
-    static void counter_ns_func(int out, int st, int inp)
+    static void counter_ns_func(int& out, const int& st, const int& inp)
     {
         if(inp>0)
             out = st+1;
@@ -80,12 +80,12 @@ SC_MODULE(sampler_counter)
             out = st;
     }
 
-    static void counter_od_func(int out, int st)
+    static void counter_od_func(int& out, const int& st)
     {
         out = st;
     }
 
-    static void and_func(int out, int inp1, int inp2)
+    static void and_func(int& out, const int& inp1, const int& inp2)
     {
         out = (inp1 && inp2) ? 1 : 0;
     }

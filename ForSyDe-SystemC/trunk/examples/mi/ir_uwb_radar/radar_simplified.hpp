@@ -32,7 +32,7 @@ using namespace ForSyDe;
 // Simulation time required to finish the measurement:
 // TOTAVG*SPERIOD*2
 
-#include <delay_line.hpp>
+#include <delay_line_structural.hpp>
 #include <sweep_ctrl.hpp>
 #include <sampler_counter.hpp>
 
@@ -66,7 +66,7 @@ SC_MODULE(radar_simplified)
     {
         // Front-end: ADC + thresholder
         
-        auto noise = SY::make_gaussian("noise", noise_var, 0, n);
+        SY::make_gaussian("noise", noise_var, 0, n);
         
         make_CT2SY("adc", sc_time(ADC_PERIOD,SC_SEC), s, sig);
 
@@ -103,12 +103,12 @@ SC_MODULE(radar_simplified)
         }
     }
     
-    static void add_func(double out, double inp1, double inp2)
+    static void add_func(double& out, const double& inp1, const double& inp2)
     {
         out = inp1 + inp2;
     }
 
-    static void threshold_func(int out, double sig, double threshold)
+    static void threshold_func(int& out, const double& sig, const double& threshold)
     {
         if(sig>threshold)
             out = 1;

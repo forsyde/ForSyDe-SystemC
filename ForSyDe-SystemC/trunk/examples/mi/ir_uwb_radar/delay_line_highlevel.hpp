@@ -1,5 +1,5 @@
 /**********************************************************************
-    * delay_line.hpp -- Configurable SY MoC tapped delayline          *
+    * delay_line_highlevel.hpp -- Configurable SY MoC tapped delayline*
     *                                                                 *
     * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *          Based on a model developed by (Novelda AS)             *
@@ -24,13 +24,13 @@ SC_MODULE(delay_line)
 
     std::vector<SY::out_port<int>>  oports;
     
-    // Vector of forks
-    std::vector<SY::fanout<int>*>       fork_vec;
-    // Vector of delay elements
-    std::vector<SY::sdelay<int>*>        delay_vec;
-
-    // Array of signals for hooking up the forks and delays
-    std::vector<SY::signal<int>>    signal_vec;
+    //~ // Vector of forks
+    //~ std::vector<SY::fanout<int>*>       fork_vec;
+    //~ // Vector of delay elements
+    //~ std::vector<SY::sdelay<int>*>        delay_vec;
+//~ 
+    //~ // Array of signals for hooking up the forks and delays
+    //~ std::vector<SY::signal<int>>    signal_vec;
 
 
     /*
@@ -46,13 +46,9 @@ SC_MODULE(delay_line)
         //////////////////////////////
         // Submodule instatiation
         //////////////////////////////
-
-        // Create delay modules
-        for(int i=0;i<N;i++){
-            std::stringstream name;
-            name << "delay" << i;
-            delay_vec.push_back(new SY::sdelay<int>( name.str().c_str(), 0));
-        }
+        
+        // Create the tapped line
+        SY::make_smoore("tapped_lined1", tapped_line_ns_func, tapped_line_od_func, std::array<int,N>(), iport);
 
         //////////////////////////////
         // Submodule connections

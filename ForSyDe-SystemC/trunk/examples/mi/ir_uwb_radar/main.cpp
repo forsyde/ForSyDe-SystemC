@@ -15,14 +15,17 @@
 //~ #include "top.hpp"
 //~ #include "test_uwb_pg.hpp"
 //~ #include "test_ir_channel.hpp"
-#include "test_radar.hpp"
+//~ #include "test_radar.hpp"
+#include "top.hpp"
 
 
 int sc_main(int argc, char **argv)
 {
     top top1("top1");
 
-    sc_start(11,SC_NS);
-        
+    sc_start();
+    
+    sc_stop();
+    
     return 0;
 }
