@@ -1595,16 +1595,16 @@ private:
         }
         else
         {
-            *out_val1 = std::get<0>(get_value(*in_ev));
-            *out_val2 = std::get<1>(get_value(*in_ev));
+            *out_val1 = std::get<0>(unsafe_from_abst_ext(get_value(*in_ev)));
+            *out_val2 = std::get<1>(unsafe_from_abst_ext(get_value(*in_ev)));
         }
     }
     
     void prod()
     {
         sc_time te(get_time(*in_ev));
-        WRITE_MULTIPORT(oport1,ttn_event<T1>(out_val1,te))  // write to the output 1
-        WRITE_MULTIPORT(oport2,ttn_event<T2>(out_val2,te))  // write to the output 2
+        WRITE_MULTIPORT(oport1,ttn_event<T1>(*out_val1,te))  // write to the output 1
+        WRITE_MULTIPORT(oport2,ttn_event<T2>(*out_val2,te))  // write to the output 2
     }
     
     void clean()
