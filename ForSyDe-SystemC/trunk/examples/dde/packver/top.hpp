@@ -12,20 +12,19 @@
 
 #include "report.hpp"
 #include "splitter.hpp"
-//~ #include "pv.hpp"
-//~ #include "merge.hpp"
 #include <iostream>
 
 using namespace ForSyDe;
 
 SC_MODULE(top)
 {
-    DDE::signal<char> si, s1, s2, sp1, sp2, so1, so2, sf;
+    DDE::signal<int> si, s1, s2;
+    DDE::signal<char> sp1, sp2, so1, so2, sf;
     
     SC_CTOR(top)
     {
-        DDE::make_vsource("inputs", {'A','A','B'}, 
-            {sc_time(50,SC_MS), sc_time(100,SC_MS), sc_time(150,SC_MS)}, si
+        DDE::make_vsource("inputs", {4, 8, -3}, 
+            {sc_time(10,SC_MS), sc_time(40,SC_MS), sc_time(60,SC_MS)}, si
         );
         
         auto splitter1 = new splitter("splitter1");
@@ -41,16 +40,16 @@ SC_MODULE(top)
         auto merge1 = DDE::make_comb2("merge1", merge_func, so1, sp1, sp2);
         merge1->oport1(so2);
         
-        DDE::make_delay("delay1", abst_ext<char>(), sc_time(30,SC_MS),
+        DDE::make_delay("delay1", abst_ext<char>(), sc_time(15,SC_MS),
             sf, so2
         );
         
         DDE::make_sink("report1", report_func, so1);
     }
     
-    static void pv_func(abst_ext<char>& out, const char& inp)
+    static void pv_func(abst_ext<char>& out, const int& inp)
     {
-        out = abst_ext<char>(inp);
+        out = abst_ext<char>(inp>=0 ? 'V' : 'F');
     }
     
     static void merge_func(abst_ext<char>& out, const abst_ext<char>& inp1, const abst_ext<char>& inp2)
