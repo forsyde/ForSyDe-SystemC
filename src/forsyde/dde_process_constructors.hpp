@@ -213,7 +213,7 @@ private:
         if (get_time(*next_iev2) == tl)
             *cur_ival2 = get_value(*next_iev2);
         else
-            *cur_ival2 = abst_ext<T1>();
+            *cur_ival2 = abst_ext<T2>();
     }
     
     void exec()
@@ -560,7 +560,7 @@ private:
         if (get_time(*next_iev2) == tl)
             *cur_ival2 = get_value(*next_iev2);
         else
-            *cur_ival2 = abst_ext<IT1>();
+            *cur_ival2 = abst_ext<IT2>();
     }
     
     void exec()
