@@ -21,11 +21,11 @@ using namespace ForSyDe;
 SC_MODULE(splitter)
 {
     DDE::in_port<char> iport1;
-    DDE::in_port<char> iport2;
-    DDE::out_port<char> oport1;
-    DDE::out_port<char> oport2;
+    DDE::in_port<int> iport2;
+    DDE::out_port<int> oport1;
+    DDE::out_port<int> oport2;
     
-    DDE::signal<std::tuple<abst_ext<char>,abst_ext<char>>> zout;
+    DDE::signal<std::tuple<abst_ext<int>,abst_ext<int>>> zout;
     
     SC_CTOR(splitter)
     {        
@@ -35,25 +35,28 @@ SC_MODULE(splitter)
     }
     
     static void split_ns_func(char& nst, const char& st, 
-        const ttn_event<char>& inp1, const ttn_event<char>& inp2)
+        const ttn_event<char>& inp1, const ttn_event<int>& inp2)
     {
         nst = st == 'F' || unsafe_from_abst_ext(get_value(inp1)) == 'F'?
             'F':
             'V';
     }
     
-    static void split_od_func(abst_ext<std::tuple<abst_ext<char>,abst_ext<char>>>& out, const char& st, 
-        const ttn_event<char>& inp1, const ttn_event<char>& inp2)
+    static void split_od_func(abst_ext<std::tuple<abst_ext<int>,abst_ext<int>>>& out, const char& st, 
+        const ttn_event<char>& inp1, const ttn_event<int>& inp2)
     {
-        if (st == 'F')
-            out = std::tuple<abst_ext<char>,abst_ext<char>>();
+        if (st == 'F' || is_absent(get_value(inp2)))
+            out = std::tuple<abst_ext<int>,abst_ext<int>>();
         else
-            if (unsafe_from_abst_ext(get_value(inp2)) == 'A')
-                out = std::make_tuple(abst_ext<char>('A'),abst_ext<char>());
-            else if (unsafe_from_abst_ext(get_value(inp2)) == 'B')
-                out = std::make_tuple(abst_ext<char>(),abst_ext<char>('B'));
+        {
+            auto packet = unsafe_from_abst_ext(get_value(inp2));
+            if (packet % 2 == 0)
+                out = std::make_tuple(abst_ext<int>(packet),abst_ext<int>());
+            else if (abs(packet % 2) == 1)
+                out = std::make_tuple(abst_ext<int>(),abst_ext<int>(packet));
             else
-                out = std::tuple<abst_ext<char>,abst_ext<char>>();
+                out = std::tuple<abst_ext<int>,abst_ext<int>>();
+        }
     }
 
 };
