@@ -44,7 +44,7 @@ SC_MODULE(generator)
         auto int1 = CT::make_integratorf("integrator1", sc_time(100 ,SC_MS), int2sub2, scale2int);
         int1->oport1(int2expr);
         
-        CT::make_delay("delay1", sc_time(200,SC_MS), int2sub, int2sub2);
+        CT::make_shift("delay1", sc_time(200,SC_MS), int2sub, int2sub2);
                 
         CT::make_comb2("expression1", [=](CTTYPE& vout, const CTTYPE& vin, const CTTYPE& imp)
             {
