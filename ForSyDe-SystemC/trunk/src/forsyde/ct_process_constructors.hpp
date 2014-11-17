@@ -374,10 +374,10 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        if (delay_time > sc_time(0,SC_NS))
+        if (delay_time > SC_ZERO_TIME)
         {
             WRITE_MULTIPORT(oport1, 
-                sub_signal(sc_time(0,SC_NS), delay_time, 
+                sub_signal(SC_ZERO_TIME, delay_time, 
                     [](const sc_time& t){return 0;}
                 )
             )
@@ -455,10 +455,10 @@ private:
     //Implementing the abstract semantics
     void init()
     {
-        if (delay_time > sc_time(0,SC_NS))
+        if (delay_time > SC_ZERO_TIME)
         {
             WRITE_MULTIPORT(oport1, 
-                sub_signal(sc_time(0,SC_NS), delay_time, 
+                sub_signal(SC_ZERO_TIME, delay_time, 
                     [](const sc_time& t){return 0;}
                 )
             )

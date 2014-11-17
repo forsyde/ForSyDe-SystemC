@@ -477,9 +477,12 @@ private:
     
     void prep()
     {
-        auto in_ev = iport1.read();
-        currentVal = (double)from_abst_ext(get_value(in_ev), previousVal);
-        currentT = get_time(in_ev);
+        while (currentT <= previousT)
+        {
+            auto in_ev = iport1.read();
+            currentVal = (double)from_abst_ext(get_value(in_ev), previousVal);
+            currentT = get_time(in_ev);
+        }
     }
     
     void exec()
