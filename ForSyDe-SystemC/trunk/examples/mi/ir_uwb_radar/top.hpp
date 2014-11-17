@@ -58,15 +58,15 @@ SC_MODULE(top)
         auto uwb_pg1 = new uwb_pg("uwb_pg1", end_t, t_c, t_bw, t_fire, duty_cycle);
         uwb_pg1->out(from_pg);
         
-        CT::make_filterf("filter1", nums, dens, t_step, from_anttx, from_pg);
+        CT::make_filterf("tx_antenna", nums, dens, t_step, from_anttx, from_pg);
         
         auto ir_channel1 = new ir_channel("ir_channel1", ch_shift, ch_attn, no_of_bs);
         ir_channel1->in(from_anttx);
         ir_channel1->out(from_channel);
         
-        CT::make_filterf("filter2", nums, dens, t_step, from_antrx, from_channel);
+        CT::make_filterf("rx_antenna", nums, dens, t_step, from_antrx, from_channel);
         
-        CT::make_shift("shift", delay_int, src2, from_antrx);
+        CT::make_shift("chan_delay", delay_int, src2, from_antrx);
         
         auto radar1 = new radar_simplified("radar1", NTAPS, 0.16);
         radar1->sig(src2);
