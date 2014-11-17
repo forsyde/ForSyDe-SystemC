@@ -1,6 +1,24 @@
 
 ForSyDe-SystemC NEWS                            -*- outline -*-
 
+* Noteworthy changes in release 0.4.0 (2013-11-17)
+
+** General Improvements
+  
+  Replaced/renamed the DE MoC with a new DDE MoC
+  
+  Add new heterogeneous system model examples.
+  
+  Bug fixes and improvements in different MoCs and also introspection
+  
+  Add data-parallel process constructors with possible OpenMP-based simulation
+  
+  Add the strict version of the process constructors in the SY MoC
+  
+  Common base for signals and ports of different MoCs and unifies naming aliases
+  
+  More process constructors to enrich different MoCs
+
 * Noteworthy changes in release 0.3.0 (2013-05-05)
 
 ** General Improvements
