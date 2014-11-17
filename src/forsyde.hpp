@@ -52,7 +52,7 @@
  *
  *     - Synchronous MoC in ForSyDe::SY
  *     - Untimed MoC in ForSyDe::UT and its Synchronous Dataflow variant in ForSyDe::SDF
- *     - Two timed MoCs Discrete-Event in ForSyDe::DE and Discrete-Time in ForSyDe::DT
+ *     - Two timed MoCs Distributed Discrete-Event in ForSyDe::DDE and Discrete-Time in ForSyDe::DT
  *     - Continuous-Time MoC in ForSyDe::CT
  */
 
