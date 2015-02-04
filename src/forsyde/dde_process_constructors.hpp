@@ -1,4 +1,4 @@
-/**********************************************************************           
+/**********************************************************************
     * dde_process_constructors.hpp -- Process constructors in the DDE *
     *                                MOC                              *
     *                                                                 *
@@ -17,7 +17,7 @@
 
 /*! \file dde_process_constructors.hpp
  * \brief Implements the basic process constructors in the DDE MoC
- * 
+ *
  *  This file includes the basic process constructors used for modeling
  * in the distributed discrete-event model of computation.
  */
@@ -51,7 +51,7 @@ class comb : public dde_process
 public:
     DDE_in<T1>  iport1;       ///< port for the input channel
     DDE_out<T0> oport1;        ///< port for the output channel
-    
+
     //! Type of the function to be passed to the process constructor
     typedef std::function<void(abst_ext<T0>&, const T1&)> functype;
 
@@ -71,7 +71,7 @@ public:
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::comb";}
 
@@ -79,22 +79,22 @@ private:
     // Inputs and output variables
     abst_ext<T0>* oval;
     ttn_event<T1>* iev1;
-    
+
     //! The function passed to the process constructor
     functype _func;
-    
+
     //Implementing the abstract semantics
     void init()
     {
         oval = new abst_ext<T0>;
         iev1 = new ttn_event<T1>;
     }
-    
+
     void prep()
     {
         *iev1 = iport1.read();
     }
-    
+
     void exec()
     {
         if (is_present(get_value(*iev1)))
@@ -102,7 +102,7 @@ private:
         else
             *oval = abst_ext<T0>();
     }
-    
+
     void prod()
     {
         auto oev = ttn_event<T0>(*oval, get_time(*iev1));
@@ -110,13 +110,13 @@ private:
         // synchronization with kernel time
         wait(get_time(oev) - sc_time_stamp());
     }
-    
+
     void clean()
     {
         delete iev1;
         delete oval;
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -138,7 +138,7 @@ public:
     DDE_in<T1> iport1;        ///< port for the input channel 1
     DDE_in<T2> iport2;        ///< port for the input channel 2
     DDE_out<T0> oport1;        ///< port for the output channel
-    
+
     //! Type of the function to be passed to the process constructor
     typedef std::function<void(abst_ext<T0>&, const abst_ext<T1>&, const abst_ext<T2>&)> functype;
 
@@ -158,7 +158,7 @@ public:
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::comb2";}
 private:
@@ -168,13 +168,13 @@ private:
     ttn_event<T2> *next_iev2;
     abst_ext<T1> *cur_ival1;
     abst_ext<T2> *cur_ival2;
-    
+
     // the current time (local time)
     sc_time tl;
-    
+
     // clocks of the input ports (channel times)
     sc_time in1T, in2T;
-    
+
     //! The function passed to the process constructor
     functype _func;
 
@@ -188,7 +188,7 @@ private:
         cur_ival2 = new abst_ext<T2>;
         in1T = in2T = tl = SC_ZERO_TIME;
     }
-    
+
     void prep()
     {
         if (in1T == tl)
@@ -201,10 +201,10 @@ private:
             *next_iev2 = iport2.read();
             in2T = get_time(*next_iev2);
         }
-        
+
         // update channel clocks and the local clock
         tl = std::min(in1T, in2T);
-        
+
         // update current values
         if (get_time(*next_iev1) == tl)
             *cur_ival1 = get_value(*next_iev1);
@@ -215,7 +215,7 @@ private:
         else
             *cur_ival2 = abst_ext<T2>();
     }
-    
+
     void exec()
     {
         if (is_absent(*cur_ival1) && is_absent(*cur_ival2))
@@ -223,13 +223,13 @@ private:
         else
             _func(*oval, *cur_ival1, *cur_ival2);
     }
-    
+
     void prod()
     {
         WRITE_MULTIPORT(oport1, ttn_event<T0>(*oval,tl))
         wait(tl - sc_time_stamp());
     }
-    
+
     void clean()
     {
         delete oval;
@@ -238,7 +238,7 @@ private:
         delete cur_ival1;
         delete cur_ival2;
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -256,7 +256,7 @@ private:
  * extended value and a delay time, it inserts this value as the first
  * event in time zero in the output and delays the rest of the events by
  * the delay time.
- * 
+ *
  * It is mandatory to include at least one delay element in all feedback
  * loops since combinational loops are forbidden in ForSyDe.
  */
@@ -287,18 +287,18 @@ public:
         arg_vec.push_back(std::make_tuple("delay_time", ss.str()));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::delay";}
-    
+
 private:
     // Initial value and the delay time
     abst_ext<T> init_val;
     sc_time delay_time;
-    
+
     // Inputs and output variables
     ttn_event<T>* ev;
-    
+
     //Implementing the abstract semantics
     void init()
     {
@@ -307,23 +307,23 @@ private:
         WRITE_MULTIPORT(oport1, oev)
         wait(SC_ZERO_TIME);
     }
-    
+
     void prep()
     {
         *ev = iport1.read();
     }
-    
+
     void exec()
     {
         set_time(*ev, get_time(*ev)+delay_time);
     }
-    
+
     void prod()
     {
         WRITE_MULTIPORT(oport1, *ev)
         wait(get_time(*ev) - sc_time_stamp());
     }
-    
+
     void clean()
     {
         delete ev;
@@ -350,13 +350,13 @@ class mealy : public dde_process
 public:
     DDE_in<IT>  iport1;        ///< port for the input channel
     DDE_out<OT> oport1;        ///< port for the output channel
-    
+
     //! Type of the next-state function to be passed to the process constructor
     typedef std::function<void(ST&, const ST&, const ttn_event<IT>&)> ns_functype;
-    
+
     //! Type of the output-decoding function to be passed to the process constructor
     typedef std::function<void(abst_ext<OT>&, const ST&, const ttn_event<IT>&)> od_functype;
-    
+
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented functions to the input and current
@@ -383,20 +383,20 @@ public:
         arg_vec.push_back(std::make_tuple("delay_time",ss.str()));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const{return "DDE::mealy";}
-    
+
 private:
     //! The functions passed to the process constructor
     ns_functype _ns_func;
     od_functype _od_func;
-    
+
     // Initial value
     ST init_st;
-    
+
     sc_time delay_time;
-    
+
     // Input, output, current state, and next state variables
     ttn_event<IT>* itok;
     ST* stval;
@@ -412,24 +412,24 @@ private:
         nsval = new ST;
         oval = new abst_ext<OT>;
     }
-    
+
     void prep()
     {
         *itok = iport1.read();
     }
-    
+
     void exec()
     {
         _ns_func(*nsval, *stval, *itok);
         _od_func(*oval, *stval, *itok);
         *stval = *nsval;
     }
-    
+
     void prod()
     {
         WRITE_MULTIPORT(oport1, ttn_event<OT>(*oval,get_time(*itok)+delay_time))
     }
-    
+
     void clean()
     {
         delete itok;
@@ -460,13 +460,13 @@ public:
     DDE_in<IT1>  iport1;        ///< port for the input channel
     DDE_in<IT2>  iport2;        ///< port for the input channel
     DDE_out<OT> oport1;        ///< port for the output channel
-    
+
     //! Type of the next-state function to be passed to the process constructor
     typedef std::function<void(ST&, const ST&, const ttn_event<IT1>&, const ttn_event<IT2>&)> ns_functype;
-    
+
     //! Type of the output-decoding function to be passed to the process constructor
     typedef std::function<void(abst_ext<OT>&, const ST&, const ttn_event<IT1>&, const ttn_event<IT2>&)> od_functype;
-    
+
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * applies the user-imlpemented functions to the input and current
@@ -493,20 +493,20 @@ public:
         arg_vec.push_back(std::make_tuple("delay_time",ss.str()));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const{return "DDE::mealy2";}
-    
+
 private:
     //! The functions passed to the process constructor
     ns_functype _ns_func;
     od_functype _od_func;
-    
+
     // Initial value
     ST init_st;
-    
+
     sc_time delay_time;
-    
+
     // Input, output, current state, and next state variables
     ttn_event<IT1> *next_iev1;
     ttn_event<IT2> *next_iev2;
@@ -515,13 +515,13 @@ private:
     ST* stval;
     ST* nsval;
     abst_ext<OT>* oval;
-    
+
     // the current time (local time)
     sc_time tl;
 
     // clocks of the input ports (channel times)
     sc_time in1T, in2T;
-    
+
     //Implementing the abstract semantics
     void init()
     {
@@ -535,7 +535,7 @@ private:
         oval = new abst_ext<OT>;
         in1T = in2T = tl = SC_ZERO_TIME;
     }
-    
+
     void prep()
     {
         if (in1T == tl)
@@ -548,10 +548,10 @@ private:
             *next_iev2 = iport2.read();
             in2T = get_time(*next_iev2);
         }
-        
+
         // update channel clocks and the local clock
         tl = std::min(in1T, in2T);
-        
+
         // update current values
         if (get_time(*next_iev1) == tl)
             *cur_ival1 = get_value(*next_iev1);
@@ -562,7 +562,7 @@ private:
         else
             *cur_ival2 = abst_ext<IT2>();
     }
-    
+
     void exec()
     {
         if (is_absent(*cur_ival1) && is_absent(*cur_ival2))
@@ -574,13 +574,13 @@ private:
             *stval = *nsval;
         }
     }
-    
+
     void prod()
     {
         WRITE_MULTIPORT(oport1, ttn_event<OT>(*oval,tl+delay_time))
         wait(tl - sc_time_stamp());
     }
-    
+
     void clean()
     {
         delete next_iev1;
@@ -650,19 +650,19 @@ public:
         arg_vec.push_back(std::make_tuple("tol_error", ss.str()));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::filter";}
-    
+
 private:
     // Constructor parameters
     std::vector<T> numerators, denominators;
     sc_time max_step, min_step;
     T tol_error;
-    
+
     // Internal variables
     sc_time step;
-    sc_time samplingTimeTag; 
+    sc_time samplingTimeTag;
     MatrixDouble a, b, c, d;
     // states
     MatrixDouble x, x0, x1, x2;
@@ -675,24 +675,24 @@ private:
     MatrixDouble k1,k2,k3,k4;
     // to prevent rounding error
     double roundingFactor;
-    
+
     // Output event
     ttn_event<T>* out_ev;
-    
+
     //Implementing the abstract semantics
     void init()
     {
         out_ev = new ttn_event<T>;
-        
+
         step = max_step;
         int /*nn = nums.size(),*/ nd = denominators.size();
         a = MatrixDouble(nd-1,nd-1);
         b = MatrixDouble(nd-1,1);
         c = MatrixDouble(1,nd-1);
         d = MatrixDouble(1,1);
-    
+
         tf2ss(numerators,denominators,a,b,c,d);
-        
+
         // State number
         int numState = a.size1();
         assert(a.size1() == a.size2());
@@ -705,7 +705,7 @@ private:
         k2 = MatrixDouble(numState,1);
         k3 = MatrixDouble(numState,1);
         k4 = MatrixDouble(numState,1);
-        
+
         // initial sampling time tag
         WRITE_MULTIPORT(oport2,ttn_event<unsigned int>(0, samplingTimeTag))
         // read initial input
@@ -719,37 +719,37 @@ private:
         // step signal
         WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step/2))
         WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step))
-        u_1(0,0) = u(0,0); 
+        u_1(0,0) = u(0,0);
         t_1 = t;
         roundingFactor = 1.0001;
     }
-    
+
     void prep()
     {
         auto in_ev = iport1.read();
         u1(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-null inputs
         t = get_time(in_ev);
-        
+
         in_ev = iport1.read();
         u0(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-null inputs
         t2 = get_time(in_ev);
     }
-    
+
     void exec()
     {
         // 1st step error estimation
         h = t - t_1;
         rkSolver(a, b, c, d, u1, u_1, x, h.to_seconds(), x1, y1);
-        
-        // regular RK 
+
+        // regular RK
         h = t2 - t_1;
         rkSolver(a, b, c, d, u0, u_1, x, h.to_seconds(), x0, y0);
-        
+
         // 2nd step error estimation
         rkSolver(a, b, c, d, u0, u1, x1, (h/2).to_seconds(), x2, y2);
-        
+
         // error estimation
-        double err_est = (double) abs(y2(0,0)-y0(0,0))/(h.to_seconds());
+        double err_est = (double) std::abs(y2(0,0)-y0(0,0))/(h.to_seconds());
         if( (err_est < tol_error) || (h<=roundingFactor*min_step)) {
           x = x0;
           samplingTimeTag = t;
@@ -758,28 +758,28 @@ private:
           *out_ev = ttn_event<T>(y0(0,0), t);
           WRITE_MULTIPORT(oport1, *out_ev)
           u(0,0) = u0(0,0);
-          u_1(0,0) = u(0,0); 
+          u_1(0,0) = u(0,0);
           t_1 = t;
           if(h==min_step)
             std::cout << "Step accepted due to minimum step size. "
              << "However, err_tol is not met." << std::endl;
         }
     }
-    
+
     void prod()
     {
         WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step/2))
         WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step))
     }
-    
+
     void clean()
     {
         delete out_ev;
     }
-    
+
     // To obtain state space matrices from transfer function.
     // We assume there are non-zero leading coefficients in num and denom.
-    int tf2ss(std::vector<T> & num_, std::vector<T> & den_, MatrixDouble & a, 
+    int tf2ss(std::vector<T> & num_, std::vector<T> & den_, MatrixDouble & a,
           MatrixDouble & b, MatrixDouble & c, MatrixDouble & d)
     {
         std::vector<T> num, den;
@@ -811,7 +811,7 @@ private:
                         num.push_back(num_.at(i-nd+nn));
                 }
             }
-        
+
             // Normalizing w.r.t the leading coefficient of denominator
             for(unsigned int i=0; i<num.size(); i++)
                 num.at(i) /= dCoef1;
@@ -819,7 +819,7 @@ private:
                 den_.at(i) /= dCoef1;
             for(unsigned int i=0; i<(den_.size()-1); i++)
                 den.push_back(den_.at(i+1));
-        
+
             // Form A (nd-1)*(nd-1)
             a = zero_matrix<T> (a.size1(), a.size2());
             if(nd > 2)
@@ -846,10 +846,10 @@ private:
             // Form D 1*1
             d(0,0) = num.at(0);
         }
-        
+
         return 0;
     }
-    
+
     void rkSolver(MatrixDouble a, MatrixDouble b, MatrixDouble c,
                   MatrixDouble d, MatrixDouble u_k, MatrixDouble u_k_1,
                   MatrixDouble x, T h, MatrixDouble &x_, MatrixDouble &y)
@@ -863,7 +863,7 @@ private:
         x_ = x + (k1 + 2.0*k2 + 2.0*k3 + k4) * (h/6.0);
         y = boost::numeric::ublas::prod(c,x_) + boost::numeric::ublas::prod(d,u_k);
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -909,14 +909,14 @@ public:
         arg_vec.push_back(std::make_tuple("denominators", ss.str()));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::filterf";}
-    
+
 private:
     // Constructor parameters
     std::vector<T> numerators, denominators;
-    
+
     // Internal variables
     MatrixDouble a, b, c, d;
     // states
@@ -928,23 +928,23 @@ private:
     MatrixDouble y;
     // Some helper matrices used in RK solver
     MatrixDouble k1,k2,k3,k4;
-    
+
     // Output event
     ttn_event<T>* out_ev;
-    
+
     //Implementing the abstract semantics
     void init()
     {
         out_ev = new ttn_event<T>;
-        
+
         int /*nn = nums.size(),*/ nd = denominators.size();
         a = MatrixDouble(nd-1,nd-1);
         b = MatrixDouble(nd-1,1);
         c = MatrixDouble(1,nd-1);
         d = MatrixDouble(1,1);
-    
+
         tf2ss(numerators,denominators,a,b,c,d);
-        
+
         // State number
         int numState = a.size1();
         assert(a.size1() == a.size2());
@@ -955,7 +955,7 @@ private:
         k2 = MatrixDouble(numState,1);
         k3 = MatrixDouble(numState,1);
         k4 = MatrixDouble(numState,1);
-        
+
         // read initial input
         auto in_ev = iport1.read();
         u(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-absent inputs
@@ -965,17 +965,17 @@ private:
         *out_ev = ttn_event<T>(y(0,0), t);
         WRITE_MULTIPORT(oport1, *out_ev)
         wait(t - sc_time_stamp());
-        u_1(0,0) = u(0,0); 
+        u_1(0,0) = u(0,0);
         t_1 = t;
     }
-    
+
     void prep()
     {
         auto in_ev = iport1.read();
         u(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-absent inputs
         t = get_time(in_ev);
     }
-    
+
     void exec()
     {
         // 1st step error estimation
@@ -983,24 +983,24 @@ private:
         rkSolver(a, b, c, d, u, u_1, x_1, h.to_seconds(), x, y);
         *out_ev = ttn_event<T>(y(0,0), t);
     }
-    
+
     void prod()
     {
         WRITE_MULTIPORT(oport1, *out_ev)
         wait(t - sc_time_stamp());
         x_1 = x;
-        u_1(0,0) = u(0,0); 
+        u_1(0,0) = u(0,0);
         t_1 = t;
     }
-    
+
     void clean()
     {
         delete out_ev;
     }
-    
+
     // To obtain state space matrices from transfer function.
     // We assume there are non-zero leading coefficients in num and denom.
-    int tf2ss(std::vector<T> & num_, std::vector<T> & den_, MatrixDouble & a, 
+    int tf2ss(std::vector<T> & num_, std::vector<T> & den_, MatrixDouble & a,
           MatrixDouble & b, MatrixDouble & c, MatrixDouble & d)
     {
         std::vector<T> num, den;
@@ -1032,7 +1032,7 @@ private:
                         num.push_back(num_.at(i-nd+nn));
                 }
             }
-        
+
             // Normalizing w.r.t the leading coefficient of denominator
             for(unsigned int i=0; i<num.size(); i++)
                 num.at(i) /= dCoef1;
@@ -1040,7 +1040,7 @@ private:
                 den_.at(i) /= dCoef1;
             for(unsigned int i=0; i<(den_.size()-1); i++)
                 den.push_back(den_.at(i+1));
-        
+
             // Form A (nd-1)*(nd-1)
             a = zero_matrix<T> (a.size1(), a.size2());
             if(nd > 2)
@@ -1067,10 +1067,10 @@ private:
             // Form D 1*1
             d(0,0) = num.at(0);
         }
-        
+
         return 0;
     }
-    
+
     void rkSolver(MatrixDouble a, MatrixDouble b, MatrixDouble c,
                   MatrixDouble d, MatrixDouble u_k, MatrixDouble u_k_1,
                   MatrixDouble x, T h, MatrixDouble &x_, MatrixDouble &y)
@@ -1084,7 +1084,7 @@ private:
         x_ = x + (k1 + 2.0*k2 + 2.0*k3 + k4) * (h/6.0);
         y = boost::numeric::ublas::prod(c,x_) + boost::numeric::ublas::prod(d,u_k);
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -1107,7 +1107,7 @@ class source : public dde_process
 {
 public:
     DDE_out<T> oport1;        ///< port for the output channel
-    
+
     //! Type of the function to be passed to the process constructor
     typedef std::function<void(ttn_event<T>&, const ttn_event<T>&)> functype;
 
@@ -1134,21 +1134,21 @@ public:
         arg_vec.push_back(std::make_tuple("take", ss.str()));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::source";}
-    
+
 private:
     ttn_event<T> init_st;        // The current state
     unsigned long long take;    // Number of tokens produced
-    
+
     ttn_event<T>* cur_st;        // The current state of the process
     unsigned long long tok_cnt;
     bool infinite;
-    
+
     //! The function passed to the process constructor
     functype _func;
-    
+
     //Implementing the abstract semantics
     void init()
     {
@@ -1159,14 +1159,14 @@ private:
         if (take==0) infinite = true;
         tok_cnt = 1;
     }
-    
+
     void prep() {}
-    
+
     void exec()
     {
         _func(*cur_st, *cur_st);
     }
-    
+
     void prod()
     {
         if (tok_cnt++ < take || infinite)
@@ -1176,12 +1176,12 @@ private:
         }
         else wait();
     }
-    
+
     void clean()
     {
         delete cur_st;
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -1224,7 +1224,7 @@ public:
         arg_vec.push_back(std::make_tuple("offsets", ss.str()));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::vsource";}
 private:
@@ -1237,11 +1237,11 @@ private:
     {
         iter = 0;
     }
-    
+
     void prep() {}
-    
+
     void exec() {}
-    
+
     void prod()
     {
         WRITE_MULTIPORT(oport1, ttn_event<T>(abst_ext<T>(values[iter]), offsets[iter]))
@@ -1254,7 +1254,7 @@ private:
             wait();
         }
     }
-    
+
     void clean() {}
 
 #ifdef FORSYDE_INTROSPECTION
@@ -1277,7 +1277,7 @@ class sink : public dde_process
 {
 public:
     DDE_in<T> iport1;         ///< port for the input channel
-    
+
     //! Type of the function to be passed to the process constructor
     typedef std::function<void(const ttn_event<T>&)> functype;
 
@@ -1288,7 +1288,7 @@ public:
     sink(sc_module_name _name,      ///< process name
          functype _func             ///< function to be passed
         ) : dde_process(_name), iport1("iport1"), _func(_func)
-            
+
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
@@ -1296,39 +1296,39 @@ public:
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
 #endif
     }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::sink";}
-    
+
 private:
     ttn_event<T>* val;         // The current state of the process
 
     //! The function passed to the process constructor
     functype _func;
-    
+
     //Implementing the abstract semantics
     void init()
     {
         val = new ttn_event<T>;
     }
-    
+
     void prep()
     {
         *val = iport1.read();
     }
-    
+
     void exec()
     {
         _func(*val);
     }
-    
+
     void prod() {}
-    
+
     void clean()
     {
         delete val;
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -1356,24 +1356,24 @@ public:
     zip(sc_module_name _name)
          :dde_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1")
     { }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::zip";}
-    
-private:    
+
+private:
     // inputs and output variables
     ttn_event<T1> *next_iev1;
     ttn_event<T2> *next_iev2;
     abst_ext<T1> *cur_ival1;
     abst_ext<T2> *cur_ival2;
     abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >* oval;
-        
+
     // the current time (local time)
     sc_time tl;
-    
+
     // clocks of the input ports (channel times)
     sc_time in1T, in2T;
-    
+
     void init()
     {
         next_iev1 = new ttn_event<T1>;
@@ -1383,7 +1383,7 @@ private:
         in1T = in2T = tl = SC_ZERO_TIME;
         oval = new abst_ext< std::tuple<abst_ext<T1>,abst_ext<T2>> >();
     }
-    
+
     void prep()
     {
         if (in1T == tl)
@@ -1396,10 +1396,10 @@ private:
             *next_iev2 = iport2.read();
             in2T = get_time(*next_iev2);
         }
-        
+
         // update channel clocks and the local clock
         tl = std::min(in1T, in2T);
-        
+
         // update current values
         if (get_time(*next_iev1) == tl)
             *cur_ival1 = get_value(*next_iev1);
@@ -1410,7 +1410,7 @@ private:
         else
             *cur_ival2 = abst_ext<T1>();
     }
-    
+
     void exec()
     {
         if (is_absent(*cur_ival1) && is_absent(*cur_ival2))
@@ -1420,14 +1420,14 @@ private:
                 std::make_tuple(*cur_ival1,*cur_ival2)
             );
     }
-    
+
     void prod()
     {
         auto temp_event = ttn_event<std::tuple<abst_ext<T1>,abst_ext<T2>>>(*oval,tl);
         WRITE_MULTIPORT(oport1,temp_event)
         wait(tl - sc_time_stamp());
     }
-    
+
     void clean()
     {
         delete next_iev1;
@@ -1436,7 +1436,7 @@ private:
         delete cur_ival2;
         delete oval;
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -1470,29 +1470,29 @@ public:
     zipX(sc_module_name _name)
          :dde_process(_name), oport1("oport1")
     { }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::zipX";}
-    
-private:    
+
+private:
     // inputs and output variables
     std::array<ttn_event<T1>,N> next_ievs;
     std::array<abst_ext<T1>,N> cur_ivals;
     abst_ext< std::array<abst_ext<T1>,N> >* oval;
-        
+
     // the current time (local time)
     sc_time tl;
-    
+
     // clocks of the input ports (channel times)
     std::array<sc_time,N> insT;
-    
+
     void init()
     {
         insT.fill(SC_ZERO_TIME);
         tl = SC_ZERO_TIME;
         oval = new abst_ext< std::array<abst_ext<T1>,N> >();
     }
-    
+
     void prep()
     {
         for (size_t i=0;i<N;i++)
@@ -1501,10 +1501,10 @@ private:
                 next_ievs[i] = iport[i].read();
                 insT[i] = get_time(next_ievs[i]);
             }
-        
+
         // update channel clocks and the local clock
         tl = *std::min_element(insT.begin(), insT.end());
-        
+
         // update current values
         for (size_t i=0;i<N;i++)
             if (get_time(next_ievs[i]) == tl)
@@ -1512,7 +1512,7 @@ private:
             else
                 cur_ivals[i] = abst_ext<T1>();
     }
-    
+
     void exec()
     {
         if (std::all_of(cur_ivals.begin(), cur_ivals.end(), [](abst_ext<T1> el){
@@ -1522,19 +1522,19 @@ private:
         else
             *oval = abst_ext< std::array<abst_ext<T1>,N> >(cur_ivals);
     }
-    
+
     void prod()
     {
         auto temp_event = ttn_event<std::array<abst_ext<T1>,N>>(*oval,tl);
         WRITE_MULTIPORT(oport1,temp_event)
         wait(tl - sc_time_stamp());
     }
-    
+
     void clean()
     {
         delete oval;
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -1565,7 +1565,7 @@ public:
     unzip(sc_module_name _name)
          :dde_process(_name), iport1("iport1"), oport1("oport1"), oport2("oport2")
     {}
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::unzip";}
 private:
@@ -1573,19 +1573,19 @@ private:
     ttn_event< std::tuple<abst_ext<T1>,abst_ext<T2>> >* in_ev;
     abst_ext<T1>* out_val1;
     abst_ext<T2>* out_val2;
-    
+
     void init()
     {
         in_ev = new ttn_event< std::tuple<abst_ext<T1>,abst_ext<T2>> >;
         out_val1 = new abst_ext<T1>;
         out_val2 = new abst_ext<T2>;
     }
-    
+
     void prep()
     {
         *in_ev = iport1.read();
     }
-    
+
     void exec()
     {
         if (is_absent(get_value(*in_ev)))
@@ -1599,21 +1599,21 @@ private:
             *out_val2 = std::get<1>(unsafe_from_abst_ext(get_value(*in_ev)));
         }
     }
-    
+
     void prod()
     {
         sc_time te(get_time(*in_ev));
         WRITE_MULTIPORT(oport1,ttn_event<T1>(*out_val1,te))  // write to the output 1
         WRITE_MULTIPORT(oport2,ttn_event<T2>(*out_val2,te))  // write to the output 2
     }
-    
+
     void clean()
     {
         delete in_ev;
         delete out_val1;
         delete out_val2;
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -1647,30 +1647,30 @@ public:
     unzipX(sc_module_name _name)
          :dde_process(_name), iport1("iport1")
     { }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::unzipX";}
-    
+
 private:
     // intermediate values
     ttn_event<std::array<abst_ext<T1>,N>>* in_ev;
-    
+
     // output events
     std::array<ttn_event<T1>,N> oevs;
-    
+
     sc_time tl;
-    
+
     void init()
     {
         in_ev = new ttn_event<std::array<abst_ext<T1>,N>>;
         tl = SC_ZERO_TIME;
     }
-    
+
     void prep()
     {
         *in_ev = iport1.read();
     }
-    
+
     void exec()
     {
         if (is_absent(*in_ev))
@@ -1685,19 +1685,19 @@ private:
         }
         tl = get_time(*in_ev);
     }
-    
+
     void prod()
     {
         for (size_t i=0; i<N; i++)
             WRITE_MULTIPORT(oport[i],oevs[i])  // write to the output i
         wait(tl - sc_time_stamp());
     }
-    
+
     void clean()
     {
         delete in_ev;
     }
-    
+
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
@@ -1715,7 +1715,7 @@ private:
 /*! This class is used to build a fanout processes with one input
  * and one output. The class is parameterized for input and output
  * data-types.
- * 
+ *
  * This class exist because it is impossible to connect channels
  * directly to ports in SystemC (which may be needed in hierarchical
  * designs). It will be used when it is needed to connect an input
@@ -1734,32 +1734,32 @@ public:
      */
     fanout(sc_module_name _name)  // module name
          : dde_process(_name) { }
-    
+
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "DDE::fanout";}
-    
+
 private:
     // Inputs and output variables
     ttn_event<T>* val;
-    
+
     //Implementing the abstract semantics
     void init()
     {
         val = new ttn_event<T>;
     }
-    
+
     void prep()
     {
         *val = iport1.read();
     }
-    
+
     void exec() {}
-    
+
     void prod()
     {
         WRITE_MULTIPORT(oport1, *val)
     }
-    
+
     void clean()
     {
         delete val;
