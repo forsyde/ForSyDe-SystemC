@@ -26,20 +26,21 @@ void sub_func(double& out, const double& inp1, const double& inp2)
 SC_MODULE(top)
 {
   CT::signal u, v, vout;
-	SY::signal<double> r, e, du, dv, dv2, dv3;
+	SY::signal<double> r, e, du, dv;
 
 	SC_CTOR(top)
 	{
 		SY::make_sconstant("step", 1.0, 0, r);
 
-    SY::make_scomb2("sub1", sub_func, e, r, dv3);
+    SY::make_scomb2("sub1", sub_func, e, r, dv);
 
     SY::make_smealy("controller1",
               controller_ns_func,
               controller_od_func,
               std::make_tuple(0.0, 0.0),
               du,
-              e);
+              e
+        );
 
     make_SY2CT("d2a", sc_time(20,SC_MS), HOLD, u, du);
 
@@ -49,9 +50,6 @@ SC_MODULE(top)
     plant1->v(vout);
 
     make_CT2SY("a2d", sc_time(20,SC_MS), dv, v);
-
-    SY::make_sdelay("delay1", 0.0, dv2, dv);
-    SY::make_sdelay("delay2", 0.0, dv3, dv2); // unnecceessary!
 
     CT::make_traceSig("output", sc_time(20,SC_MS), vout);
 	}
