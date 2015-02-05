@@ -21,13 +21,14 @@ using namespace ForSyDe;
 
 #define m 1000
 #define b 50
+#define DEAT_TIME .1  // transport delay of the plant in seconds
 
 SC_MODULE(plant)
 {
 		CT::in_port u;
     CT::out_port v;
 
-		// CT::signal inter;
+		CT::signal v_t;
 
     SC_CTOR(plant)
 		{
@@ -38,9 +39,18 @@ SC_MODULE(plant)
 			// 		v,
 			// 		u
 			// );
-			auto car = new CT::filter("car", {1.0}, {{m, b}}, sc_time(20,SC_MS), sc_time(0.05,SC_NS), 1);
+			auto car = new CT::filter("car",
+					{1.0},
+					{{m, b}},
+					sc_time(20,SC_MS),
+					sc_time(0.05,SC_NS),
+					1
+			);
 			car->iport1(u);
-			car->oport1(v);
+			car->oport1(v_t);
+
+			CT::make_shift("dead_time", sc_time(DEAT_TIME, SC_SEC), v, v_t);
+
   	}
 };
 
