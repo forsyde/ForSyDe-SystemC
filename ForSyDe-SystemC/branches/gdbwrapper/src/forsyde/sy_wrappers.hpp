@@ -107,35 +107,59 @@ private:
       mi_free_bkpt(bk_in1);
       mi_free_bkpt(bk_out);
       
+      // Start the executation of the external model
+      async_run(d.RunOrContinue());
+      
       /* disabling the async mode */
-      d.Send("-gdb-set mi-async off");
+      //~ d.Send("-gdb-set mi-async off");
     }
     
     void prep()
     {
         *ival1 = iport1.read();
         ival1_str<<unsafe_from_abst_ext(*ival1);
-        d.RunOrContinue();
-        d.StepOver();
+        async_run(d.StepOver());
         d.ModifyExpression("forsyde_in1",const_cast<char*>(ival1_str.str().c_str()));
+        ival1_str.str(std::string());
     }
     
-    void exec() {}
+    void exec()
+    {
+      // Resume execution
+      async_run(d.Continue());
+    }
     
     void prod()
     {
-      d.RunOrContinue();
-      d.StepOver();
-      if (d.EvalExpression("forsyde_out") == 0) std::cout << "error!" << std::endl;
+      async_run(d.StepOver());
       oval_str.str(d.EvalExpression("forsyde_out"));
       oval_str >> *oval;
+      oval_str.clear();
       WRITE_MULTIPORT(oport1, abst_ext<T0>(*oval))
+      
+      // Resume execution
+      async_run(d.Continue());
     }
     
     void clean()
     {
-        delete ival1;
-        delete oval;
+      d.TargetUnselect();
+      d.Disconnect();
+      delete ival1;
+      delete oval;
+    }
+    
+    inline void async_run(int res)
+    {
+      if (!res)
+        SC_REPORT_ERROR(name(),"Error in GDB command execution!");
+      
+      mi_stop *sr;
+      while (!d.Poll(sr)) ;//wait();
+      if (sr)
+        mi_free_stop(sr);
+      else
+        SC_REPORT_ERROR(name(),mi_error_from_gdb);
     }
     
 #ifdef FORSYDE_INTROSPECTION

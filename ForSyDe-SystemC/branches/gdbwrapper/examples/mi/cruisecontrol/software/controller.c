@@ -1,18 +1,18 @@
 
-int inp, pinp, out, pout;
+double inp, pinp, out, pout;
 
-int forsyde_read_in1()
+double forsyde_read_in1()
 {
-    int a;
+    double a;
 }
 
-void forsyde_write_out(int a)
+void forsyde_write_out(double a)
 {
-    int b;
+    double b;
 }
 
 int main() {
-  int forsyde_in1, forsyde_out;
+  double forsyde_in1, forsyde_out;
   pinp = 0; pout = 0;
   for (;;)
   {
