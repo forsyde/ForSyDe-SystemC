@@ -34,6 +34,7 @@ SC_MODULE(top)
 
     SY::make_scomb2("sub1", sub_func, e, r, dv);
 
+    #ifndef FORSYDE_COSIMULATION_WRAPPERS
     SY::make_smealy("controller1",
               controller_ns_func,
               controller_od_func,
@@ -41,6 +42,13 @@ SC_MODULE(top)
               du,
               e
         );
+    #else
+    SY::make_gdbwrap("controller1",
+              "software/controller",
+              du,
+              e
+        );
+    #endif
 
     make_SY2CT("d2a", sc_time(20,SC_MS), HOLD, u, du);
 
