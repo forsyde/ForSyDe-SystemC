@@ -105,4 +105,9 @@
 #include "forsyde/parallel_sim_helpers.hpp"
 #endif
 
+#ifdef FORSYDE_COSIMULATION_WRAPPERS
+#include "forsyde/sy_wrappers.hpp"
+#endif
+
+
 #endif
