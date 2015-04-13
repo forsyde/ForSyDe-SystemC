@@ -28,8 +28,9 @@ using namespace ForSyDe;
 SC_MODULE(top)
 {
     DDE::signal<bool> on_off, fault;
-	DDE::signal<double> load_impedance, voltage_controller, voltage_pd3,voltage_pd4,
-        voltage_expression, voltage_plot, drive_discgen;//, drive_plot;
+	DDE::signal<double> load_impedance, load_impedance_d,
+        voltage_controller, voltage_expression, voltage_plot,
+        drive_discgen, drive_discgen_d;
 		
 	SC_CTOR(top)
 	{
@@ -43,29 +44,29 @@ SC_MODULE(top)
         supervisor1->on_off(on_off);
         supervisor1->fault(fault);
 		supervisor1->load_impedance(load_impedance);
-                
+        
+        auto impedance_delay = DDE::make_delay(
+            "impedance_delay", abst_ext<double>(),sc_time(200, SC_MS),
+            load_impedance_d, load_impedance
+        );
+        
         auto discrete_generator1 = new discrete_generator(
             "discrete_generator1", 5.0, 1.0, sc_time(100, SC_MS)
         );
-        discrete_generator1->drive(drive_discgen);
-		discrete_generator1->load_impedance(load_impedance);
-        discrete_generator1->voltage(voltage_pd3);
-        
-        // the following two delays should be there and the second one needs to be more than 3*sample_time
-        auto voltage_delay3 = DDE::make_delay(
-            "voltage_delay3", abst_ext<double>(),sc_time(100, SC_MS),
-            voltage_pd4, voltage_pd3
-        );
-        auto voltage_delay4 = DDE::make_delay(
-            "voltage_delay4", abst_ext<double>(), sc_time(400, SC_MS),
-            voltage_controller, voltage_pd4
-        );
-        voltage_delay4->oport1(voltage_expression);
-        voltage_delay4->oport1(voltage_plot);
+        discrete_generator1->drive(drive_discgen_d);
+		discrete_generator1->load_impedance(load_impedance_d);
+        discrete_generator1->voltage(voltage_controller);
+        discrete_generator1->voltage(voltage_expression);
+        discrete_generator1->voltage(voltage_plot);
         
         auto controller1 = new controller("controller1");
         controller1->voltage(voltage_controller);
         controller1->drive(drive_discgen);
+        
+        auto drive_delay = DDE::make_delay(
+            "drive_delay", abst_ext<double>(), sc_time(400, SC_MS),
+            drive_discgen_d, drive_discgen
+        );
         
         DDE::make_comb("expression1",
             [](abst_ext<bool>& fault, const double& voltage) {
