@@ -26,14 +26,18 @@ void sub_func(double& out, const double& inp1, const double& inp2)
 SC_MODULE(top)
 {
   CT::signal u, v, vout;
-	SY::signal<double> r, e, du, dv;
+  SY::signal<double> r, e, du, dv;
 
-	SC_CTOR(top)
-	{
-		SY::make_sconstant("step", 1.0, 0, r);
+  SC_CTOR(top)
+  {
+    SY::make_sconstant("step", 1.0, 0, r);
 
+    #ifndef FORSYDE_COSIMULATION_WRAPPERS
     SY::make_scomb2("sub1", sub_func, e, r, dv);
-
+    #else
+    SY::make_pipewrap2("sub1", -1, "simulink", e, r, dv);
+    #endif
+    
     #ifndef FORSYDE_COSIMULATION_WRAPPERS
     SY::make_smealy("controller1",
               controller_ns_func,
@@ -52,7 +56,7 @@ SC_MODULE(top)
 
     make_SY2CT("d2a", sc_time(20,SC_MS), HOLD, u, du);
 
-		auto plant1 = new plant("plant1");
+    auto plant1 = new plant("plant1");
     plant1->u(u);
     plant1->v(v);
     plant1->v(vout);
@@ -60,7 +64,7 @@ SC_MODULE(top)
     make_CT2SY("a2d", sc_time(20,SC_MS), dv, v);
 
     CT::make_traceSig("output", sc_time(20,SC_MS), vout);
-	}
+  }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()
     {
