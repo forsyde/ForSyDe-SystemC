@@ -56,22 +56,22 @@ std::vector<abst_ext<double>> input_vec =
 
 SC_MODULE(top)
 {
-    SY2SY<Sensor> bassDn_sig, bassUp_sig;
-    SY2SY<Sensor> trebleDn_sig, trebleUp_sig;
-    SY2SY<double> input_sig, output_sig;
-    
+    SY::signal<Sensor> bassDn_sig, bassUp_sig;
+    SY::signal<Sensor> trebleDn_sig, trebleUp_sig;
+    SY::signal<double> input_sig, output_sig;
+
     SC_CTOR(top)
     {
         make_vsource("bassDn_src", bassDn_vec, bassDn_sig);
 
         make_vsource("bassUp_src", bassUp_vec, bassUp_sig);
-        
+
         make_vsource("trebleDn_src", trebleDn_vec, trebleDn_sig);
 
         make_vsource("trebleUp_src", trebleUp_vec, trebleUp_sig);
-        
+
         make_vsource("binput_src", input_vec, input_sig);
-        
+
         auto equalizer1 = new equalizer("equalizer");
         equalizer1->bassUp(bassUp_sig);
         equalizer1->bassDn(bassDn_sig);
@@ -79,7 +79,7 @@ SC_MODULE(top)
         equalizer1->trebleDn(trebleDn_sig);
         equalizer1->input(input_sig);
         equalizer1->output(output_sig);
-        
+
         make_sink("report1", report_func, output_sig);
     }
 #ifdef FORSYDE_INTROSPECTION
@@ -90,4 +90,3 @@ SC_MODULE(top)
     }
 #endif
 };
-

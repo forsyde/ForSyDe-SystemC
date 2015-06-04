@@ -28,14 +28,9 @@
 
 using namespace ForSyDe::SY;
 
-void to_complex_func(abst_ext<std::complex<double>>& out, const abst_ext<double>& inp)
+void to_complex_func(std::complex<double>& out1, const double& inp1)
 {
-    double inp1 = unsafe_from_abst_ext(inp);
-    std::complex<double> out1;
-    
     out1 = std::complex<double>(inp1, 0);
-    
-    out = abst_ext<std::complex<double>>(out1);
 }
 
 
@@ -91,25 +86,25 @@ void check_bass_func(abst_ext<AnalyzerMsg>& out, abst_ext<std::vector<double>> i
 
 SC_MODULE(audio_analyzer)
 {
-    SY_in<double> audioIn;
-    
-    SY_out<AnalyzerMsg> analyzerOut;
-    
-    SY2SY<std::complex<double>> cmplxSig;
-    SY2SY<std::vector<abst_ext<std::complex<double>>>> grpSig;
-    SY2SY<std::vector<std::complex<double>>> dftSig;
-    SY2SY<std::vector<double>> spectrumSig;
-    
-    SC_CTOR(audio_analyzer)                            
+    SY::in_port<double> audioIn;
+
+    SY::out_port<AnalyzerMsg> analyzerOut;
+
+    SY::signal<std::complex<double>> cmplxSig;
+    SY::signal<std::vector<abst_ext<std::complex<double>>>> grpSig;
+    SY::signal<std::vector<std::complex<double>>> dftSig;
+    SY::signal<std::vector<double>> spectrumSig;
+
+    SC_CTOR(audio_analyzer)
     {
-        make_comb("to_complex1", to_complex_func, cmplxSig, audioIn);
-        
+        make_scomb("to_complex1", to_complex_func, cmplxSig, audioIn);
+
         make_group("group_samples", grppts, grpSig, cmplxSig);
-        
+
         make_comb("dft1", dft_func, dftSig, grpSig);
-        
+
         make_comb("take_spectrum", take_spectrum_func, spectrumSig, dftSig);
-        
+
         make_comb("check_bass", check_bass_func, analyzerOut, spectrumSig);
     }
 };
