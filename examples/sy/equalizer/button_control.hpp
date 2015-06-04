@@ -31,35 +31,35 @@ using namespace ForSyDe::SY;
 
 SC_MODULE(button_control)
 {
-    SY_in<OverrideMsg> overrides;
-    SY_in<Sensor> bassDn;
-    SY_in<Sensor> bassUp;
-    SY_in<Sensor> trebleDn;
-    SY_in<Sensor> trebleUp;
-    
-    SY_out<Bass> bass;
-    SY_out<Treble> treble;
-    
-    SY2SY<Button> button;
-    SY2SY<std::tuple<abst_ext<Bass>,abst_ext<Treble>>> levelCntrl;
-    SY2SY<std::tuple<abst_ext<Bass>,abst_ext<Treble>>> levels;
-    SY2SY<std::tuple<abst_ext<Button>,abst_ext<OverrideMsg>>> tup_btn_ovr;
-    
+    SY::in_port<OverrideMsg> overrides;
+    SY::in_port<Sensor> bassDn;
+    SY::in_port<Sensor> bassUp;
+    SY::in_port<Sensor> trebleDn;
+    SY::in_port<Sensor> trebleUp;
+
+    SY::out_port<Bass> bass;
+    SY::out_port<Treble> treble;
+
+    SY::signal<Button> button;
+    SY::signal<std::tuple<abst_ext<Bass>,abst_ext<Treble>>> levelCntrl;
+    SY::signal<std::tuple<abst_ext<Bass>,abst_ext<Treble>>> levels;
+    SY::signal<std::tuple<abst_ext<Button>,abst_ext<OverrideMsg>>> tup_btn_ovr;
+
     SC_CTOR(button_control)
     {
-        make_comb4("button_interface1", button_interface_func, 
+        make_comb4("button_interface1", button_interface_func,
                     button, bassUp, bassDn, trebleUp, trebleDn);
-        
+
         make_zip("zip1", tup_btn_ovr, button, overrides);
-        
+
         make_mealy("level_control1", level_control_ns_func, level_control_od_func,
                     std::make_tuple(initState,initLevel),
                     levelCntrl, tup_btn_ovr);
-        
+
         make_hold("hold1",
                 std::make_tuple(abst_ext<Bass>(0),abst_ext<Treble>(0)),
                 levels, levelCntrl);
-        
+
         make_unzip("unzip1", levels, bass, treble);
     }
 };
