@@ -107,6 +107,7 @@
 
 #ifdef FORSYDE_COSIMULATION_WRAPPERS
 #include "forsyde/sy_wrappers.hpp"
+#include "forsyde/ct_wrappers.hpp"
 #endif
 
 
