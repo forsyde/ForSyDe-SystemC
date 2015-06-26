@@ -1,7 +1,0 @@
-ForSyDe-SystemC comes as a header-only library. Thus, it is sufficient to
-include the src folder in the search path during compilation or copy it to a
-global include path of the system. Don't forget to have the SystemC library
-also in your include path and link against it.
-
-ForSyDe-SystemC relies on several C++11 features. You will need an updated
-compiler to work with this library.
