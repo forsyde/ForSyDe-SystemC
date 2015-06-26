@@ -28,21 +28,21 @@ using namespace ForSyDe::SY;
 
 SC_MODULE(equalizer)
 {
-    SY_in<Sensor> bassDn;
-    SY_in<Sensor> bassUp;
-    SY_in<Sensor> trebleDn;
-    SY_in<Sensor> trebleUp;
-    SY_in<double> input;
-    
-    SY_out<double> output;
-    
-    SY2SY<double> filteredInp;
-    SY2SY<AnalyzerMsg> distFlag_sig;
-    SY2SY<AnalyzerMsg> deldistFlag_sig;
-    SY2SY<OverrideMsg> override_sig;
-    SY2SY<Bass> bass;
-    SY2SY<Treble> treble;
-    
+    SY::in_port<Sensor> bassDn;
+    SY::in_port<Sensor> bassUp;
+    SY::in_port<Sensor> trebleDn;
+    SY::in_port<Sensor> trebleUp;
+    SY::in_port<double> input;
+
+    SY::out_port<double> output;
+
+    SY::signal<double> filteredInp;
+    SY::signal<AnalyzerMsg> distFlag_sig;
+    SY::signal<AnalyzerMsg> deldistFlag_sig;
+    SY::signal<OverrideMsg> override_sig;
+    SY::signal<Bass> bass;
+    SY::signal<Treble> treble;
+
     equalizer(sc_module_name name)
     {
         auto audio_filter1 = new audio_filter("audio_filter1");
@@ -51,20 +51,20 @@ SC_MODULE(equalizer)
         audio_filter1->audioIn(input);
         audio_filter1->audioOut(filteredInp);
         audio_filter1->audioOut(output);
-        
+
         auto audio_analyzer1 = new audio_analyzer("audio_analyzer1");
         audio_analyzer1->audioIn(filteredInp);
         audio_analyzer1->analyzerOut(distFlag_sig);
-        
+
         make_delay("del", abst_ext<AnalyzerMsg>(), deldistFlag_sig, distFlag_sig);
-        
+
         make_mealy("distortion_control1",
                     distortion_control_ns_func,
                     distortion_control_od_func,
                     std::make_tuple(Passed,0),
                     override_sig,
                     deldistFlag_sig);
-        
+
         auto button_control1 = new button_control("button_control1");
         button_control1->overrides(override_sig);
         button_control1->bassDn(bassDn);
@@ -75,4 +75,3 @@ SC_MODULE(equalizer)
         button_control1->treble(treble);
     }
 };
-
