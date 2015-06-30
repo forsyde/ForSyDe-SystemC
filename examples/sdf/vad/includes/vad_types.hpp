@@ -17,6 +17,9 @@
 #include <forsyde.hpp>
 #include <array>
 
+template<typename ...T>
+using tuple_of_vectors = std::tuple<std::vector<T>...>;
+
 typedef std::array<short,9> r_t;
 typedef std::array<short,9> L_av_t;
 typedef std::array<short,4> rc_t;

@@ -25,7 +25,7 @@ SC_MODULE(top)
     SDF::signal<rc_t> e17;
     SDF::signal<short> e18;
     
-    SDF::signal<std::tuple<r_t,r_t,r_t,short,short,rc_t,short>> e12_13_14_15_16_17_18;
+    SDF::signal<tuple_of_vectors<r_t,r_t,r_t,short,short,rc_t,short>> e12_13_14_15_16_17_18;
     
     SDF::signal<short> e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11;
     
@@ -38,6 +38,15 @@ SC_MODULE(top)
         SDF::make_file_source("VADFilesource1", VADFilesource_func, "source_data.txt", e12_13_14_15_16_17_18);
       
         //~ SDF::make_unzip("VADFilesource1_unzip", e12_13_14_15_16_17_18, , , , , , , , e12, e13, e14, e15, e16, e17, e18);
+        auto VADFilesource1_unzip = new SDF::unzipN<r_t,r_t,r_t,short,short,rc_t,short>("VADFilesource1_unzip", {1,1,1,1,1,1,1});
+        VADFilesource1_unzip->iport1(e12_13_14_15_16_17_18);
+        std::get<0>(VADFilesource1_unzip->oport)(e12);
+        std::get<1>(VADFilesource1_unzip->oport)(e13);
+        std::get<2>(VADFilesource1_unzip->oport)(e14);
+        std::get<3>(VADFilesource1_unzip->oport)(e15);
+        std::get<4>(VADFilesource1_unzip->oport)(e16);
+        std::get<5>(VADFilesource1_unzip->oport)(e17);
+        std::get<6>(VADFilesource1_unzip->oport)(e18);        
         
         //~ SDF::make_comb("ToneDetection1", ToneDetection_func, , , e9, e17);
         //~ 
@@ -64,7 +73,7 @@ SC_MODULE(top)
         //~ SDF::make_file_sink("VADFilesink", VADFilesink_func, e19);
         
         // FIXME: REMOVE! only for test:
-        SDF::make_sink("test_sink", [](std::tuple<r_t,r_t,r_t,short,short,rc_t,short> val){std::cout << val << std::endl;}, e12_13_14_15_16_17_18);
+        SDF::make_sink("test_sink", [](rc_t val){std::cout << val << std::endl;}, e17);
     }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()
