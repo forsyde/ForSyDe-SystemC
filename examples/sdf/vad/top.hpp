@@ -15,6 +15,7 @@
 
 #include "includes/vad_types.hpp"
 #include "vad_source.hpp"
+#include "ToneDetection.hpp"
 
 using namespace ForSyDe;
 
@@ -37,7 +38,7 @@ SC_MODULE(top)
     {
         SDF::make_file_source("VADFilesource1", VADFilesource_func, "source_data.txt", e12_13_14_15_16_17_18);
       
-        //~ SDF::make_unzip("VADFilesource1_unzip", e12_13_14_15_16_17_18, , , , , , , , e12, e13, e14, e15, e16, e17, e18);
+        //~ SDF::make_unzip("VADFilesource1_unzip", e12_13_14_15_16_17_18, {1,1,1,1,1,1,1}, e12, e13, e14, e15, e16, e17, e18);
         auto VADFilesource1_unzip = new SDF::unzipN<r_t,r_t,r_t,short,short,rc_t,short>("VADFilesource1_unzip", {1,1,1,1,1,1,1});
         VADFilesource1_unzip->iport1(e12_13_14_15_16_17_18);
         std::get<0>(VADFilesource1_unzip->oport)(e12);
@@ -48,8 +49,8 @@ SC_MODULE(top)
         std::get<5>(VADFilesource1_unzip->oport)(e17);
         std::get<6>(VADFilesource1_unzip->oport)(e18);        
         
-        //~ SDF::make_comb("ToneDetection1", ToneDetection_func, , , e9, e17);
-        //~ 
+        SDF::make_comb("ToneDetection1", ToneDetection_func, 1, 1, e9, e17);
+        
         //~ SDF::make_comb3("EnergyComputation1", EnergyComputation_func, , , e6, e7, e13, e16);
         //~ 
         //~ SDF::make_comb3("ACFAveraging1", ACFAveraging_fun, , , ez2, e12, e14, e15);
@@ -73,7 +74,7 @@ SC_MODULE(top)
         //~ SDF::make_file_sink("VADFilesink", VADFilesink_func, e19);
         
         // FIXME: REMOVE! only for test:
-        SDF::make_sink("test_sink", [](rc_t val){std::cout << val << std::endl;}, e17);
+        SDF::make_sink("test_sink", [](short val){std::cout << val << std::endl;}, e9);
     }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()

@@ -31,7 +31,7 @@ void VADFilesource_func(tuple_of_vectors<r_t,r_t,r_t,short,short,rc_t,short>& ou
     std::get<4>(out).resize(1);
     std::get<5>(out).resize(1);
     std::get<6>(out).resize(1);
-#pragma ForSyDe begin report_func
+#pragma ForSyDe begin VADFilesource_func
 
     std::stringstream ss(line);
     
