@@ -17,6 +17,8 @@
 #include "vad_source.hpp"
 #include "ToneDetection.hpp"
 
+#include "ACFAveraging.hpp"
+
 using namespace ForSyDe;
 
 SC_MODULE(top)
@@ -28,11 +30,18 @@ SC_MODULE(top)
     
     SDF::signal<tuple_of_vectors<r_t,r_t,r_t,short,short,rc_t,short>> e12_13_14_15_16_17_18;
     
-    SDF::signal<short> e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11;
+    SDF::signal<short> e9;
     
-    SDF::signal<short> e1_2, e3_4, e7_10;
+    SDF::signal<L_av_t> e1, e2;
+    
+    SDF::signal<short> e3, e4, e5, e6, e7, e8, e10, e11;
     
     SDF::signal<short> e19;
+    
+    SDF::signal<tuple_of_vectors<L_av_t,L_av_t>> e1_2;
+    
+    SDF::signal<short> e3_4, e7_10;
+    
     
     SC_CTOR(top)
     {
@@ -51,12 +60,12 @@ SC_MODULE(top)
         
         SDF::make_comb("ToneDetection1", ToneDetection_func, 1, 1, e9, e17);
         
-        //~ SDF::make_comb3("EnergyComputation1", EnergyComputation_func, , , e6, e7, e13, e16);
-        //~ 
-        //~ SDF::make_comb3("ACFAveraging1", ACFAveraging_fun, , , ez2, e12, e14, e15);
-        //~ 
-        //~ SDF::make_unzip("ACFAveraging1_unzip", e1_2, , , e1, e2);
-        //~ 
+        //~ SDF::make_comb3("EnergyComputation1", EnergyComputation_func, 1, 1, 1, e6, e7, e13, e16);
+        
+        SDF::make_comb3("ACFAveraging1", ACFAveraging_fun, 1, 1, 1, 1, e1_2, e12, e14, e15);
+        
+        SDF::make_unzip("ACFAveraging1_unzip", e1_2, 1, 1, e1, e2);
+        
         //~ SDF::make_comb("PredictorValues1", PredictorValues_func, , , e3_4, e2);
         //~ 
         //~ SDF::make_unzip("PredictorValues1_unzip", e3_4, , , e3, e4);
@@ -74,7 +83,7 @@ SC_MODULE(top)
         //~ SDF::make_file_sink("VADFilesink", VADFilesink_func, e19);
         
         // FIXME: REMOVE! only for test:
-        SDF::make_sink("test_sink", [](short val){std::cout << val << std::endl;}, e9);
+        SDF::make_sink("test_sink", [](L_av_t val){std::cout << val << std::endl;}, e1);
     }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()
