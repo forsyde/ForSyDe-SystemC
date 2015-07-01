@@ -35,8 +35,8 @@ void EnergyComputation_func(std::vector<tuple_of_vectors<pvad_acf0_t,Pfloat>>& o
     short* in_r_h = inp2[0].data();
     short in_scal_acf = inp3[0];
     
-    Pfloat* val_acf0 = &std::get<0>((std::get<0>(out[0]))[0]);
-    Pfloat* val_pvad = &std::get<1>((std::get<0>(out[0]))[0]);
+    Pfloat* val_pvad = &std::get<0>((std::get<0>(out[0]))[0]);
+    Pfloat* val_acf0 = &std::get<1>((std::get<0>(out[0]))[0]);
     
 #pragma ForSyDe begin ACFAveraging_func
     
