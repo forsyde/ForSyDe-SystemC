@@ -15,7 +15,7 @@
 #define ACFAVERAGING_HPP
 
 #include <forsyde.hpp>
-#include <includes/vad.h>
+#include "includes/vad.h"
 
 using namespace ForSyDe::SDF;
 

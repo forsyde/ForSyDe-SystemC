@@ -1,35 +1,38 @@
 /**********************************************************************
-    * ToneDetection.hpp                                               *
+    * VADhangover.hpp                                                 *
     *                                                                 *
     * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *          adapted from KisTA: https://github.com/nandohca/kista  *
     *                                                                 *
-    * Purpose: The Tone Detection task                                *
+    * Purpose: The VAD Hangover task                                  *
     *                                                                 *
     * Usage:   The VAD example                                        *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef TONEDETECTION_HPP
-#define TONEDETECTION_HPP
+#ifndef VADHANGOVER_HPP
+#define VADHANGOVER_HPP
 
 #include <forsyde.hpp>
 #include "includes/vad.h"
 
 using namespace ForSyDe::SDF;
 
-void ToneDetection_func(std::vector<short>& out, std::vector<rc_t> inp)
+void VADhangover_func(std::vector<short>& out, std::vector<short> inp1)
 {
     // Resize all the vectors to contain 1 element
     out.resize(1);
     
-    short* inp1 = inp[0].data();
-    short out1;
-#pragma ForSyDe begin ToneDetection_func
-    tone_detection(inp1, &out1);
+    short out_vad;
+#pragma ForSyDe begin VADhangover_func
+    
+    out_vad = vad_hangover(
+        inp1[0]  // vad decision before hangover is added
+    );
+    
 #pragma ForSyDe end
-    out[0] = out1;
+    out[0] = out_vad;
 }
 
 

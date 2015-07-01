@@ -22,12 +22,14 @@
 #include "SpectralComparison.hpp"
 
 #include "VADdecision.hpp"
+#include "VADhangover.hpp"
+#include "VADFilesink.hpp"
 
 using namespace ForSyDe;
 
 SC_MODULE(top)
 {
-    SDF::signal<short> e5, e9, e11, e19, e15, e16, e18;
+    SDF::signal<short> e5, e9, e11, e15, e16, e18, e19;
     SDF::signal<L_av_t> e1, e2;
     SDF::signal<rav1_t> e3, e4;
     SDF::signal<pvad_acf0_t> e6;
@@ -79,12 +81,12 @@ SC_MODULE(top)
         
         SDF::make_comb2("VADdecision1", VADdecision_func, 1, 1, 1, e11, e8, e10);
         
-        //~ SDF::make_comb("VAD_hangover1", VADhangover_func, , , e19, e11);
-        //~ 
-        //~ SDF::make_file_sink("VADFilesink", VADFilesink_func, e19);
+        SDF::make_comb("VADhangover1", VADhangover_func, 1, 1, e19, e11);
+        
+        SDF::make_file_sink("VADFilesink1", VADFilesink_func, "sink_data.txt", e19);
         
         // FIXME: REMOVE! only for test:
-        SDF::make_sink("test_sink", [](short val){std::cout << val << std::endl;}, e11);
+        SDF::make_sink("test_sink", [](rav1_t val){std::cout << val << std::endl;}, e4);
     }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()

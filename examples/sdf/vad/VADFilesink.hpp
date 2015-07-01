@@ -1,35 +1,33 @@
 /**********************************************************************
-    * ToneDetection.hpp                                               *
+    * VADFilesink.hpp                                                 *
     *                                                                 *
     * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *          adapted from KisTA: https://github.com/nandohca/kista  *
     *                                                                 *
-    * Purpose: The Tone Detection task                                *
+    * Purpose: Collect output stimuli                                 *
     *                                                                 *
     * Usage:   The VAD example                                        *
     *                                                                 *
     * License: BSD3                                                   *
     *******************************************************************/
 
-#ifndef TONEDETECTION_HPP
-#define TONEDETECTION_HPP
+#ifndef VADFILESINK_HPP
+#define VADFILESINK_HPP
 
 #include <forsyde.hpp>
-#include "includes/vad.h"
+#include <iostream>
 
 using namespace ForSyDe::SDF;
 
-void ToneDetection_func(std::vector<short>& out, std::vector<rc_t> inp)
+void VADFilesink_func(std::string& line, const short& out)
 {
-    // Resize all the vectors to contain 1 element
-    out.resize(1);
+#pragma ForSyDe begin VADFilesink_func
+
+    std::stringstream ss(line);
+    ss << out;
+    line = ss.str();
     
-    short* inp1 = inp[0].data();
-    short out1;
-#pragma ForSyDe begin ToneDetection_func
-    tone_detection(inp1, &out1);
 #pragma ForSyDe end
-    out[0] = out1;
 }
 
 
