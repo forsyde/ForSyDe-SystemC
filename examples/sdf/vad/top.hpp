@@ -19,6 +19,7 @@
 
 #include "ACFAveraging.hpp"
 #include "PredictorValues.hpp"
+#include "SpectralComparison.hpp"
 
 using namespace ForSyDe;
 
@@ -72,8 +73,8 @@ SC_MODULE(top)
         auto PredictorValues1 = SDF::make_comb("PredictorValues1", PredictorValues_func, 1, 1, e3, e2);
         PredictorValues1->oport1(e4);
         
-        //~ SDF::make_comb2("SpectralComparison1", SpectralComparison_func, , , , e5, e1, e3);
-        //~ 
+        SDF::make_comb2("SpectralComparison1", SpectralComparison_func, 1, 1, 1, e5, e1, e3);
+        
         //~ SDF::make_comb5("ThresholdAdaptation1", ThresholdAdaptation_func, , , , e7_10, e4, e5, e6, e9, e18);
         //~ 
         //~ SDF::make_unzip("ThresholdAdaptation1_unzip", e7_10, , , e7, e10);
@@ -85,7 +86,7 @@ SC_MODULE(top)
         //~ SDF::make_file_sink("VADFilesink", VADFilesink_func, e19);
         
         // FIXME: REMOVE! only for test:
-        SDF::make_sink("test_sink", [](rav1_t val){std::cout << val << std::endl;}, e4);
+        SDF::make_sink("test_sink", [](short val){std::cout << val << std::endl;}, e5);
     }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()
