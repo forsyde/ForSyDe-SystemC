@@ -19,7 +19,7 @@
 
 using namespace ForSyDe::SDF;
 
-void ACFAveraging_fun(std::vector<tuple_of_vectors<L_av_t,L_av_t>>& out,
+void ACFAveraging_func(std::vector<tuple_of_vectors<L_av_t,L_av_t>>& out,
                     std::vector<r_t> inp1,
                     std::vector<r_t> inp2,
                     std::vector<short> inp3)
@@ -35,7 +35,7 @@ void ACFAveraging_fun(std::vector<tuple_of_vectors<L_av_t,L_av_t>>& out,
     short in_scal_acf = inp3[0];
     short* tout_L_av0 = (std::get<0>(out[0]))[0].data();
     short* tout_L_av1 = (std::get<1>(out[0]))[0].data();
-#pragma ForSyDe begin ToneDetection_func
+#pragma ForSyDe begin ACFAveraging_func
     int out_L_av0[9];
     int out_L_av1[9];
     
