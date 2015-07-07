@@ -41,9 +41,10 @@ void VADFilesource_func(tuple_of_vectors<r_t,r_t,r_t,short,short,rc_t,short>& ou
     ss.ignore(1);   //ignore comma
     
     // read r_h_2
-    for (short& val: (std::get<1>(out))[0])
-        ss >> val;
-    ss.ignore(1);   //ignore comma
+    (std::get<1>(out))[0] = (std::get<0>(out))[0];
+    //~ for (short& val: (std::get<1>(out))[0])
+        //~ ss >> val;
+    //~ ss.ignore(1);   //ignore comma
     
     // read r_l
     for (short& val: (std::get<2>(out))[0])
@@ -55,8 +56,9 @@ void VADFilesource_func(tuple_of_vectors<r_t,r_t,r_t,short,short,rc_t,short>& ou
     ss.ignore(1);   //ignore comma
     
     // read scal_acf_1
-    ss >> (std::get<4>(out))[0];
-    ss.ignore(1);   //ignore comma
+    (std::get<4>(out))[0] = (std::get<3>(out))[0];
+    //~ ss >> (std::get<4>(out))[0];
+    //~ ss.ignore(1);   //ignore comma
     
     // read rc
     for (short& val: (std::get<5>(out))[0])
