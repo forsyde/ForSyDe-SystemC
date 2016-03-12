@@ -784,6 +784,7 @@ public:
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
         arg_vec.push_back(std::make_tuple("file_name", file_name));
+        arg_vec.push_back(std::make_tuple("o1toks", std::to_string(1)));
 #endif
     }
     
@@ -937,6 +938,7 @@ public:
         std::string func_name = std::string(basename());
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+        arg_vec.push_back(std::make_tuple("i1toks", std::to_string(1)));
 #endif
     }
     
@@ -1012,6 +1014,7 @@ public:
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
         arg_vec.push_back(std::make_tuple("file_name", file_name));
+        arg_vec.push_back(std::make_tuple("i1toks", std::to_string(1)));
 #endif
     }
     
