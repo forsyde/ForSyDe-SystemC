@@ -14,6 +14,8 @@
 #ifndef ABSSEMANTICS_HPP
 #define ABSSEMANTICS_HPP
 
+#include "types.hpp"
+
 /*! \file abssemantics.hpp
  * \brief The common abstract semantics for all MoCs.
  * 
@@ -49,7 +51,7 @@ class introspective_channel
 {
 public:
     //! Name of the tokens in the channels
-    virtual const char* token_type() const = 0;
+    virtual const char* token_type(IntrospectiveType&) const = 0;
     
     // TODO: remove if proved not to be needed
     //~ //! Size of the tokens in the channels
@@ -87,9 +89,10 @@ public:
     
     // TODO: remove if proved not to be needed
     //! Returns the name of the token type
-    virtual const char* token_type() const
+    virtual const char* token_type(IntrospectiveType& type_parser) const
     {
-        return get_smart_type_name<T>();
+    	type_parser<T>.traverse();
+        return get_type_name<T>();
     }
     
     virtual std::string moc() const = 0;
@@ -149,7 +152,7 @@ public:
     //! Returns the plain name of the token type
     virtual const char* token_type() const
     {
-        return get_smart_type_name<T>();
+        return get_type_name<T>();
     }
 #endif
 };
@@ -189,7 +192,7 @@ public:
     //! Returns the name of the actual type (not abst_ext version)
     virtual const char* token_type() const
     {
-        return get_smart_type_name<T>();
+        return get_type_name<T>();
     }
 #endif
 };

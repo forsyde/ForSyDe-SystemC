@@ -15,6 +15,11 @@
 #define TYPES_HPP
 
 #include <iostream>
+ #include <sstream>
+#include "rapidxml_print.hpp"
+
+
+using namespace rapidxml;
 
 /*! \file types.hpp
  * \brief Provides facilities for basic type introspection
@@ -27,9 +32,12 @@
 //~ namespace ForSyDe
 //~ {
 
+
 // The general case uses RTTI (if the type is not registered explicitly)
 #pragma once
-template<typename T> const char* get_type_name() {return typeid(T).name();}
+template<typename T> const char* get_type_name() {
+	return typeid(T).name();
+}
 
 
 template <typename T>
@@ -63,50 +71,61 @@ DEFINE_TYPE(long double);
 DEFINE_TYPE(wchar_t);
 
 
-template<typename T> std::string get_type_size() {return std::to_string(sizeof(T));}
-
-
-struct type_info {
-	std::string name = "";
-	std::string size = "";
-
-	void surround(const std::string& before, const std::string& after) {
-		name = before + name + after;
-		size = before + size + after;
+class IntrospectiveType {
+public:
+	IntrospectiveType(xml_document<>* xml_doc, xml_node<>* root) : xml_doc(xml_doc), root(root) {
+        const_name = (char*)"name";
+        const_data_type = (char*)"data_type";
+		const_primitive = (char*)"primitive";
+		const_vector = (char*)"vector";
+		const_tuple = (char*)"tuple";
+        const_size = (char*)"size";
+        const_length = (char*)"length";
 	}
+    ~IntrospectiveType(){}
 
-	void concat(type_info& rhs) {
-		name += rhs.name;
-		size += rhs.size;
-	}
-};
-
-class SmartTypes {
 public:
 	template <typename T>
-	struct base_type {
-		static inline void get(type_info& info) {
-			std::cout<< "base nothing" << std::endl;
-			info.name += get_type_name<T>();
-			info.size += get_type_size<T>();
+	inline void traverse() {
+		// Get the list of module children (ports and other processes)
+
+		for (auto child = root->first_node(); child; child = child->next_sibling()) {
+			if (child->first_attribute(const_name)->value() == get_type_name<T>() ) return;
+		}
+
+		xml_node<> *type_node = allocate_append_node(root, const_data_type);
+		allocate_append_attribute(type_node, const_data_type, get_type_name<T>());
+
+		add_type_node<T>::get(type_node);
+	};
+
+	template <typename T>
+	struct add_type_node {
+		inline void get (xml_node<>* parent) {
+			xml_node<> *primitive_node = allocate_append_node(parent, const_primitive);
+			allocate_append_attribute(primitive_node, const_name, get_type_name<T>());
+			allocate_append_attribute(primitive_node, const_size, size_to_char(sizeof(T)));
 		}
 	};
 
-
 	template <typename T>
-	struct base_type<Vector<T>> {
-		static inline void get(type_info& info) {
-			std::cout<< "base vector" << std::endl;
-			type_context<T>::get(info);
-			info.size += ":" + std::to_string(sizeof(T));
+	struct add_type_node<Vector<T>> {
+		inline void  get (xml_node<>* parent) {
+			xml_node<> *vector_node = allocate_append_node(parent, const_vector);
+			add_type_node<T>::get(vector_node);
+
+			size_t child_size = char_to_size(vector_node->first_node()->first_attribute(const_size)->value());
+			allocate_append_attribute(vector_node, const_length, size_to_char(sizeof(T)/child_size));
+			allocate_append_attribute(vector_node, const_size, size_to_char(sizeof(T)));
 		}
 	};
 
 	template <typename... T>
-	struct base_type<Tuple<T...>> {
-		static inline void get(type_info& info) {
-			std::cout<< "base tuple" << std::endl;
-			type_context<Tuple<T...>>::get(info);
+	struct add_type_node<Tuple<T...>> {
+		inline void get (xml_node<>* parent) {
+			xml_node<> *tuple_node = allocate_append_node(parent, const_tuple);
+			traverse_tuple<sizeof...(T), Tuple<T...>>(tuple_node);
+			allocate_append_attribute(tuple_node, const_size, size_to_char(sizeof(T)));
 		}
 	};
 
@@ -115,72 +134,54 @@ public:
 
 	template <size_t N, typename Head, typename... Tail>
 	struct traverse_tuple<N, Tuple<Head, Tail...>>{
-		static inline void get(type_info& info) {
-			std::cout<< "traversal" << std::endl;
-			type_context<Head>::get(info);
-			info.surround("", ",");
-			traverse_tuple<N-1, Tuple<Tail...>>::get(info);
+		inline void get (xml_node<>* parent) {
+			add_type_node<Head>(parent);
+			traverse_tuple<N-1, Tuple<Tail...>>(parent);
 		}
 	};
 
 	template <typename Head, typename... Tail>
 	struct traverse_tuple<1, Tuple<Head, Tail...>> {
-		static inline void get(type_info& info) {
-			std::cout<< "traversal end" << std::endl;
-			type_context<Head>::get(info);
+		inline void get (xml_node<>* parent) {
+			add_type_node<Head>(parent);
 		}
 	};
 
+    //! The RapidXML DOM
+	xml_document<>* xml_doc;
+	xml_node<>* root;
 
-	template <typename T>
-	struct type_context {
-		static inline void get(type_info& info) {
-			std::cout<< "context nothing" << std::endl;
-			base_type<T>::get(info);
-		}
-	};
+    //! Some global constant names
+	char *const_name, *const_data_type, *const_primitive, *const_vector, *const_tuple, *const_size, *const_length;
 
+    inline xml_node<>* allocate_append_node(xml_node<>* top, const char* name)
+    {
+        xml_node<>* node = xml_doc.allocate_node(node_element, name);
+        top->append_node(node);
+        return node;
+    }
 
-	template <typename T>
-	struct type_context<Vector<T>> {
-		static inline void get(type_info& info) {
-			std::cout<< "context vector" << std::endl;
-			type_info new_vector;
-			base_type<Vector<T>>::get(new_vector);
-			std::cout<< "end vector" << std::endl;
-			new_vector.surround("[","]");
-			info.concat(new_vector);
-		}
-	};
+    inline void allocate_append_attribute(xml_node<>* node, const char* attr_name, const char* attr_val)
+    {
+        xml_attribute<>* attr = xml_doc.allocate_attribute(attr_name, attr_val);
+        node->append_attribute(attr);
+    }
 
-	template <typename... T>
-	struct type_context<Tuple<T...>> {
-		static inline void get(type_info& info) {
-			std::cout<< "context tuple" << std::endl;
-			type_info new_tuple;
-			traverse_tuple<sizeof...(T), Tuple<T...>>::get(new_tuple);
-			new_tuple.surround("(",")");
-			info.concat(new_tuple);
+    inline const char* size_to_char(size_t size){
+    	std::string str = std::to_string(size);
+    	char * writable = new char[str.size() + 1];
+    	std::copy(str.begin(), str.end(), writable);
+    	writable[str.size()] = '\0';
+    	return writable;
+    }
 
-		}
-	};
-
-	template <typename T>
-	static inline type_info get_smart_type_info() {
-		type_info info;
-		type_context<T>::get(info);
-		return info;
-	};
+    inline size_t char_to_size(const char* char_size){
+    	std::istringstream iss(char_size);
+    	size_t size;
+    	iss > size;
+    	return size;
+    }
 };
-
-template<typename X>
-const char* get_smart_type_name() {
-	std::string str = SmartTypes::get_smart_type_info<X>().name;
-	char * writable = new char[str.size() + 1];
-	std::copy(str.begin(), str.end(), writable);
-	writable[str.size()] = '\0';
-	return writable;
-}
 
 //~ }
 
