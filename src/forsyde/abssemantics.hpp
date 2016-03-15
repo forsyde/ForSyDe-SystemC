@@ -89,7 +89,7 @@ public:
     //! Returns the name of the token type
     virtual const char* token_type() const
     {
-        return get_type_name<T>();
+        return get_smart_type_name<T>();
     }
     
     virtual std::string moc() const = 0;
@@ -149,7 +149,7 @@ public:
     //! Returns the plain name of the token type
     virtual const char* token_type() const
     {
-        return get_type_name<T>();
+        return get_smart_type_name<T>();
     }
 #endif
 };
@@ -189,7 +189,7 @@ public:
     //! Returns the name of the actual type (not abst_ext version)
     virtual const char* token_type() const
     {
-        return get_type_name<T>();
+        return get_smart_type_name<T>();
     }
 #endif
 };
