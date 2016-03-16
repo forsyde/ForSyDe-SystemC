@@ -92,20 +92,12 @@ public:
         xml_doc.clear();
     }
     
-    void traverse(sc_module* top) {
-        this->_traverse(top);
-        std::string types_path(path + "types.xml");
-        TypeContainer::get().printXML(types_path);
-    }
-
-    //! The _traverse function requires the top ForSyDe process name
+    //! The traverse function requires the top ForSyDe process name
     /*! It initiates the translation job which is a recursive traversal
      * of the process network.
      */
 
-private:
-
-    void _traverse(sc_module* top)
+    void traverse(sc_module* top)
     {
         // Initiate the XML file for this level of hierarchy
         xml_node<>* pn_node = init(top);
@@ -131,7 +123,7 @@ private:
                     add_composite_process(static_cast<sc_module*>(*it), pn_node);
                     // Recursion step
                     XMLExport dumper(path);
-                    dumper._traverse(static_cast<ForSyDe::process*>(*it));
+                    dumper.traverse(static_cast<ForSyDe::process*>(*it));
                 }
             }
             else if (is_port(*it))
@@ -158,6 +150,7 @@ private:
         
     }
 
+private:
     //! The init member initiates the XML DOM and performs initial settings.
     /*! 
      */

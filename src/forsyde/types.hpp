@@ -1,11 +1,15 @@
 /**********************************************************************           
-    * TypeContainer::get().hpp -- provides a simple type reflection mechanism.       *
+    * types.hpp -- provides a type reflection mechanism.              *
     *                                                                 *
-    * Author:  Hosein Attarzadeh (shan2@kth.se) based on:             *
-    * http://stackoverflow.com/questions/1055452/c-get-name-of-type-in-template *
+    * Authors: Hosein Attarzadeh (shan2@kth.se)                       *
+    *          George Ungureanu (ugeorge@kth.se)                      *
     *                                                                 *
-    * Purpose: Provide facilities to store the type names, used in    *
-    *          introspection.                                         *
+    * based on: http://stackoverflow.com/questions/1055452/c-get-name-of-type-in-template *
+    *           http://www.diva-portal.org/smash/get/diva2:647797/FULLTEXT01.pdf *
+    *                                                                 *
+    * Purpose: Provide facilities to store the type information, used *
+    *          in introspection.                                      *
+    *                                                                 *
     * Usage:   This file is included automatically                    *
     *                                                                 *
     * License:                                                        *
@@ -14,6 +18,24 @@
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
+/*! \file types.hpp
+ * \brief Provides facilities for type introspection
+ * 
+ *  This file includes
+ *    - a set of basic facilities for registering names or non-POD
+ *      C/C++ types to be reflected in the XML output of the
+ *      introspection stage.
+ *    - a set of basic facilities for declaring and registering custom
+ *      types, such as struct
+ *    - a set of methods for recursive parsing and introspection of
+ *      template data types.
+ *    - a singleton container for storing all type structures found
+ *      during the introspection phase
+ */
+
+
+
+
 #include <iostream>
  #include <sstream>
 #include "rapidxml_print.hpp"
@@ -21,40 +43,42 @@
 
 using namespace rapidxml;
 
-/*! \file TypeContainer::get().hpp
- * \brief Provides facilities for basic type introspection
- * 
- *  This file includes a a set of basic facilities for registering names
- * for non-POD C/C++ TypeContainer::get() to be reflected in the XML output of the
- * interospection stage.
- */
-
-//~ namespace ForSyDe
-//~ {
-
-
 // The general case uses RTTI (if the type is not registered explicitly)
 #pragma once
 template<typename T> const char* get_type_name() {
 	return typeid(T).name();
 }
 
-
-template <typename T>
-using Vector = std::vector<T>;
-
-template <typename... T>
-using Tuple = std::tuple<T...>;
-
 // Specialization for each type
 #define DEFINE_TYPE(X) \
     template<>const char* get_type_name<X>(){return #X;}
-// Another version where we explicitly provide the type name (for complex TypeContainer::get())
+
+// Another version where we explicitly provide the type name (for complex types)
 #define DEFINE_TYPE_NAME(X,N) \
     template<>const char* get_type_name<X>(){return N;}
 
-// Specialization for base TypeContainer::get()
+// Defines also the streaming operator for user defined types. Must be followed by a function definition. {}
+#define DEFINE_TYPE_NAME_STREAM(X, N) \
+		DEFINE_TYPE_NAME(X, N); \
+		void getCustomTypeDefinition(std::ostream &os, const X &obj); \
+		std::ostream& operator <<(std::ostream &os, const X &obj) \
+		{ \
+			getCustomTypeDefinition(os, obj); \
+			return os;\
+		} \
+		void getCustomTypeDefinition(std::ostream &os, const X &obj)
 
+// Helper macro for creating structures. Must be followed by a definition between {}
+#define STRUCT(NAME, DEF)\
+	typedef struct NAME { \
+		DEF \
+	} NAME; \
+	DEFINE_TYPE_NAME_STREAM(NAME, #NAME) {}
+
+
+
+
+// Primitive type name definition
 DEFINE_TYPE(char);
 DEFINE_TYPE(short int);
 DEFINE_TYPE(unsigned short int);
@@ -71,32 +95,64 @@ DEFINE_TYPE(long double);
 DEFINE_TYPE(wchar_t);
 
 
+
+namespace ForSyDe
+{
+
+// Identifiers for primitive types
+template<class T> struct isPrimitive { enum { val = 0 }; };
+template<> struct isPrimitive<char>                   { enum { val = 1 }; };
+template<> struct isPrimitive<short int>              { enum { val = 1 }; };
+template<> struct isPrimitive<unsigned short int>     { enum { val = 1 }; };
+template<> struct isPrimitive<int>                    { enum { val = 1 }; };
+template<> struct isPrimitive<unsigned int>           { enum { val = 1 }; };
+template<> struct isPrimitive<long int>               { enum { val = 1 }; };
+template<> struct isPrimitive<unsigned long int>      { enum { val = 1 }; };
+template<> struct isPrimitive<long long int>          { enum { val = 1 }; };
+template<> struct isPrimitive<unsigned long long int> { enum { val = 1 }; };
+template<> struct isPrimitive<bool>                   { enum { val = 1 }; };
+template<> struct isPrimitive<float>                  { enum { val = 1 }; };
+template<> struct isPrimitive<double>                 { enum { val = 1 }; };
+template<> struct isPrimitive<long double>            { enum { val = 1 }; };
+template<> struct isPrimitive<wchar_t>                { enum { val = 1 }; };
+
+// xml label names
 static char* const_name = (char*)"name";
 static char* const_data_type = (char*)"data_type";
 static char* const_primitive = (char*)"primitive";
+static char* const_custom = (char*)"custom";
 static char* const_vector = (char*)"vector";
+static char* const_array = (char*)"array";
 static char* const_tuple = (char*)"tuple";
 static char* const_size = (char*)"size";
 static char* const_length = (char*)"length";
 static char* const_root_type = (char*)"forsyde_types";
 
+
+//! Singleton container for storing type structures during introspection
+/*! This class is used to store type structures during the introspection phase
+ *  as XML DOM document. It identifies types from the ForSyDe-IR by their
+ *  name given by the RTTI and stores them only once.
+ */
 class TypeContainer {
 public:
+    //! The instance getter.
 	static TypeContainer& get() {
 		static TypeContainer instance;
 		return instance;
 	}
 
+    //! Returns the root node of the XML DOM
 	xml_node<>* root() { return root_node; }
-	xml_document<>* doc() { return &xml_doc; }
 
-
+    //! Allocates and appends a node to the XML documents, and returns its pointer.
     xml_node<>* add_node(xml_node<>* parent, const char* name) {
         xml_node<>* node = xml_doc.allocate_node(node_element, name);
         parent->append_node(node);
         return node;
     }
 
+    //! Allocates and appends an attribute to an XML node, and returns its pointer.
     void add_attribute(xml_node<>* node, const char* attr_name, const char* attr_val) {
         xml_attribute<>* attr = xml_doc.allocate_attribute(attr_name, attr_val);
         node->append_attribute(attr);
@@ -120,26 +176,45 @@ public:
     }
 
 private:
+    //! The (hidden) default constructor.
 	TypeContainer() {
 		root_node = xml_doc.allocate_node(node_element, const_root_type);
 		xml_doc.append_node(root_node);
 	};
 
+	// these are needed to ensure singleton pattern
 	TypeContainer(TypeContainer const&);
 	void operator=(TypeContainer const&);
 
+    //! The RapidXML DOM
 	xml_document<> xml_doc;
+
+	//! The root node
 	xml_node<>* root_node;
 
 };
 
+//! Class containing methods for recursive type introspection
+/*! This class is used as a namespace for all template functions used for
+ *  recursive type introspection. During the traversal of a type, its structure
+ *  is being stored in a TypeContainer singleton.
+ */
 class IntrospectiveType {
 public:
+	//! Main (and only) function for parsing a data type
+	/*! This function is the only one called during the introspection phase to
+	 *  traverse a type.
+	 *
+	 *  If the FORSYDE_TYPE_INTROSPECTION compiler flag is enabled then it
+	 *  updates the TypeContainer with the XML structure extracted. Otherwise
+	 *  it just returns its identifier (RTTI or given name).
+	 */
 	template <typename T>
 	static inline const char* traverse() {
-		xml_node<>* root = TypeContainer::get().root();
 		const char* type_name = get_type_name<T>();
 
+#ifdef FORSYDE_TYPE_INTROSPECTION
+		xml_node<>* root = TypeContainer::get().root();
 		for (auto child = root->first_node(); child; child = child->next_sibling()) {
 			if (child->first_attribute(const_name)->value() == type_name ) return type_name;
 		}
@@ -147,58 +222,73 @@ public:
 		xml_node<> *type_node = TypeContainer::get().add_node(root, const_data_type);
 		TypeContainer::get().add_attribute(type_node, const_name, type_name);
 		add_type_node<T>::get(type_node);
+#endif
 		return type_name;
 	};
 
+	// Default template for getting the information of a node, in case no other structure is identified
 	template <typename T>
 	struct add_type_node {
 		static inline void get (xml_node<>* parent) {
-			xml_node<> *primitive_node = TypeContainer::get().add_node(parent, const_primitive);
+			char* node_type = (isPrimitive<T>::val) ? const_primitive : const_custom;
+			xml_node<> *primitive_node = TypeContainer::get().add_node(parent, node_type);
 			TypeContainer::get().add_attribute(primitive_node, const_name, get_type_name<T>());
 			TypeContainer::get().add_attribute(primitive_node, const_size, size_to_char(sizeof(T)));
 		}
 	};
 
+	// Template specialization for parsing vectors
 	template <typename T>
-	struct add_type_node<Vector<T>> {
+	struct add_type_node<std::vector<T>> {
 		static inline void  get (xml_node<>* parent) {
 			xml_node<> *vector_node = TypeContainer::get().add_node(parent, const_vector);
 
 			add_type_node<T>::get(vector_node);
-
-			//size_t child_size = char_to_size(vector_node->first_node()->first_attribute(const_size)->value());
-			//TypeContainer::get().add_attribute(vector_node, const_length, size_to_char(sizeof(T)/child_size));
-			TypeContainer::get().add_attribute(vector_node, const_size, size_to_char(sizeof(Vector<T>)));
 		}
 	};
 
+	// Template specialization for parsing fixed size (std::)arrays
+	template <typename T, size_t S>
+	struct add_type_node<std::array<T,S>> {
+		static inline void  get (xml_node<>* parent) {
+			xml_node<> *vector_node = TypeContainer::get().add_node(parent, const_array);
+			TypeContainer::get().add_attribute(vector_node, const_length, size_to_char(S));
+
+			add_type_node<T>::get(vector_node);
+		}
+	};
+
+	// Template specialization for parsing tuples
 	template <typename... T>
-	struct add_type_node<Tuple<T...>> {
+	struct add_type_node<std::tuple<T...>> {
 		static inline void get (xml_node<>* parent) {
 			xml_node<> *tuple_node = TypeContainer::get().add_node(parent, const_tuple);
-			traverse_tuple<sizeof...(T), Tuple<T...>>::get(tuple_node);
-			//TypeContainer::get().add_attribute(tuple_node, const_size, size_to_char(sizeof(Tuple<T...>)));
+			traverse_tuple<sizeof...(T), std::tuple<T...>>::get(tuple_node);
 		}
 	};
 
+	// Default template for traversing a tuple
 	template <size_t N, typename Tup>
 	struct traverse_tuple {};
 
+	// Template specialization for traversing a tuple with multiple elements
 	template <size_t N, typename Head, typename... Tail>
-	struct traverse_tuple<N, Tuple<Head, Tail...>>{
+	struct traverse_tuple<N, std::tuple<Head, Tail...>>{
 		static inline void get (xml_node<>* parent) {
 			add_type_node<Head>::get(parent);
-			traverse_tuple<N-1, Tuple<Tail...>>::get(parent);
+			traverse_tuple<N-1, std::tuple<Tail...>>::get(parent);
 		}
 	};
 
+	// Template specialization for traversing a tuple with one element
 	template <typename Head, typename... Tail>
-	struct traverse_tuple<1, Tuple<Head, Tail...>> {
+	struct traverse_tuple<1, std::tuple<Head, Tail...>> {
 		static inline void get (xml_node<>* parent) {
 			add_type_node<Head>::get(parent);
 		}
 	};
 
+	// Utility function : size_t to char array
     static inline const char* size_to_char(size_t size){
     	std::string str = std::to_string(size);
     	char * writable = new char[str.size() + 1];
@@ -207,6 +297,7 @@ public:
     	return writable;
     }
 
+	// Utility function : char array size_t
     static inline size_t char_to_size(const char* char_size){
     	std::istringstream iss(char_size);
     	size_t size;
@@ -215,6 +306,6 @@ public:
     }
 };
 
-//~ }
+}
 
 #endif

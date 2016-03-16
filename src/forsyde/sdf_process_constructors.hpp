@@ -1168,7 +1168,7 @@ private:
         for (auto i=0; i<i1toks; i++)
             ival1[i] = iport1.read();
         for (auto i=0; i<i2toks; i++)
-            ival2[i] = iport2.read();    
+            ival2[i] = iport2.read();
     }
     
     void exec() {}
