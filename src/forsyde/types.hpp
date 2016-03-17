@@ -43,23 +43,38 @@
 
 using namespace rapidxml;
 
+template<typename ...T>
+using token_tuple_t = std::tuple<std::vector<T>...>;
+
+template<typename T>
+using token_t = std::vector<T>;
+
 // The general case uses RTTI (if the type is not registered explicitly)
 #pragma once
 template<typename T> const char* get_type_name() {
 	return typeid(T).name();
 }
 
+// helper macros
+#define FIRST_ARG___(N, ...) N
+#define FARG_NAME___(N, ...) #N
+#define REST_ARGS___(N, ...) __VA_ARGS__
+#define FIRST_ARG__(args) FIRST_ARG___ args
+#define FARG_NAME__(args) FARG_NAME___ args
+#define REST_ARGS__(args) REST_ARGS___ args
+
+
 // Specialization for each type
 #define DEFINE_TYPE(X) \
     template<>const char* get_type_name<X>(){return #X;}
 
-// Another version where we explicitly provide the type name (for complex types)
-#define DEFINE_TYPE_NAME(X,N) \
-    template<>const char* get_type_name<X>(){return N;}
+#define DEFINE_TYPE_NAME(X, N) \
+	template<>const char* get_type_name<X>(){return N;}
+
 
 // Defines also the streaming operator for user defined types. Must be followed by a function definition. {}
-#define DEFINE_TYPE_NAME_STREAM(X, N) \
-		DEFINE_TYPE_NAME(X, N); \
+#define DEFINE_TYPE_STREAM(X) \
+		DEFINE_TYPE(X); \
 		void getCustomTypeDefinition(std::ostream &os, const X &obj); \
 		std::ostream& operator <<(std::ostream &os, const X &obj) \
 		{ \
@@ -69,11 +84,11 @@ template<typename T> const char* get_type_name() {
 		void getCustomTypeDefinition(std::ostream &os, const X &obj)
 
 // Helper macro for creating structures. Must be followed by a definition between {}
-#define STRUCT(NAME, DEF)\
-	typedef struct NAME { \
-		DEF \
-	} NAME; \
-	DEFINE_TYPE_NAME_STREAM(NAME, #NAME) {}
+#define STRUCT(...)\
+	typedef struct FIRST_ARG__((__VA_ARGS__)) { \
+			REST_ARGS__((__VA_ARGS__)) \
+	} FIRST_ARG__((__VA_ARGS__)); \
+	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
 
 
 
