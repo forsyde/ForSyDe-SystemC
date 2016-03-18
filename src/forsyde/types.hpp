@@ -15,8 +15,8 @@
     * License:                                                        *
     *******************************************************************/
 
-#ifndef TYPES_HPP
-#define TYPES_HPP
+#ifndef FORSYDE_TYPES_HPP
+#define FORSYDE_TYPES_HPP
 
 /*! \file types.hpp
  * \brief Provides facilities for type introspection
@@ -41,13 +41,12 @@
 #include "rapidxml_print.hpp"
 
 
+#include <boost/config.hpp>
+#include <boost/operators.hpp>
+#include <initializer_list>
+
+
 using namespace rapidxml;
-
-template<typename ...T>
-using token_tuple_t = std::tuple<std::vector<T>...>;
-
-template<typename T>
-using token_t = std::vector<T>;
 
 // The general case uses RTTI (if the type is not registered explicitly)
 #pragma once
@@ -65,11 +64,11 @@ template<typename T> const char* get_type_name() {
 
 
 // Specialization for each type
-#define DEFINE_TYPE(X) \
-    template<>const char* get_type_name<X>(){return #X;}
+#define DEFINE_TYPE(...) \
+    template<>const char* get_type_name<__VA_ARGS__>(){return #__VA_ARGS__;}
 
-#define DEFINE_TYPE_NAME(X, N) \
-	template<>const char* get_type_name<X>(){return N;}
+#define DEFINE_TYPE_NAME(...) \
+	template<>const char* get_type_name<REST_ARGS__((__VA_ARGS__))>(){return FIRST_ARG__((__VA_ARGS__);}
 
 
 // Defines also the streaming operator for user defined types. Must be followed by a function definition. {}
@@ -83,6 +82,19 @@ template<typename T> const char* get_type_name() {
 		} \
 		void getCustomTypeDefinition(std::ostream &os, const X &obj)
 
+
+#define TYPEDEF(...)\
+    typedef REST_ARGS__((__VA_ARGS__)) FIRST_ARG__((__VA_ARGS__));\
+    DEFINE_TYPE(FIRST_ARG__((__VA_ARGS__)))
+
+// Helper macro for creating C structures. Must be followed by a definition between {}
+#define C_STRUCT(...)\
+	extern "C" typedef struct FIRST_ARG__((__VA_ARGS__)) { \
+			REST_ARGS__((__VA_ARGS__)) \
+	} FIRST_ARG__((__VA_ARGS__)); \
+	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
+
+
 // Helper macro for creating structures. Must be followed by a definition between {}
 #define STRUCT(...)\
 	typedef struct FIRST_ARG__((__VA_ARGS__)) { \
@@ -91,7 +103,19 @@ template<typename T> const char* get_type_name() {
 	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
 
 
+// Helper macro for creating unions. Must be followed by a definition between {}
+#define UNION(...)\
+	typedef union FIRST_ARG__((__VA_ARGS__)) { \
+			REST_ARGS__((__VA_ARGS__)) \
+	} FIRST_ARG__((__VA_ARGS__)); \
+	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
 
+// Helper macro for creating C unions. Must be followed by a definition between {}
+#define C_UNION(...)\
+	extern "C" typedef union FIRST_ARG__((__VA_ARGS__)) { \
+			REST_ARGS__((__VA_ARGS__)) \
+	} FIRST_ARG__((__VA_ARGS__)); \
+	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
 
 // Primitive type name definition
 DEFINE_TYPE(char);
@@ -111,8 +135,83 @@ DEFINE_TYPE(wchar_t);
 
 
 
+
+template<typename T>
+using token_t = std::vector<T>;
+
+template<typename... T>
+using token_tuple_t = std::tuple<std::vector<T>...>;
+
 namespace ForSyDe
 {
+
+
+template<typename... T>
+struct token_tuple_t_
+{
+	typedef std::tuple<std::vector<T>...> tupvec;
+	tupvec t;
+
+    token_tuple_t_(std::initializer_list<size_t> list) {
+    	traverse_tuple<sizeof...(T), tupvec>::resize(list.end(), t);
+    }
+
+    void resize(std::initializer_list<size_t> list) {
+    	traverse_tuple<sizeof...(T), tupvec>::resize(list.end(), t);
+    }
+
+    /*template<size_t Pos>
+    T& get(size_t n_token) { return std::get<Pos>(t)[n_token]; }*/
+
+
+	explicit token_tuple_t_(const std::tuple<std::vector<T>...> t_) : t(t_) {};
+	token_tuple_t_(const token_tuple_t_ & t_) : t(t_.t){}
+	token_tuple_t_ & operator=(const token_tuple_t_ & rhs) { t = rhs.t; return *this;}
+	token_tuple_t_ & operator=(const std::tuple<std::vector<T>...> & rhs) { t = rhs; return *this;}
+	operator const std::tuple<std::vector<T>...> & () const {return t; }
+	operator std::tuple<std::vector<T>...> & () { return t; }
+	bool operator==(const token_tuple_t_ & rhs) const { return t == rhs.t; }
+	bool operator<(const token_tuple_t_ & rhs) const { return t < rhs.t; }
+
+
+private:
+	// Default template for traversing a tuple
+	template <size_t N, typename Tup>
+	struct traverse_tuple {};
+
+	// Template specialization for traversing a tuple with multiple elements
+	template <size_t N, typename Head, typename... Tail>
+	struct traverse_tuple<N, std::tuple<Head, Tail...>>{
+		static inline void resize(std::initializer_list<size_t>::iterator size, tupvec tv) {
+			std::get<N>(tv).resize(*size);
+			traverse_tuple<N-1, std::tuple<Tail...>>::resize(size--, tv);
+		}
+	};
+
+	// Template specialization for traversing a tuple with one element
+	template <typename Head, typename... Tail>
+	struct traverse_tuple<1, std::tuple<Head, Tail...>> {
+		static inline void resize(std::initializer_list<size_t>::iterator size, tupvec tv) {
+			std::get<1>(tv).resize(*size);
+		}
+	};
+
+};
+
+
+
+/*    D(){};                                                      \
+    D(const D & t_) : t(t_.t){}                                 \
+    D & operator=(const D & rhs) { t = rhs.t; return *this;}    \
+    D & operator=(const T & rhs) { t = rhs; return *this;}      \
+    operator const T & () const {return t; }                    \
+    operator T & () { return t; }                               \
+    bool operator==(const D & rhs) const { return t == rhs.t; } \
+    bool operator<(const D & rhs) const { return t < rhs.t; }   \*/
+
+
+
+#ifdef FORSYDE_TYPE_INTROSPECTION
 
 // Identifiers for primitive types
 template<class T> struct isPrimitive { enum { val = 0 }; };
@@ -209,6 +308,8 @@ private:
 
 };
 
+#endif
+
 //! Class containing methods for recursive type introspection
 /*! This class is used as a namespace for all template functions used for
  *  recursive type introspection. During the traversal of a type, its structure
@@ -240,6 +341,8 @@ public:
 #endif
 		return type_name;
 	};
+
+#ifdef FORSYDE_TYPE_INTROSPECTION
 
 	// Default template for getting the information of a node, in case no other structure is identified
 	template <typename T>
@@ -278,6 +381,7 @@ public:
 	struct add_type_node<std::tuple<T...>> {
 		static inline void get (xml_node<>* parent) {
 			xml_node<> *tuple_node = TypeContainer::get().add_node(parent, const_tuple);
+			TypeContainer::get().add_attribute(tuple_node, const_length, size_to_char(sizeof...(T)));
 			traverse_tuple<sizeof...(T), std::tuple<T...>>::get(tuple_node);
 		}
 	};
@@ -319,6 +423,8 @@ public:
     	iss >> size;
     	return size;
     }
+
+#endif
 };
 
 }
