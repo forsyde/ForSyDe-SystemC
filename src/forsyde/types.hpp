@@ -34,16 +34,12 @@
  */
 
 
-
-
 #include <iostream>
- #include <sstream>
+#include <sstream>
+#include <tuple>
+
 #include "rapidxml_print.hpp"
-
-
-#include <boost/config.hpp>
-#include <boost/operators.hpp>
-#include <initializer_list>
+#include "sdf_types.hpp"
 
 
 using namespace rapidxml;
@@ -72,15 +68,15 @@ template<typename T> const char* get_type_name() {
 
 
 // Defines also the streaming operator for user defined types. Must be followed by a function definition. {}
-#define DEFINE_TYPE_STREAM(X) \
-		DEFINE_TYPE(X); \
-		void getCustomTypeDefinition(std::ostream &os, const X &obj); \
-		std::ostream& operator <<(std::ostream &os, const X &obj) \
+#define DEFINE_TYPE_STREAM(...) \
+		DEFINE_TYPE(__VA_ARGS__); \
+		void getCustomTypeDefinition(std::ostream &os, const __VA_ARGS__ &obj); \
+		std::ostream& operator <<(std::ostream &os, const __VA_ARGS__ &obj) \
 		{ \
 			getCustomTypeDefinition(os, obj); \
 			return os;\
 		} \
-		void getCustomTypeDefinition(std::ostream &os, const X &obj)
+		void getCustomTypeDefinition(std::ostream &os, const __VA_ARGS__ &obj)
 
 
 #define TYPEDEF(...)\
@@ -133,83 +129,8 @@ DEFINE_TYPE(double);
 DEFINE_TYPE(long double);
 DEFINE_TYPE(wchar_t);
 
-
-
-
-template<typename T>
-using token_t = std::vector<T>;
-
-template<typename... T>
-using token_tuple_t = std::tuple<std::vector<T>...>;
-
 namespace ForSyDe
 {
-
-
-template<typename... T>
-struct token_tuple_t_
-{
-	typedef std::tuple<std::vector<T>...> tupvec;
-	tupvec t;
-
-    token_tuple_t_(std::initializer_list<size_t> list) {
-    	traverse_tuple<sizeof...(T), tupvec>::resize(list.end(), t);
-    }
-
-    void resize(std::initializer_list<size_t> list) {
-    	traverse_tuple<sizeof...(T), tupvec>::resize(list.end(), t);
-    }
-
-    /*template<size_t Pos>
-    T& get(size_t n_token) { return std::get<Pos>(t)[n_token]; }*/
-
-
-	explicit token_tuple_t_(const std::tuple<std::vector<T>...> t_) : t(t_) {};
-	token_tuple_t_(const token_tuple_t_ & t_) : t(t_.t){}
-	token_tuple_t_ & operator=(const token_tuple_t_ & rhs) { t = rhs.t; return *this;}
-	token_tuple_t_ & operator=(const std::tuple<std::vector<T>...> & rhs) { t = rhs; return *this;}
-	operator const std::tuple<std::vector<T>...> & () const {return t; }
-	operator std::tuple<std::vector<T>...> & () { return t; }
-	bool operator==(const token_tuple_t_ & rhs) const { return t == rhs.t; }
-	bool operator<(const token_tuple_t_ & rhs) const { return t < rhs.t; }
-
-
-private:
-	// Default template for traversing a tuple
-	template <size_t N, typename Tup>
-	struct traverse_tuple {};
-
-	// Template specialization for traversing a tuple with multiple elements
-	template <size_t N, typename Head, typename... Tail>
-	struct traverse_tuple<N, std::tuple<Head, Tail...>>{
-		static inline void resize(std::initializer_list<size_t>::iterator size, tupvec tv) {
-			std::get<N>(tv).resize(*size);
-			traverse_tuple<N-1, std::tuple<Tail...>>::resize(size--, tv);
-		}
-	};
-
-	// Template specialization for traversing a tuple with one element
-	template <typename Head, typename... Tail>
-	struct traverse_tuple<1, std::tuple<Head, Tail...>> {
-		static inline void resize(std::initializer_list<size_t>::iterator size, tupvec tv) {
-			std::get<1>(tv).resize(*size);
-		}
-	};
-
-};
-
-
-
-/*    D(){};                                                      \
-    D(const D & t_) : t(t_.t){}                                 \
-    D & operator=(const D & rhs) { t = rhs.t; return *this;}    \
-    D & operator=(const T & rhs) { t = rhs; return *this;}      \
-    operator const T & () const {return t; }                    \
-    operator T & () { return t; }                               \
-    bool operator==(const D & rhs) const { return t == rhs.t; } \
-    bool operator<(const D & rhs) const { return t < rhs.t; }   \*/
-
-
 
 #ifdef FORSYDE_TYPE_INTROSPECTION
 
@@ -386,6 +307,16 @@ public:
 		}
 	};
 
+	// Template specialization for parsing tuples
+	template <typename... T>
+	struct add_type_node<SDF::token_tuple<T...>> {
+		static inline void get (xml_node<>* parent) {
+			xml_node<> *tuple_node = TypeContainer::get().add_node(parent, const_tuple);
+			TypeContainer::get().add_attribute(tuple_node, const_length, size_to_char(sizeof...(T)));
+			traverse_tuple<sizeof...(T), SDF::token_tuple<T...>>::get(tuple_node);
+		}
+	};
+
 	// Default template for traversing a tuple
 	template <size_t N, typename Tup>
 	struct traverse_tuple {};
@@ -406,6 +337,25 @@ public:
 			add_type_node<Head>::get(parent);
 		}
 	};
+
+	// Template specialization for traversing a tuple with multiple elements
+	template <size_t N, typename Head, typename... Tail>
+	struct traverse_tuple<N, SDF::token_tuple<Head, Tail...>>{
+		static inline void get (xml_node<>* parent) {
+			add_type_node<Head>::get(parent);
+			traverse_tuple<N-1, SDF::token_tuple<Tail...>>::get(parent);
+		}
+	};
+
+	// Template specialization for traversing a tuple with one element
+	template <typename Head, typename... Tail>
+	struct traverse_tuple<1, SDF::token_tuple<Head, Tail...>> {
+		static inline void get (xml_node<>* parent) {
+			add_type_node<Head>::get(parent);
+		}
+	};
+
+
 
 	// Utility function : size_t to char array
     static inline const char* size_to_char(size_t size){
