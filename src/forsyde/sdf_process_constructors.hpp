@@ -25,6 +25,8 @@
 #include <functional>
 #include <tuple>
 #include <vector>
+#include <initializer_list>
+
 
 #include "sdf_process.hpp"
 
@@ -1205,8 +1207,8 @@ public:
      * zips them together and writes the results using the output port
      */
     zipN(sc_module_name _name,
-         std::vector<unsigned> in_toks)
-          :sdf_process(_name), oport1("oport1"), in_toks(in_toks)
+		 std::initializer_list<unsigned> in_toks)
+          :sdf_process(_name), oport1("oport1"), in_toks(std::vector<unsigned>(in_toks))
     {
         if (in_toks.size()!=sizeof...(Ts))
             SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
@@ -1231,7 +1233,7 @@ private:
     
     void prep()
     {
-        *in_val = sc_fifo_tuple_read<Ts...>(iport, in_toks);
+        in_val->t = sc_fifo_tuple_read<Ts...>(iport, in_toks);
     }
     
     void exec() {}
@@ -1405,8 +1407,8 @@ public:
      * unzips it and writes the results using the output ports
      */
     unzipN(sc_module_name _name,
-            std::vector<unsigned> out_toks)
-          :sdf_process(_name), iport1("iport1"), out_toks(out_toks)
+            std::initializer_list<unsigned> out_toks)
+          :sdf_process(_name), iport1("iport1"), out_toks(std::vector<unsigned>(out_toks))
     {
         if (out_toks.size()!=sizeof...(Ts))
             SC_REPORT_ERROR(name(),"Wrong number of production rates provided");

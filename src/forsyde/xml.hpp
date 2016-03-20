@@ -101,7 +101,6 @@ public:
     {
         // Initiate the XML file for this level of hierarchy
         xml_node<>* pn_node = init(top);
-        std::cout<<"parsing " << pn_node->name();
 
         // Get the list of module children (ports and other processes)
         std::vector<sc_object*> children = top->get_child_objects();

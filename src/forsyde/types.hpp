@@ -217,6 +217,10 @@ private:
 		xml_doc.append_node(root_node);
 	};
 
+	~TypeContainer() {
+		xml_doc.clear();
+	};
+
 	// these are needed to ensure singleton pattern
 	TypeContainer(TypeContainer const&);
 	void operator=(TypeContainer const&);
