@@ -123,11 +123,11 @@ template<size_t N, typename T>
 T get(const tokens<T> v){ return v.at(N); }
 
 template< std::size_t N1, std::size_t N2, typename... T >
-typename std::tuple_element<N2, std::tuple<T...> >::type&
+typename std::tuple_element<N1, std::tuple<T...> >::type&
 get(token_tuple<T...>& v) { return std::get<N1>(v.t).at(N2); }
 
 template< std::size_t N1, std::size_t N2, typename... T >
-typename std::tuple_element<N2, std::tuple<T...> >::type
+typename std::tuple_element<N1, std::tuple<T...> >::type
 get(const token_tuple<T...>& v) { return std::get<N1>(v.t).at(N2); }
 
 template< std::size_t N1, std::size_t N2, typename... T >

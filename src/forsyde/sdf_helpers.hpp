@@ -345,7 +345,7 @@ template <class T1, template <class> class I1If,
 inline zip<T1,T2>* make_zip(std::string pName,
     unsigned int i1toks,
     unsigned int i2toks,
-    OIf<std::tuple<std::vector<T1>,std::vector<T2>>>& outS,
+    OIf<token_tuple<T1,T2>>& outS,
     I1If<T1>& inp1S,
     I2If<T2>& inp2S
     )
@@ -370,7 +370,7 @@ template <template <class> class IIf,
            class T1, template <class> class O1If,
            class T2, template <class> class O2If>
 inline unzip<T1,T2>* make_unzip(std::string pName,
-    IIf<std::tuple<std::vector<T1>,std::vector<T2>>>& inpS,
+    IIf<token_tuple<T1,T2>>& inpS,
     unsigned int o1toks,
     unsigned int o2toks,
     O1If<T1>& out1S,
