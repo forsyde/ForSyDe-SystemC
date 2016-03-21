@@ -27,7 +27,6 @@
 #include "sdf_process.hpp"
 #include "sdf_process_constructors.hpp"
 #include "sdf_helpers.hpp"
-#include "sdf_types.hpp"
 
 namespace ForSyDe
 {

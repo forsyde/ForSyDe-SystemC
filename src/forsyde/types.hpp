@@ -39,8 +39,6 @@
 #include <tuple>
 
 #include "rapidxml_print.hpp"
-#include "sdf_types.hpp"
-
 
 using namespace rapidxml;
 
