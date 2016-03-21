@@ -37,6 +37,7 @@
 #include <iostream>
 #include <sstream>
 #include <tuple>
+#include <type_traits>
 
 #include "rapidxml_print.hpp"
 
@@ -180,6 +181,7 @@ std::ostream& operator <<(std::ostream &os, const token_tuple<T...> &obj) {
 }
 
 
+
 // TODO: make an initializer traversal
 template<typename T>
 tokens<T> init(size_t n){
@@ -190,11 +192,15 @@ tokens<token_tuple<T...>> init(size_t n, std::initializer_list<size_t> list){
 	return tokens<token_tuple<T...>>(n, token_tuple<T...>(list));
 }
 
-
 } // end SDF
 
 
+
+
+
+
 class TypeGetter {
+	template<size_t N, typename T, size_t... Ixs> struct base;
 	template<size_t N, typename T, size_t... Ixs>
 	struct traverse {
 		static inline const void get (T&) {
@@ -202,7 +208,10 @@ class TypeGetter {
 		}
 	};
 
+
 	// the traversal should stop when it found a primitive or a custom type
+	template<typename T, size_t... Ixs>
+	struct base<0, T, Ixs...> { typedef T& type; };
 	template<typename T, size_t... Ixs>
 	struct traverse<0, T, Ixs...> {
 		static inline const void* get (const T& t) { return (void*)&t; }
@@ -211,12 +220,17 @@ class TypeGetter {
 
 	// traversal through a vector
 	template<size_t N, typename T, size_t Ix, size_t... Ixs>
+	struct base<N, std::vector<T>, Ix, Ixs...> { typedef decltype(*(typename base<N-1, T, Ixs...>::type*)0) type; };
+	template<size_t N, typename T, size_t Ix, size_t... Ixs>
 	struct traverse<N, std::vector<T>, Ix, Ixs...> {
 		static inline const void* get (const std::vector<T>& t) { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
 		static inline void*       get (std::vector<T>& t)       { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
 	};
 
 	// stop traversal through vector. Output a C array.
+	// traversal through a vector
+	template<typename T, size_t Ix, size_t... Ixs>
+	struct base<0, std::vector<T>, Ix, Ixs...> { typedef T* type; };
 	template<typename T, size_t Ix, size_t... Ixs>
 	struct traverse<0, std::vector<T>, Ix, Ixs...> {
 		static inline const void* get (const std::vector<T>& t) { return (void*)&t[0]; }
@@ -225,6 +239,8 @@ class TypeGetter {
 
 	// traversal through an array
 	template<size_t N, typename T, size_t S, size_t Ix, size_t... Ixs>
+	struct base<N, std::array<T,S>, Ix, Ixs...> { typedef decltype(*(typename base<N-1, T, Ixs...>::type*)0) type; };
+	template<size_t N, typename T, size_t S, size_t Ix, size_t... Ixs>
 	struct traverse<N, std::array<T,S>, Ix, Ixs...> {
 		static inline const void* get (const std::array<T,S>& t) { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
 		static inline void*       get (std::array<T,S>& t)       { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
@@ -232,12 +248,18 @@ class TypeGetter {
 
 	// stop traversal through an array. Output a C array.
 	template<typename T, size_t S, size_t Ix, size_t... Ixs>
+	struct base<0, std::array<T,S>, Ix, Ixs...> { typedef T* type; };
+	template<typename T, size_t S, size_t Ix, size_t... Ixs>
 	struct traverse<0, std::array<T,S>, Ix, Ixs...> {
 		static inline const void* get (const std::array<T,S>& t) { return (void*)t.data(); }
 		static inline void*       get (std::array<T,S>& t)       { return (void*)t.data(); }
 	};
 
 	// traversal through a tuple
+	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
+	struct base<N, std::tuple<T...>, Ix, Ixs...> {
+		typedef decltype(*(typename base<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...>::type*)0) type;
+	};
 	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
 	struct traverse<N, std::tuple<T...>, Ix, Ixs...> {
 		static inline const void* get (const std::tuple<T...>& t) {
@@ -249,6 +271,10 @@ class TypeGetter {
 	};
 
 	// traversal through a SDF::token_tuple
+	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
+	struct base<N, SDF::token_tuple<T...>, Ix, Ixs...> {
+		typedef decltype(*(typename base<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...>::type*)0) type;
+	};
 	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
 	struct traverse<N, SDF::token_tuple<T...>, Ix, Ixs...> {
 		static inline const void* get (const SDF::token_tuple<T...>& t) {
@@ -290,6 +316,7 @@ To* get(Ti& v){ return (To*) TypeGetter::traverse<4, Ti, I1, I2, I3, I4>::get(v)
 
 template<typename To, size_t I1, size_t I2, size_t I3, size_t I4, size_t I5, typename Ti>
 To* get(Ti& v){ return (To*) TypeGetter::traverse<3, Ti, I1, I2, I3, I4, I5>::get(v); }
+
 
 
 
