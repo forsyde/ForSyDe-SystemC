@@ -132,6 +132,169 @@ DEFINE_TYPE(wchar_t);
 namespace ForSyDe
 {
 
+namespace SDF {
+
+template<typename T>
+using tokens = std::vector<T>;
+
+template<typename... T>
+struct token_tuple {
+	typedef std::tuple<tokens<T>...> type;
+	type t;
+
+    token_tuple() {}
+    token_tuple(std::initializer_list<size_t> list) { traverse_tuple<sizeof...(T), type>::resize(list.end(), t); }
+	explicit token_tuple(const std::tuple<tokens<T>...> t_) : t(t_) {};
+	token_tuple(const token_tuple<T...> & t_) : t(t_.t){}
+
+    void resize(std::initializer_list<size_t> list) { traverse_tuple<sizeof...(T), type>::resize(list.end(), t); }
+	token_tuple<T...>& operator=(const token_tuple<T...>& rhs) { t = rhs.t; return *this;}
+	token_tuple<T...>& operator=(const std::tuple<tokens<T>...>& rhs) { t = rhs; return *this;}
+
+private:
+
+	// Default template for traversing a tuple
+	template <size_t N, typename Tup>
+	struct traverse_tuple {};
+
+	// Template specialization for traversing a tuple with multiple elements
+	template <size_t N, typename TT, typename... Tail>
+	struct traverse_tuple<N, std::tuple<tokens<TT>, Tail...>>{
+		static inline void resize(std::initializer_list<size_t>::iterator size, std::tuple<tokens<TT>, Tail...>& tv) {
+			--size;
+			std::get<N-1>(tv).resize(*size);
+			traverse_tuple<N-1, std::tuple<tokens<TT>, Tail...>>::resize(size, tv);
+		}
+	};
+
+	// Template specialization for traversing a tuple with one element
+	template <typename TT, typename... Tail>
+	struct traverse_tuple<1, std::tuple<tokens<TT>, Tail...>>{
+		static inline void resize(std::initializer_list<size_t>::iterator size, std::tuple<tokens<TT>, Tail...>& tv) {
+			std::get<0>(tv).resize(*size);
+		}
+	};
+};
+
+template<typename... T>
+std::ostream& operator <<(std::ostream &os, const token_tuple<T...> &obj) {
+	return os;
+}
+
+
+// TODO: make an initializer traversal
+template<typename T>
+tokens<T> init(size_t n){
+	return tokens<T>(n);
+}
+template<typename... T>
+tokens<token_tuple<T...>> init(size_t n, std::initializer_list<size_t> list){
+	return tokens<token_tuple<T...>>(n, token_tuple<T...>(list));
+}
+
+
+} // end SDF
+
+
+class TypeGetter {
+	template<size_t N, typename T, size_t... Ixs>
+	struct traverse {
+		static inline const void get (T&) {
+			throw std::out_of_range( "Too many indexes for the input type!" );
+		}
+	};
+
+	// the traversal should stop when it found a primitive or a custom type
+	template<typename T, size_t... Ixs>
+	struct traverse<0, T, Ixs...> {
+		static inline const void* get (const T& t) { return (void*)&t; }
+		static inline void*       get (T& t)       { return (void*)&t; }
+	};
+
+	// traversal through a vector
+	template<size_t N, typename T, size_t Ix, size_t... Ixs>
+	struct traverse<N, std::vector<T>, Ix, Ixs...> {
+		static inline const void* get (const std::vector<T>& t) { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
+		static inline void*       get (std::vector<T>& t)       { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
+	};
+
+	// stop traversal through vector. Output a C array.
+	template<typename T, size_t Ix, size_t... Ixs>
+	struct traverse<0, std::vector<T>, Ix, Ixs...> {
+		static inline const void* get (const std::vector<T>& t) { return (void*)&t[0]; }
+		static inline void*       get (std::vector<T>& t)       { return (void*)&t[0]; }
+	};
+
+	// traversal through an array
+	template<size_t N, typename T, size_t S, size_t Ix, size_t... Ixs>
+	struct traverse<N, std::array<T,S>, Ix, Ixs...> {
+		static inline const void* get (const std::array<T,S>& t) { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
+		static inline void*       get (std::array<T,S>& t)       { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
+	};
+
+	// stop traversal through an array. Output a C array.
+	template<typename T, size_t S, size_t Ix, size_t... Ixs>
+	struct traverse<0, std::array<T,S>, Ix, Ixs...> {
+		static inline const void* get (const std::array<T,S>& t) { return (void*)t.data(); }
+		static inline void*       get (std::array<T,S>& t)       { return (void*)t.data(); }
+	};
+
+	// traversal through a tuple
+	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
+	struct traverse<N, std::tuple<T...>, Ix, Ixs...> {
+		static inline const void* get (const std::tuple<T...>& t) {
+			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...> ::get(std::get<Ix>(t));
+		}
+		static inline void*       get (SDF::token_tuple<T...>& t) {
+			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...> ::get(std::get<Ix>(t));
+		}
+	};
+
+	// traversal through a SDF::token_tuple
+	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
+	struct traverse<N, SDF::token_tuple<T...>, Ix, Ixs...> {
+		static inline const void* get (const SDF::token_tuple<T...>& t) {
+			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...> ::get(std::get<Ix>(t.t));
+		}
+		static inline void*       get (SDF::token_tuple<T...>& t) {
+			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...> ::get(std::get<Ix>(t.t));
+		}
+	};
+};
+
+template<typename To, size_t I1, typename Ti>
+const To* get(const Ti& v){ return (To*) TypeGetter::traverse<1, Ti, I1>::get(v); }
+
+template<typename To, size_t I1, size_t I2, typename Ti>
+const To* get(const Ti& v){ return (To*) TypeGetter::traverse<2, Ti, I1, I2>::get(v); }
+
+template<typename To, size_t I1, size_t I2, size_t I3, typename Ti>
+const To* get(const Ti& v){ return (To*) TypeGetter::traverse<3, Ti, I1, I2, I3>::get(v); }
+
+template<typename To, size_t I1, size_t I2, size_t I3, size_t I4, typename Ti>
+const To* get(const Ti& v){ return (To*) TypeGetter::traverse<4, Ti, I1, I2, I3, I4>::get(v); }
+
+template<typename To, size_t I1, size_t I2, size_t I3, size_t I4, size_t I5, typename Ti>
+const To* get(const Ti& v){ return (To*) TypeGetter::traverse<3, Ti, I1, I2, I3, I4, I5>::get(v); }
+
+
+template<typename To, size_t I1, typename Ti>
+To* get(Ti& v){ return (To*) TypeGetter::traverse<1, Ti, I1>::get(v); }
+
+template<typename To, size_t I1, size_t I2, typename Ti>
+To* get(Ti& v){ return (To*) TypeGetter::traverse<2, Ti, I1, I2>::get(v); }
+
+template<typename To, size_t I1, size_t I2, size_t I3, typename Ti>
+To* get(Ti& v){ return (To*) TypeGetter::traverse<3, Ti, I1, I2, I3>::get(v); }
+
+template<typename To, size_t I1, size_t I2, size_t I3, size_t I4, typename Ti>
+To* get(Ti& v){ return (To*) TypeGetter::traverse<4, Ti, I1, I2, I3, I4>::get(v); }
+
+template<typename To, size_t I1, size_t I2, size_t I3, size_t I4, size_t I5, typename Ti>
+To* get(Ti& v){ return (To*) TypeGetter::traverse<3, Ti, I1, I2, I3, I4, I5>::get(v); }
+
+
+
 #ifdef FORSYDE_TYPE_INTROSPECTION
 
 // Identifiers for primitive types
@@ -233,7 +396,7 @@ private:
 
 };
 
-#endif
+#endif // FORSYDE_TYPE_INTROSPECTION
 
 //! Class containing methods for recursive type introspection
 /*! This class is used as a namespace for all template functions used for
