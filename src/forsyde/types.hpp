@@ -82,14 +82,6 @@ template<typename T> const char* get_type_name() {
     typedef REST_ARGS__((__VA_ARGS__)) FIRST_ARG__((__VA_ARGS__));\
     DEFINE_TYPE(FIRST_ARG__((__VA_ARGS__)))
 
-// Helper macro for creating C structures. Must be followed by a definition between {}
-#define C_STRUCT(...)\
-	extern "C" typedef struct FIRST_ARG__((__VA_ARGS__)) { \
-			REST_ARGS__((__VA_ARGS__)) \
-	} FIRST_ARG__((__VA_ARGS__)); \
-	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
-
-
 // Helper macro for creating structures. Must be followed by a definition between {}
 #define STRUCT(...)\
 	typedef struct FIRST_ARG__((__VA_ARGS__)) { \
@@ -105,12 +97,6 @@ template<typename T> const char* get_type_name() {
 	} FIRST_ARG__((__VA_ARGS__)); \
 	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
 
-// Helper macro for creating C unions. Must be followed by a definition between {}
-#define C_UNION(...)\
-	extern "C" typedef union FIRST_ARG__((__VA_ARGS__)) { \
-			REST_ARGS__((__VA_ARGS__)) \
-	} FIRST_ARG__((__VA_ARGS__)); \
-	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
 
 // Primitive type name definition
 DEFINE_TYPE(char);
@@ -208,64 +194,70 @@ class TypeGetter {
 		}
 	};
 
+	template <typename T> struct base_t { typedef T type; };
+	template <typename T> struct base_val {
+		static inline const T& get (const T& t) { return t; }
+		static inline       T& get (T& t)       { return t; }
+	};
+
+	template <typename T> struct base_t<std::vector<T>> { typedef T type; };
+	template <typename T> struct base_val<std::vector<T>> {
+		static inline const T& get (const std::vector<T>& t) { return t[0]; }
+		static inline       T& get (std::vector<T>& t)       { return t[0]; }
+	};
+
+	template <typename T, size_t S> struct base_t<std::array<T,S>> { typedef T type; };
+	template <typename T, size_t S> struct base_val<std::array<T,S>> {
+		static inline const T& get (const std::array<T,S>& t) { return t.data()[0]; }
+		static inline       T& get (std::array<T,S>& t)       { return t.data()[0]; }
+	};
 
 	// the traversal should stop when it found a primitive or a custom type
 	template<typename T, size_t... Ixs>
-	struct base<0, T, Ixs...> { typedef T& type; };
+	struct base<0, T, Ixs...> { typedef typename base_t<T>::type type; };
 	template<typename T, size_t... Ixs>
 	struct traverse<0, T, Ixs...> {
-		static inline const void* get (const T& t) { return (void*)&t; }
-		static inline void*       get (T& t)       { return (void*)&t; }
+		static inline const typename base_t<T>::type& get (const T& t) { return base_val<T>::get(t); }
+		static inline typename base_t<T>::type&       get (T& t)       { return base_val<T>::get(t); }
 	};
 
 	// traversal through a vector
 	template<size_t N, typename T, size_t Ix, size_t... Ixs>
-	struct base<N, std::vector<T>, Ix, Ixs...> { typedef decltype(*(typename base<N-1, T, Ixs...>::type*)0) type; };
+	struct base<N, std::vector<T>, Ix, Ixs...> { typedef typename base<N-1, T, Ixs...>::type type; };
 	template<size_t N, typename T, size_t Ix, size_t... Ixs>
 	struct traverse<N, std::vector<T>, Ix, Ixs...> {
-		static inline const void* get (const std::vector<T>& t) { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
-		static inline void*       get (std::vector<T>& t)       { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
-	};
-
-	// stop traversal through vector. Output a C array.
-	// traversal through a vector
-	template<typename T, size_t Ix, size_t... Ixs>
-	struct base<0, std::vector<T>, Ix, Ixs...> { typedef T* type; };
-	template<typename T, size_t Ix, size_t... Ixs>
-	struct traverse<0, std::vector<T>, Ix, Ixs...> {
-		static inline const void* get (const std::vector<T>& t) { return (void*)&t[0]; }
-		static inline void*       get (std::vector<T>& t)       { return (void*)&t[0]; }
+		static inline const typename base<N, std::vector<T>, Ix, Ixs...>::type& get (const std::vector<T>& t) {
+			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
+		}
+		static inline typename base<N, std::vector<T>, Ix, Ixs...>::type& get (std::vector<T>& t) {
+			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
+		}
 	};
 
 	// traversal through an array
 	template<size_t N, typename T, size_t S, size_t Ix, size_t... Ixs>
-	struct base<N, std::array<T,S>, Ix, Ixs...> { typedef decltype(*(typename base<N-1, T, Ixs...>::type*)0) type; };
+	struct base<N, std::array<T,S>, Ix, Ixs...> { typedef typename base<N-1, T, Ixs...>::type type; };
 	template<size_t N, typename T, size_t S, size_t Ix, size_t... Ixs>
 	struct traverse<N, std::array<T,S>, Ix, Ixs...> {
-		static inline const void* get (const std::array<T,S>& t) { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
-		static inline void*       get (std::array<T,S>& t)       { return traverse<N-1, T, Ixs...>::get(t.at(Ix)); }
-	};
-
-	// stop traversal through an array. Output a C array.
-	template<typename T, size_t S, size_t Ix, size_t... Ixs>
-	struct base<0, std::array<T,S>, Ix, Ixs...> { typedef T* type; };
-	template<typename T, size_t S, size_t Ix, size_t... Ixs>
-	struct traverse<0, std::array<T,S>, Ix, Ixs...> {
-		static inline const void* get (const std::array<T,S>& t) { return (void*)t.data(); }
-		static inline void*       get (std::array<T,S>& t)       { return (void*)t.data(); }
+		static inline const typename base<N, std::array<T,S>, Ix, Ixs...>::type& get (const std::array<T,S>& t) {
+			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
+		}
+		static inline typename base<N, std::array<T,S>, Ix, Ixs...>::type& get (std::array<T,S>& t) {
+			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
+		}
 	};
 
 	// traversal through a tuple
 	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
 	struct base<N, std::tuple<T...>, Ix, Ixs...> {
-		typedef decltype(*(typename base<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...>::type*)0) type;
+		typedef typename base<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...>::type type;
 	};
 	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
 	struct traverse<N, std::tuple<T...>, Ix, Ixs...> {
-		static inline const void* get (const std::tuple<T...>& t) {
+		static inline const typename base<N, std::tuple<T...>, Ix, Ixs...>::type& get (const std::tuple<T...>& t) {
 			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...> ::get(std::get<Ix>(t));
 		}
-		static inline void*       get (SDF::token_tuple<T...>& t) {
+		static inline typename base<N, std::tuple<T...>, Ix, Ixs...>::type& get (SDF::token_tuple<T...>& t) {
 			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...> ::get(std::get<Ix>(t));
 		}
 	};
@@ -273,49 +265,60 @@ class TypeGetter {
 	// traversal through a SDF::token_tuple
 	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
 	struct base<N, SDF::token_tuple<T...>, Ix, Ixs...> {
-		typedef decltype(*(typename base<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...>::type*)0) type;
+		typedef typename base<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...>::type type;
 	};
 	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
 	struct traverse<N, SDF::token_tuple<T...>, Ix, Ixs...> {
-		static inline const void* get (const SDF::token_tuple<T...>& t) {
+		static inline const typename base<N, SDF::token_tuple<T...>, Ix, Ixs...>::type& get (const SDF::token_tuple<T...>& t) {
 			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...> ::get(std::get<Ix>(t.t));
 		}
-		static inline void*       get (SDF::token_tuple<T...>& t) {
+		static inline typename base<N, SDF::token_tuple<T...>, Ix, Ixs...>::type& get (SDF::token_tuple<T...>& t) {
 			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...> ::get(std::get<Ix>(t.t));
 		}
 	};
 };
 
-template<typename To, size_t I1, typename Ti>
-const To* get(const Ti& v){ return (To*) TypeGetter::traverse<1, Ti, I1>::get(v); }
 
-template<typename To, size_t I1, size_t I2, typename Ti>
-const To* get(const Ti& v){ return (To*) TypeGetter::traverse<2, Ti, I1, I2>::get(v); }
+template<size_t I1, typename Ti>
+inline const typename TypeGetter::base<1, Ti, I1>::type&
+get(const Ti& v){ return TypeGetter::traverse<1, Ti, I1>::get(v); }
 
-template<typename To, size_t I1, size_t I2, size_t I3, typename Ti>
-const To* get(const Ti& v){ return (To*) TypeGetter::traverse<3, Ti, I1, I2, I3>::get(v); }
+template<size_t I1, size_t I2, typename Ti>
+inline const typename TypeGetter::base<2, Ti, I1, I2>::type&
+get(const Ti& v){ return TypeGetter::traverse<2, Ti, I1, I2>::get(v); }
 
-template<typename To, size_t I1, size_t I2, size_t I3, size_t I4, typename Ti>
-const To* get(const Ti& v){ return (To*) TypeGetter::traverse<4, Ti, I1, I2, I3, I4>::get(v); }
+template<size_t I1, size_t I2, size_t I3, typename Ti>
+inline const typename TypeGetter::base<3, Ti, I1, I2, I3>::type&
+get(const Ti& v){ return TypeGetter::traverse<3, Ti, I1, I2, I3>::get(v); }
 
-template<typename To, size_t I1, size_t I2, size_t I3, size_t I4, size_t I5, typename Ti>
-const To* get(const Ti& v){ return (To*) TypeGetter::traverse<3, Ti, I1, I2, I3, I4, I5>::get(v); }
+template<size_t I1, size_t I2, size_t I3, size_t I4, typename Ti>
+inline const typename TypeGetter::base<4, Ti, I1, I2, I3, I4>::type&
+get(const Ti& v){ return TypeGetter::traverse<4, Ti, I1, I2, I3, I4>::get(v); }
+
+template<size_t I1, size_t I2, size_t I3, size_t I4, size_t I5, typename Ti>
+inline const typename TypeGetter::base<5, Ti, I1, I2, I3, I4, I5>::type&
+get(const Ti& v){ return TypeGetter::traverse<5, Ti, I1, I2, I3, I4, I5>::get(v); }
 
 
-template<typename To, size_t I1, typename Ti>
-To* get(Ti& v){ return (To*) TypeGetter::traverse<1, Ti, I1>::get(v); }
+template<size_t I1, typename Ti>
+inline typename TypeGetter::base<1, Ti, I1>::type&
+ get(Ti& v){ return TypeGetter::traverse<1, Ti, I1>::get(v); }
 
-template<typename To, size_t I1, size_t I2, typename Ti>
-To* get(Ti& v){ return (To*) TypeGetter::traverse<2, Ti, I1, I2>::get(v); }
+template<size_t I1, size_t I2, typename Ti>
+inline typename TypeGetter::base<2, Ti, I1, I2>::type&
+get(Ti& v){ return TypeGetter::traverse<2, Ti, I1, I2>::get(v); }
 
-template<typename To, size_t I1, size_t I2, size_t I3, typename Ti>
-To* get(Ti& v){ return (To*) TypeGetter::traverse<3, Ti, I1, I2, I3>::get(v); }
+template<size_t I1, size_t I2, size_t I3, typename Ti>
+inline typename TypeGetter::base<3, Ti, I1, I2, I3>::type&
+get(Ti& v){ return TypeGetter::traverse<3, Ti, I1, I2, I3>::get(v); }
 
-template<typename To, size_t I1, size_t I2, size_t I3, size_t I4, typename Ti>
-To* get(Ti& v){ return (To*) TypeGetter::traverse<4, Ti, I1, I2, I3, I4>::get(v); }
+template<size_t I1, size_t I2, size_t I3, size_t I4, typename Ti>
+inline typename TypeGetter::base<4, Ti, I1, I2, I3, I4>::type&
+get(Ti& v){ return TypeGetter::traverse<4, Ti, I1, I2, I3, I4>::get(v); }
 
-template<typename To, size_t I1, size_t I2, size_t I3, size_t I4, size_t I5, typename Ti>
-To* get(Ti& v){ return (To*) TypeGetter::traverse<3, Ti, I1, I2, I3, I4, I5>::get(v); }
+template<size_t I1, size_t I2, size_t I3, size_t I4, size_t I5, typename Ti>
+inline typename TypeGetter::base<5, Ti, I1, I2, I3, I4, I5>::type&
+get(Ti& v){ return TypeGetter::traverse<5, Ti, I1, I2, I3, I4, I5>::get(v); }
 
 
 
