@@ -218,7 +218,7 @@ class TypeGetter {
 	template<typename T, size_t... Ixs>
 	struct traverse<0, T, Ixs...> {
 		static inline const typename base_t<T>::type& get (const T& t) { return base_val<T>::get(t); }
-		static inline typename base_t<T>::type&       get (T& t)       { return base_val<T>::get(t); }
+		static inline typename       base_t<T>::type& get (T& t)       { return base_val<T>::get(t); }
 	};
 
 	// traversal through a vector
@@ -229,7 +229,7 @@ class TypeGetter {
 		static inline const typename base<N, std::vector<T>, Ix, Ixs...>::type& get (const std::vector<T>& t) {
 			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
 		}
-		static inline typename base<N, std::vector<T>, Ix, Ixs...>::type& get (std::vector<T>& t) {
+		static inline typename       base<N, std::vector<T>, Ix, Ixs...>::type& get (std::vector<T>& t) {
 			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
 		}
 	};
@@ -242,7 +242,7 @@ class TypeGetter {
 		static inline const typename base<N, std::array<T,S>, Ix, Ixs...>::type& get (const std::array<T,S>& t) {
 			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
 		}
-		static inline typename base<N, std::array<T,S>, Ix, Ixs...>::type& get (std::array<T,S>& t) {
+		static inline typename      base<N, std::array<T,S>, Ix, Ixs...>::type& get (std::array<T,S>& t) {
 			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
 		}
 	};
@@ -257,7 +257,7 @@ class TypeGetter {
 		static inline const typename base<N, std::tuple<T...>, Ix, Ixs...>::type& get (const std::tuple<T...>& t) {
 			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...> ::get(std::get<Ix>(t));
 		}
-		static inline typename base<N, std::tuple<T...>, Ix, Ixs...>::type& get (SDF::token_tuple<T...>& t) {
+		static inline typename       base<N, std::tuple<T...>, Ix, Ixs...>::type& get (std::tuple<T...>& t) {
 			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...> ::get(std::get<Ix>(t));
 		}
 	};
@@ -272,7 +272,7 @@ class TypeGetter {
 		static inline const typename base<N, SDF::token_tuple<T...>, Ix, Ixs...>::type& get (const SDF::token_tuple<T...>& t) {
 			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...> ::get(std::get<Ix>(t.t));
 		}
-		static inline typename base<N, SDF::token_tuple<T...>, Ix, Ixs...>::type& get (SDF::token_tuple<T...>& t) {
+		static inline typename       base<N, SDF::token_tuple<T...>, Ix, Ixs...>::type& get (SDF::token_tuple<T...>& t) {
 			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...> ::get(std::get<Ix>(t.t));
 		}
 	};
