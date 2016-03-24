@@ -344,7 +344,7 @@ template<> struct isPrimitive<wchar_t>                { enum { val = 1 }; };
 
 // xml label names
 static char* const_name = (char*)"name";
-static char* const_data_type = (char*)"data_type";
+static char* const_data_type = (char*)"type";
 static char* const_primitive = (char*)"primitive";
 static char* const_custom = (char*)"custom";
 static char* const_vector = (char*)"vector";
