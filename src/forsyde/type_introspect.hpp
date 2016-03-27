@@ -80,26 +80,8 @@ template<typename T> const char* get_type_name() {
 
 #define TYPEDEF(...)\
     typedef REST_ARGS__((__VA_ARGS__)) FIRST_ARG__((__VA_ARGS__));\
-    DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__))) \
+    DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
 
-#ifdef __cplusplus
-
-// Helper macro for creating structures. Must be followed by a definition between {}
-#define STRUCT(...)\
-	extern "C" typedef struct FIRST_ARG__((__VA_ARGS__)) { \
-			REST_ARGS__((__VA_ARGS__)) \
-	} FIRST_ARG__((__VA_ARGS__)); \
-	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
-
-
-// Helper macro for creating unions. Must be followed by a definition between {}
-#define UNION(...)\
-	extern "C" typedef union FIRST_ARG__((__VA_ARGS__)) { \
-			REST_ARGS__((__VA_ARGS__)) \
-	} FIRST_ARG__((__VA_ARGS__)); \
-	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
-
-#else
 
 // Helper macro for creating structures. Must be followed by a definition between {}
 #define STRUCT(...)\
@@ -116,7 +98,6 @@ template<typename T> const char* get_type_name() {
 	} FIRST_ARG__((__VA_ARGS__)); \
 	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
 
-#endif //__cplusplus
 
 
 // Primitive type name definition
