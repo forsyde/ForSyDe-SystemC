@@ -14,7 +14,7 @@
 #ifndef ABSSEMANTICS_HPP
 #define ABSSEMANTICS_HPP
 
-#include "types.hpp"
+#include "type_introspect.hpp"
 
 /*! \file abssemantics.hpp
  * \brief The common abstract semantics for all MoCs.

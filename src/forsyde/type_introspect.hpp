@@ -5,7 +5,6 @@
     *          George Ungureanu (ugeorge@kth.se)                      *
     *                                                                 *
     * based on: http://stackoverflow.com/questions/1055452/c-get-name-of-type-in-template *
-    *           http://www.diva-portal.org/smash/get/diva2:647797/FULLTEXT01.pdf *
     *                                                                 *
     * Purpose: Provide facilities to store the type information, used *
     *          in introspection.                                      *
@@ -15,8 +14,8 @@
     * License:                                                        *
     *******************************************************************/
 
-#ifndef FORSYDE_TYPES_HPP
-#define FORSYDE_TYPES_HPP
+#ifndef FORSYDE_TYPE_INTROSPECT_HPP
+#define FORSYDE_TYPE_INTROSPECT_HPP
 
 /*! \file types.hpp
  * \brief Provides facilities for type introspection
@@ -37,8 +36,9 @@
 #include <iostream>
 #include <sstream>
 #include <tuple>
-#include <type_traits>
 
+#include "abst_ext.hpp"
+#include "token.hpp"
 #include "rapidxml_print.hpp"
 
 using namespace rapidxml;
@@ -80,7 +80,26 @@ template<typename T> const char* get_type_name() {
 
 #define TYPEDEF(...)\
     typedef REST_ARGS__((__VA_ARGS__)) FIRST_ARG__((__VA_ARGS__));\
-    DEFINE_TYPE(FIRST_ARG__((__VA_ARGS__)))
+    DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__))) \
+
+#ifdef __cplusplus
+
+// Helper macro for creating structures. Must be followed by a definition between {}
+#define STRUCT(...)\
+	extern "C" typedef struct FIRST_ARG__((__VA_ARGS__)) { \
+			REST_ARGS__((__VA_ARGS__)) \
+	} FIRST_ARG__((__VA_ARGS__)); \
+	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
+
+
+// Helper macro for creating unions. Must be followed by a definition between {}
+#define UNION(...)\
+	extern "C" typedef union FIRST_ARG__((__VA_ARGS__)) { \
+			REST_ARGS__((__VA_ARGS__)) \
+	} FIRST_ARG__((__VA_ARGS__)); \
+	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
+
+#else
 
 // Helper macro for creating structures. Must be followed by a definition between {}
 #define STRUCT(...)\
@@ -96,6 +115,8 @@ template<typename T> const char* get_type_name() {
 			REST_ARGS__((__VA_ARGS__)) \
 	} FIRST_ARG__((__VA_ARGS__)); \
 	DEFINE_TYPE_STREAM(FIRST_ARG__((__VA_ARGS__)))
+
+#endif //__cplusplus
 
 
 // Primitive type name definition
@@ -116,212 +137,6 @@ DEFINE_TYPE(wchar_t);
 
 namespace ForSyDe
 {
-
-namespace SDF {
-
-template<typename T>
-using tokens = std::vector<T>;
-
-template<typename... T>
-struct token_tuple {
-	typedef std::tuple<tokens<T>...> type;
-	type t;
-
-    token_tuple() {}
-    token_tuple(std::initializer_list<size_t> list) { traverse_tuple<sizeof...(T), type>::resize(list.end(), t); }
-	explicit token_tuple(const std::tuple<tokens<T>...> t_) : t(t_) {};
-	token_tuple(const token_tuple<T...> & t_) : t(t_.t){}
-
-    void resize(std::initializer_list<size_t> list) { traverse_tuple<sizeof...(T), type>::resize(list.end(), t); }
-	token_tuple<T...>& operator=(const token_tuple<T...>& rhs) { t = rhs.t; return *this;}
-	token_tuple<T...>& operator=(const std::tuple<tokens<T>...>& rhs) { t = rhs; return *this;}
-
-private:
-
-	// Default template for traversing a tuple
-	template <size_t N, typename Tup>
-	struct traverse_tuple {};
-
-	// Template specialization for traversing a tuple with multiple elements
-	template <size_t N, typename TT, typename... Tail>
-	struct traverse_tuple<N, std::tuple<tokens<TT>, Tail...>>{
-		static inline void resize(std::initializer_list<size_t>::iterator size, std::tuple<tokens<TT>, Tail...>& tv) {
-			--size;
-			std::get<N-1>(tv).resize(*size);
-			traverse_tuple<N-1, std::tuple<tokens<TT>, Tail...>>::resize(size, tv);
-		}
-	};
-
-	// Template specialization for traversing a tuple with one element
-	template <typename TT, typename... Tail>
-	struct traverse_tuple<1, std::tuple<tokens<TT>, Tail...>>{
-		static inline void resize(std::initializer_list<size_t>::iterator size, std::tuple<tokens<TT>, Tail...>& tv) {
-			std::get<0>(tv).resize(*size);
-		}
-	};
-};
-
-template<typename... T>
-std::ostream& operator <<(std::ostream &os, const token_tuple<T...> &obj) {
-	return os;
-}
-
-
-
-// TODO: make an initializer traversal
-template<typename T>
-tokens<T> init(size_t n){
-	return tokens<T>(n);
-}
-template<typename... T>
-tokens<token_tuple<T...>> init(size_t n, std::initializer_list<size_t> list){
-	return tokens<token_tuple<T...>>(n, token_tuple<T...>(list));
-}
-
-} // end SDF
-
-
-
-
-
-
-class TypeGetter {
-	template<size_t N, typename T, size_t... Ixs> struct base;
-	template<size_t N, typename T, size_t... Ixs>
-	struct traverse {
-		static inline const void get (T&) {
-			throw std::out_of_range( "Too many indexes for the input type!" );
-		}
-	};
-
-	template <typename T> struct base_t { typedef T type; };
-	template <typename T> struct base_val {
-		static inline const T& get (const T& t) { return t; }
-		static inline       T& get (T& t)       { return t; }
-	};
-
-	template <typename T> struct base_t<std::vector<T>> { typedef T type; };
-	template <typename T> struct base_val<std::vector<T>> {
-		static inline const T& get (const std::vector<T>& t) { return t[0]; }
-		static inline       T& get (std::vector<T>& t)       { return t[0]; }
-	};
-
-	template <typename T, size_t S> struct base_t<std::array<T,S>> { typedef T type; };
-	template <typename T, size_t S> struct base_val<std::array<T,S>> {
-		static inline const T& get (const std::array<T,S>& t) { return t.data()[0]; }
-		static inline       T& get (std::array<T,S>& t)       { return t.data()[0]; }
-	};
-
-	// the traversal should stop when it found a primitive or a custom type
-	template<typename T, size_t... Ixs>
-	struct base<0, T, Ixs...> { typedef typename base_t<T>::type type; };
-	template<typename T, size_t... Ixs>
-	struct traverse<0, T, Ixs...> {
-		static inline const typename base_t<T>::type& get (const T& t) { return base_val<T>::get(t); }
-		static inline typename       base_t<T>::type& get (T& t)       { return base_val<T>::get(t); }
-	};
-
-	// traversal through a vector
-	template<size_t N, typename T, size_t Ix, size_t... Ixs>
-	struct base<N, std::vector<T>, Ix, Ixs...> { typedef typename base<N-1, T, Ixs...>::type type; };
-	template<size_t N, typename T, size_t Ix, size_t... Ixs>
-	struct traverse<N, std::vector<T>, Ix, Ixs...> {
-		static inline const typename base<N, std::vector<T>, Ix, Ixs...>::type& get (const std::vector<T>& t) {
-			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
-		}
-		static inline typename       base<N, std::vector<T>, Ix, Ixs...>::type& get (std::vector<T>& t) {
-			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
-		}
-	};
-
-	// traversal through an array
-	template<size_t N, typename T, size_t S, size_t Ix, size_t... Ixs>
-	struct base<N, std::array<T,S>, Ix, Ixs...> { typedef typename base<N-1, T, Ixs...>::type type; };
-	template<size_t N, typename T, size_t S, size_t Ix, size_t... Ixs>
-	struct traverse<N, std::array<T,S>, Ix, Ixs...> {
-		static inline const typename base<N, std::array<T,S>, Ix, Ixs...>::type& get (const std::array<T,S>& t) {
-			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
-		}
-		static inline typename      base<N, std::array<T,S>, Ix, Ixs...>::type& get (std::array<T,S>& t) {
-			return traverse<N-1, T, Ixs...>::get(t.at(Ix));
-		}
-	};
-
-	// traversal through a tuple
-	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
-	struct base<N, std::tuple<T...>, Ix, Ixs...> {
-		typedef typename base<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...>::type type;
-	};
-	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
-	struct traverse<N, std::tuple<T...>, Ix, Ixs...> {
-		static inline const typename base<N, std::tuple<T...>, Ix, Ixs...>::type& get (const std::tuple<T...>& t) {
-			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...> ::get(std::get<Ix>(t));
-		}
-		static inline typename       base<N, std::tuple<T...>, Ix, Ixs...>::type& get (std::tuple<T...>& t) {
-			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<T...> >::type, Ixs...> ::get(std::get<Ix>(t));
-		}
-	};
-
-	// traversal through a SDF::token_tuple
-	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
-	struct base<N, SDF::token_tuple<T...>, Ix, Ixs...> {
-		typedef typename base<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...>::type type;
-	};
-	template<size_t N, typename... T, size_t Ix, size_t... Ixs>
-	struct traverse<N, SDF::token_tuple<T...>, Ix, Ixs...> {
-		static inline const typename base<N, SDF::token_tuple<T...>, Ix, Ixs...>::type& get (const SDF::token_tuple<T...>& t) {
-			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...> ::get(std::get<Ix>(t.t));
-		}
-		static inline typename       base<N, SDF::token_tuple<T...>, Ix, Ixs...>::type& get (SDF::token_tuple<T...>& t) {
-			return traverse<N-1, typename std::tuple_element<Ix, std::tuple<std::vector<T>...> >::type, Ixs...> ::get(std::get<Ix>(t.t));
-		}
-	};
-};
-
-
-template<size_t I1, typename Ti>
-inline const typename TypeGetter::base<1, Ti, I1>::type&
-get(const Ti& v){ return TypeGetter::traverse<1, Ti, I1>::get(v); }
-
-template<size_t I1, size_t I2, typename Ti>
-inline const typename TypeGetter::base<2, Ti, I1, I2>::type&
-get(const Ti& v){ return TypeGetter::traverse<2, Ti, I1, I2>::get(v); }
-
-template<size_t I1, size_t I2, size_t I3, typename Ti>
-inline const typename TypeGetter::base<3, Ti, I1, I2, I3>::type&
-get(const Ti& v){ return TypeGetter::traverse<3, Ti, I1, I2, I3>::get(v); }
-
-template<size_t I1, size_t I2, size_t I3, size_t I4, typename Ti>
-inline const typename TypeGetter::base<4, Ti, I1, I2, I3, I4>::type&
-get(const Ti& v){ return TypeGetter::traverse<4, Ti, I1, I2, I3, I4>::get(v); }
-
-template<size_t I1, size_t I2, size_t I3, size_t I4, size_t I5, typename Ti>
-inline const typename TypeGetter::base<5, Ti, I1, I2, I3, I4, I5>::type&
-get(const Ti& v){ return TypeGetter::traverse<5, Ti, I1, I2, I3, I4, I5>::get(v); }
-
-
-template<size_t I1, typename Ti>
-inline typename TypeGetter::base<1, Ti, I1>::type&
- get(Ti& v){ return TypeGetter::traverse<1, Ti, I1>::get(v); }
-
-template<size_t I1, size_t I2, typename Ti>
-inline typename TypeGetter::base<2, Ti, I1, I2>::type&
-get(Ti& v){ return TypeGetter::traverse<2, Ti, I1, I2>::get(v); }
-
-template<size_t I1, size_t I2, size_t I3, typename Ti>
-inline typename TypeGetter::base<3, Ti, I1, I2, I3>::type&
-get(Ti& v){ return TypeGetter::traverse<3, Ti, I1, I2, I3>::get(v); }
-
-template<size_t I1, size_t I2, size_t I3, size_t I4, typename Ti>
-inline typename TypeGetter::base<4, Ti, I1, I2, I3, I4>::type&
-get(Ti& v){ return TypeGetter::traverse<4, Ti, I1, I2, I3, I4>::get(v); }
-
-template<size_t I1, size_t I2, size_t I3, size_t I4, size_t I5, typename Ti>
-inline typename TypeGetter::base<5, Ti, I1, I2, I3, I4, I5>::type&
-get(Ti& v){ return TypeGetter::traverse<5, Ti, I1, I2, I3, I4, I5>::get(v); }
-
-
-
 
 #ifdef FORSYDE_TYPE_INTROSPECTION
 
@@ -396,7 +211,7 @@ public:
             SC_REPORT_ERROR(fileName.c_str(), "file could not be opened to write the introspection output. Does the path exists?");
         outFile << "<?xml version=\"1.0\" ?>" << std::endl;
         outFile << "<!-- Automatically generated by ForSyDe -->" << std::endl;
-        //outFile << "<!DOCTYPE process_network SYSTEM \"forsyde.dtd\" >"  << std::endl;
+        outFile << "<!DOCTYPE forsyde_types SYSTEM \"forsyde_types.dtd\" >"  << std::endl;
         outFile << xml_doc;
 
     }
@@ -504,11 +319,11 @@ public:
 
 	// Template specialization for parsing tuples
 	template <typename... T>
-	struct add_type_node<SDF::token_tuple<T...>> {
+	struct add_type_node<token_tuple<T...>> {
 		static inline void get (xml_node<>* parent) {
 			xml_node<> *tuple_node = TypeContainer::get().add_node(parent, const_tuple);
 			TypeContainer::get().add_attribute(tuple_node, const_length, size_to_char(sizeof...(T)));
-			traverse_tuple<sizeof...(T), SDF::token_tuple<T...>>::get(tuple_node);
+			traverse_tuple<sizeof...(T), token_tuple<T...>>::get(tuple_node);
 		}
 	};
 
@@ -535,16 +350,16 @@ public:
 
 	// Template specialization for traversing a tuple with multiple elements
 	template <size_t N, typename Head, typename... Tail>
-	struct traverse_tuple<N, SDF::token_tuple<Head, Tail...>>{
+	struct traverse_tuple<N, token_tuple<Head, Tail...>>{
 		static inline void get (xml_node<>* parent) {
 			add_type_node<Head>::get(parent);
-			traverse_tuple<N-1, SDF::token_tuple<Tail...>>::get(parent);
+			traverse_tuple<N-1, token_tuple<Tail...>>::get(parent);
 		}
 	};
 
 	// Template specialization for traversing a tuple with one element
 	template <typename Head, typename... Tail>
-	struct traverse_tuple<1, SDF::token_tuple<Head, Tail...>> {
+	struct traverse_tuple<1, token_tuple<Head, Tail...>> {
 		static inline void get (xml_node<>* parent) {
 			add_type_node<Head>::get(parent);
 		}
@@ -569,7 +384,7 @@ public:
     	return size;
     }
 
-#endif
+#endif  // FORSYDE_TYPE_INTROSPECTION
 };
 
 }

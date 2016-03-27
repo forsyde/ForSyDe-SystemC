@@ -69,7 +69,11 @@
 // include the main SystemC library
 #include <systemc>
 
-#include "forsyde/types.hpp"
+// include type libraries
+#include "forsyde/type_helpers.hpp"
+#ifdef FORSYDE_INTROSPECTION
+#include "forsyde/type_introspect.hpp"
+#endif
 
 // include the abstract semantics
 #include "forsyde/abssemantics.hpp"
