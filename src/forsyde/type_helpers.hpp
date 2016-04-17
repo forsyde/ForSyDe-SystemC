@@ -32,7 +32,8 @@ namespace ForSyDe
  *  classes such as STL types, by addressing them using an index pack.
  */
 class TypeGetter {
-	template<size_t N, typename T, size_t... Ixs> struct base;
+public:
+        template<size_t N, typename T, size_t... Ixs> struct base;
 	template<size_t N, typename T, size_t... Ixs>
 	struct traverse {
 		static inline const void get (T&) {
@@ -65,7 +66,7 @@ class TypeGetter {
 	};
 
 	// This is where the index pack is consumed. Once this point has been reached
-    // get the base C type addressed by the index pack
+        // get the base C type addressed by the index pack
 	template<typename T, size_t... Ixs>
 	struct base<0, T, Ixs...> { typedef typename base_t<T>::type type; };
 	template<typename T, size_t... Ixs>
