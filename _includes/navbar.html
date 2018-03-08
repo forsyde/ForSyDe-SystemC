@@ -1,0 +1,37 @@
+<div class="container">
+  <div class="navbar-header" role="banner">
+    <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".bs-navbar-collapse">
+      <span class="sr-only">Toggle navigation</span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+      <span class="icon-bar"></span>
+    </button>
+    <a class="navbar-brand" href="{{ include.url }}/index.html">ForSyDe</a>
+  </div>
+  <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="{{ include.url }}/news.html">News</a>
+      </li>
+      <li>
+        <a href="{{ include.url }}/tools.html">Tools</a>
+      </li>
+      <li>
+        <a href="{{ include.url }}/publications.html">Publications</a>
+      </li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right">
+      <li class="scrambled">
+	<a data-domain="kth" data-dept="dev" data-name="forsyde" data-tld="se" href="#" class="eggs" onclick="window.location.href = 'mailto:' +
+													      this.dataset.name + '-' + this.dataset.dept + '@' +
+													      this.dataset.domain + '.' + this.dataset.tld"></a>
+      </li>
+      <li>
+	<a href="https://github.com/forsyde">GitHub</a>
+      </li>
+      <li>
+	<a href="{{ include.url }}/feed.xml">RSS Feed</a>
+      </li>
+    </ul>
+  </nav>
+</div>

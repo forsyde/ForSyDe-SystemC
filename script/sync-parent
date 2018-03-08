@@ -1,0 +1,10 @@
+#!/bin/bash
+
+new=forsyde.github.io/_includes/navbar.html
+old=../_includes/navbar.html
+
+git clone https://github.com/forsyde/forsyde.github.io.git
+
+cmp --silent $new $old || mv $new $old
+
+rm -rf forsyde.github.io
