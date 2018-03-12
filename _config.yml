@@ -1,8 +1,6 @@
 name: ForSyDe-SystemC
 description: The SystemC implementation of ForSyDe 
-theme: jekyll-theme-slate
-
-show_downloads: true
+remote_theme: forsyde/forsyde-web-theme
 
 parent-url: https://forsyde.github.io
 
@@ -10,13 +8,14 @@ maintainer:
   name: shaniaki
   url: https://github.com/shaniaki
 
-
 github-releases:
   zip_url: https://api.github.com/repos/forsyde/ForSyDe-SystemC/zipball/master
   tar_url: https://api.github.com/repos/forsyde/ForSyDe-SystemC/tarball/master
 
-## google analytics
-google_analytics: UA-113668562-1
-
 ## paths to exclude from the site generation
-exclude: [script, Gemfile, Gemfile.lock, jekyll-theme-slate.gemspec]
+exclude: [script, Gemfile, Gemfile.lock, README.md]
+
+plugins:
+- jekyll-seo-tag
+- jekyll-remote-theme
+- jekyll-sitemap

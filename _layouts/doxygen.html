@@ -6,30 +6,31 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <meta name="viewport" content="width=device-width,maximum-scale=2">
     <meta name="description" content="{{ site.name | default: site.github.repository_name }} : {{ site.description | default: site.github.project_tagline }}">
-
-    <style>
-      #content {
-      background:{{site.header.color1}};
-      background:linear-gradient(135deg, {{site.header.color1}}, {{site.header.color2}});
-      }
-    </style>
-
     
     <link href="https://netdna.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{site.parent-url}}/assets/css/academicons.min.css" rel="stylesheet"/>
-    <link href="{{site.parent-url}}/assets/css/docs.min.css" rel="stylesheet">
-    <link href="{{site.parent-url}}/assets/css/fontawesome-all.css" rel="stylesheet">
-    <link href="{{site.parent-url}}/assets/css/style.css" rel="stylesheet">
-    <!-- <link rel="stylesheet" type="text/css" media="screen" href="{{ 'assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}"> -->
-    
+    <link href="https://use.fontawesome.com/releases/v5.0.8/css/all.css" rel="stylesheet">
+    <link href="/assets/css/academicons.min.css" rel="stylesheet"/>
+    <link href="/assets/css/docs.min.css" rel="stylesheet">
+
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/javascript">
+  $(document).ready(function() { init_search(); });
+</script>
+
+    <link rel="stylesheet" type="text/css" media="screen" href="{{ '/assets/css/doxygen.css?v=' | append: site.github.build_revision | relative_url }}">
+    <link rel="shortcut icon" type="image/x-icon" href="/assets/ico/favicon.ico?">
+
     <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>    
     <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
-    <script src="{{site.parent-url}}/assets/js/docs.min.js"></script>
-    <script src="{{site.parent-url}}/assets/js/script.js"></script>
-    <script src="{{site.parent-url}}/assets/js/scrolling.js"></script>
+    <script src="/assets/js/docs.min.js"></script>
+    <script src="/assets/js/navbar.js"></script>
+    <script src="/assets/js/scrolling.js"></script>
     {% seo %}
     
-    {% if site.google_analytics and jekyll.environment == 'production' %}
+    {% if jekyll.environment == 'production' %}
     {% include analytics.html %}
     {% endif %}
   </head>
@@ -49,15 +50,17 @@
       <div class="title-md-9">
       <header class="inner">
 
-	<h1 id="project_title">{{ site.name | default: site.github.repository_name }}</h1>
+	<h1 id="project_title"><a href="{{ site.url }}">{{ site.name | default: site.github.repository_name }}</a></h1>
 	<h2 id="project_tagline">{{ site.description | default: site.github.project_tagline }}</h2>
 
-	{% if site.show_downloads %}
+	{% if site.github-releases %}
 	<section id="downloads">
 
           <a class="zip_download_link" href="{{ site.github-releases.zip_url }}">Download this project as a .zip file</a>
           <a class="tar_download_link" href="{{ site.github-releases.tar_url }}">Download this project as a tar.gz file</a>
 	</section>
+	{% endif %}
+	{% if site.github.is_project_page %}
 	<a id="forkme_banner" href="{{ site.github.repository_url }}">GitHub Project</a>
 	{% endif %}
       </header>
@@ -106,7 +109,7 @@
         <p class="copyright">The project <a href="{{ site.github.repository_url }}">{{ site.github.repository_name }}</a> is maintained by <a href="{{ site.maintainer.url | default: site.github.owner_url }}">{{ site.maintainer.name | default: site.github.owner_name }}</a>.</p>
         {% endif %}
         <p class="copyright">&#169;2018 The ForSyDe Group @ KTH, under <a href="http://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>.</p>
-        <p>Site published with <a href="https://pages.github.com">GitHub Pages</a>. See the <a href="{{site.parent-url}}/acknowledgements.html">acknowledgements page</a> for more.</p>
+        <p>Site published with <a href="https://pages.github.com">GitHub Pages</a>. See the <a href="/acknowledgements.html">acknowledgements page</a> for more.</p>
       </footer>
       </div>
     </div>    
