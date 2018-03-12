@@ -1,3 +1,10 @@
 #!/bin/bash
 
 git clone git@github.com:forsyde/ForSyDe-SystemC.git
+
+cp ../assets/doxygen/* ForSyDe-SystemC
+cd ForSyDe-SystemC
+doxygen Doxyfile
+mv html ../../api
+cd ..
+rm -rf ForSyDe-SystemC

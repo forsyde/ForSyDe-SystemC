@@ -1,0 +1,6 @@
+<map id="src/forsyde/sy_helpers.hpp" name="src/forsyde/sy_helpers.hpp">
+<area shape="rect" id="node2" href="$sy__moc_8hpp.html" title="Implements the synchronous Model of Computation. " alt="" coords="16,80,179,107"/>
+<area shape="rect" id="node3" href="$forsyde_8hpp.html" title="Exports the library definitions for the ForSyDe&#45;SystemC. " alt="" coords="41,229,153,256"/>
+<area shape="rect" id="node4" href="$sy__lib_8hpp.html" title="Implements extra facilities on top of the SY MoC. " alt="" coords="22,155,173,181"/>
+<area shape="rect" id="node5" href="$adaptivity_8hpp.html" title="Definition of some adaptive processes. " alt="" coords="197,155,369,181"/>
+</map>

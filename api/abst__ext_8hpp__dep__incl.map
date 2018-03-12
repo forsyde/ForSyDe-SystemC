@@ -1,0 +1,22 @@
+<map id="src/forsyde/abst_ext.hpp" name="src/forsyde/abst_ext.hpp">
+<area shape="rect" id="node2" href="$sy__moc_8hpp.html" title="Implements the synchronous Model of Computation. " alt="" coords="289,333,451,360"/>
+<area shape="rect" id="node6" href="$sy__process_8hpp.html" title="Implements the abstract process in the synchronous Model of Computation. " alt="" coords="319,80,501,107"/>
+<area shape="rect" id="node7" href="$sy__process__constructors_8hpp.html" title="Implements the basic process constructors in the SY MoC. " alt="" coords="529,155,688,196"/>
+<area shape="rect" id="node8" href="$sy__helpers_8hpp.html" title="Implements helper primitives for modeling in the SY MoC. " alt="" coords="491,251,670,278"/>
+<area shape="rect" id="node9" href="$sy__process__constructors__strict_8hpp.html" title="Implements the basic strict process constructors in the SY MoC. " alt="" coords="77,155,239,196"/>
+<area shape="rect" id="node10" href="$sy__helpers__strict_8hpp.html" title="Implements strict helper primitives for modeling in the SY MoC. " alt="" coords="34,244,189,285"/>
+<area shape="rect" id="node11" href="$sy__wrappers_8hpp.html" title="Implements a set of co&#45;simulation wrappers in the SY MoC. " alt="" coords="315,162,505,189"/>
+<area shape="rect" id="node12" href="$tt__event_8hpp.html" title="Implements the time&#45;tagged events. " alt="" coords="763,80,926,107"/>
+<area shape="rect" id="node18" href="$dt__moc_8hpp.html" title="Implements the DT Model of Computation. " alt="" coords="1116,333,1275,360"/>
+<area shape="rect" id="node19" href="$dt__process_8hpp.html" title="Implements the abstract process in the DT Model of Computation. " alt="" coords="1131,80,1311,107"/>
+<area shape="rect" id="node20" href="$dt__process__constructors_8hpp.html" title="Implements the basic process constructors in the DT MoC. " alt="" coords="1233,155,1387,196"/>
+<area shape="rect" id="node21" href="$dt__helpers_8hpp.html" title="Implements helper primitives for modeling in the DT MoC. " alt="" coords="1283,251,1459,278"/>
+<area shape="rect" id="node3" href="$forsyde_8hpp.html" title="Exports the library definitions for the ForSyDe&#45;SystemC. " alt="" coords="566,557,678,584"/>
+<area shape="rect" id="node4" href="$sy__lib_8hpp.html" title="Implements extra facilities on top of the SY MoC. " alt="" coords="408,483,559,509"/>
+<area shape="rect" id="node5" href="$adaptivity_8hpp.html" title="Definition of some adaptive processes. " alt="" coords="473,408,645,435"/>
+<area shape="rect" id="node13" href="$dde__moc_8hpp_source.html" title="src/forsyde/dde_moc.hpp" alt="" coords="673,408,843,435"/>
+<area shape="rect" id="node15" href="$dde__process_8hpp.html" title="Implements the abstract process in the DDE Model of Computation. " alt="" coords="916,162,1107,189"/>
+<area shape="rect" id="node16" href="$dde__process__constructors_8hpp.html" title="Implements the basic process constructors in the DDE MoC. " alt="" coords="745,244,910,285"/>
+<area shape="rect" id="node17" href="$dde__helpers_8hpp.html" title="Implements helper primitives for modeling in the DDE MoC. " alt="" coords="795,333,982,360"/>
+<area shape="rect" id="node14" href="$ct__lib_8hpp.html" title="Implements extra facilities on top of the CT MoC. " alt="" coords="685,483,831,509"/>
+</map>

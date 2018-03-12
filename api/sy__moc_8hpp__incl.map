@@ -1,0 +1,9 @@
+<map id="src/forsyde/sy_moc.hpp" name="src/forsyde/sy_moc.hpp">
+<area shape="rect" id="node4" href="$abst__ext_8hpp.html" title="Implements the Absent&#45;extended values. " alt="" coords="204,319,301,345"/>
+<area shape="rect" id="node5" href="$sy__process_8hpp.html" title="Implements the abstract process in the synchronous Model of Computation. " alt="" coords="651,244,766,271"/>
+<area shape="rect" id="node7" href="$sy__process__constructors_8hpp.html" title="Implements the basic process constructors in the SY MoC. " alt="" coords="356,162,549,189"/>
+<area shape="rect" id="node10" href="$sy__helpers_8hpp.html" title="Implements helper primitives for modeling in the SY MoC. " alt="" coords="52,80,162,107"/>
+<area shape="rect" id="node11" href="$sy__process__constructors__strict_8hpp.html" title="Implements the basic strict process constructors in the SY MoC. " alt="" coords="574,155,742,196"/>
+<area shape="rect" id="node12" href="$sy__helpers__strict_8hpp.html" title="Implements strict helper primitives for modeling in the SY MoC. " alt="" coords="187,80,334,107"/>
+<area shape="rect" id="node6" href="$abssemantics_8hpp.html" title="The common abstract semantics for all MoCs. " alt="" coords="644,319,772,345"/>
+</map>

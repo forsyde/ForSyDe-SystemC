@@ -8,7 +8,7 @@ isHome: true
 # The SystemC ForSyDe 
 
 <p align="center">
-<img width="600px" src="assets/images/forsyde-systemc.png">
+<img width="450px" src="assets/images/forsyde-systemc.png">
 </p>
 
 ForSyDe-SystemC uses the [SystemC](www.accellera.org/downloads/standards/systemc) class library to implement ForSyDe.
@@ -17,16 +17,15 @@ An intermediate representation of ForSyDe models based on XML and C++ files, cal
 Currently, ForSyDe-SystemC can generate this intermediate representation by means of introspection.
 
 ## Getting the Tools 
-The latest version of our supporting modeling libraries and development tools can be obtained from the [repository]({{ site.github.repository_url }}). 
+The latest version of our supporting modeling libraries and development tools can be obtained from the [repository]({{ site.github.repository_url }}) or by clicking on the download button above. If you are interested in a specific release, check the [releases](https://github.com/forsyde/ForSyDe-SystemC/releases) section of the repository.
 
-### Getting the Latest Version 
-If you would like to see how [ForSyDe](https://github.com/forsyde) looks today, you can check it out directly from our repositories.
+## Installation and usage
 
-### Downloading Packaged Releases 
-It is also possible to to download ForSyDe tools as packaged releases, but you may not get the newly added functionalities.
+Following the link, you can find instructions on [setting up ForSyDe-SystemC on your machine](setup.html).
 
 ## Documentation
 
-Following the link, you can find a basic tutorial for [setting up ForSyDe-SystemC on your machine](setup.html) and building/running a simple model. For tutorials for modeling in some of the Models Of Computation check the links below:
+You can find additional documentation on ForSyDe-SystemC by following links below:
 
-#### [SY MoC Tutorial](sy-tutorial.html)
+* [SY MoC Tutorial](sy-tutorial.html): a small example of modeling a synchronous process network in ForSyDe-SystemC.
+* [API documentation](api/index.html): extended documentation generated with Doxygen. 

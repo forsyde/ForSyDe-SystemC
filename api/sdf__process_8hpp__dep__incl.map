@@ -1,0 +1,6 @@
+<map id="src/forsyde/sdf_process.hpp" name="src/forsyde/sdf_process.hpp">
+<area shape="rect" id="node2" href="$sdf__moc_8hpp.html" title="Implements the Synchronous Dataflow (SDF) Model of Computation. " alt="" coords="7,244,174,271"/>
+<area shape="rect" id="node4" href="$sdf__process__constructors_8hpp.html" title="Implements the basic process constructors in the SDF MoC. " alt="" coords="77,80,240,121"/>
+<area shape="rect" id="node3" href="$forsyde_8hpp.html" title="Exports the library definitions for the ForSyDe&#45;SystemC. " alt="" coords="35,319,147,345"/>
+<area shape="rect" id="node5" href="$sdf__helpers_8hpp.html" title="Implements helper primitives for modeling in the SDF MoC. " alt="" coords="129,169,311,196"/>
+</map>

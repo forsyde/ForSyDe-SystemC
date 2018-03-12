@@ -1,0 +1,11 @@
+<map id="src/forsyde/sy_process.hpp" name="src/forsyde/sy_process.hpp">
+<area shape="rect" id="node2" href="$sy__moc_8hpp.html" title="Implements the synchronous Model of Computation. " alt="" coords="82,259,245,285"/>
+<area shape="rect" id="node6" href="$sy__process__constructors_8hpp.html" title="Implements the basic process constructors in the SY MoC. " alt="" coords="25,80,184,121"/>
+<area shape="rect" id="node8" href="$sy__process__constructors__strict_8hpp.html" title="Implements the basic strict process constructors in the SY MoC. " alt="" coords="209,80,371,121"/>
+<area shape="rect" id="node10" href="$sy__wrappers_8hpp.html" title="Implements a set of co&#45;simulation wrappers in the SY MoC. " alt="" coords="396,87,587,114"/>
+<area shape="rect" id="node3" href="$forsyde_8hpp.html" title="Exports the library definitions for the ForSyDe&#45;SystemC. " alt="" coords="107,408,219,435"/>
+<area shape="rect" id="node4" href="$sy__lib_8hpp.html" title="Implements extra facilities on top of the SY MoC. " alt="" coords="88,333,239,360"/>
+<area shape="rect" id="node5" href="$adaptivity_8hpp.html" title="Definition of some adaptive processes. " alt="" coords="263,333,435,360"/>
+<area shape="rect" id="node7" href="$sy__helpers_8hpp.html" title="Implements helper primitives for modeling in the SY MoC. " alt="" coords="74,177,253,203"/>
+<area shape="rect" id="node9" href="$sy__helpers__strict_8hpp.html" title="Implements strict helper primitives for modeling in the SY MoC. " alt="" coords="327,169,482,211"/>
+</map>

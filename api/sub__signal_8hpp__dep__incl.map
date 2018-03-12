@@ -1,0 +1,9 @@
+<map id="src/forsyde/sub_signal.hpp" name="src/forsyde/sub_signal.hpp">
+<area shape="rect" id="node2" href="$ct__moc_8hpp.html" title="Implements the continuous&#45;time Model of Computation. " alt="" coords="5,319,164,345"/>
+<area shape="rect" id="node5" href="$ct__process_8hpp.html" title="Implements the abstract process in the CT Model of Computation. " alt="" coords="185,80,365,107"/>
+<area shape="rect" id="node6" href="$ct__process__constructors_8hpp.html" title="Implements the basic process constructors in the CT MoC. " alt="" coords="70,155,225,196"/>
+<area shape="rect" id="node7" href="$ct__helpers_8hpp.html" title="Implements helper primitives for modeling in the CT MoC. " alt="" coords="59,244,235,271"/>
+<area shape="rect" id="node8" href="$ct__wrappers_8hpp.html" title="Implements a set of co&#45;simulation wrappers in the CT MoC. " alt="" coords="310,162,497,189"/>
+<area shape="rect" id="node3" href="$forsyde_8hpp.html" title="Exports the library definitions for the ForSyDe&#45;SystemC. " alt="" coords="29,468,141,495"/>
+<area shape="rect" id="node4" href="$ct__lib_8hpp.html" title="Implements extra facilities on top of the CT MoC. " alt="" coords="67,393,214,420"/>
+</map>
