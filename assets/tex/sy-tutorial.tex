@@ -1,0 +1,37 @@
+% Title    : SY process network example
+% Author   : George Ungureanu
+% Category : tikz
+\documentclass{standalone}
+\usepackage[tikz]{forsyde}
+\begin{document}
+\begin{tikzpicture}[constructors=systemc]
+  \standard[process, moc=sy, ni=2, type=comb2, f=$\noexpand\times$, xshift=3cm] (mul) {mul1};
+  \standard[process, moc=sy, ni=2, type=comb2, f=$+$, right of=mul] (add) {add1};
+  \standard[process, moc=sy, type=delay, f=$0$, above of=add] (dly) {accum};
+  \standard[process, moc=sy, type=sink, f=\noexpand\texttt{cout}, right of=add, xshift=2.5cm] (plot) {report1};
+  \cluster[composite,ni=2,inner xsep=25pt, inner ysep=15pt] (mac) <(add)(mul)(dly)> {mulacc};
+  
+  \standard[process, moc=sy, type=source, f=$+1$;$1$, xshift=-2cm] (src) <mac.w1> {siggen1};
+  \standard[process, moc=sy, type=constant, f=$3$, xshift=-2cm] (ct) <mac.w2> {constant1};
+
+  
+  \path[]
+  (mac.w1) edge[s,srcport,dstport] (src) edge[f,-|-,->,dstport] (mul.w1)
+  (mac.w2) edge[s,srcport,dstport] (ct)  edge[f,-|-,->,dstport] (mul.w2)
+  (add.e1) edge[s,-|-,->,deviate=.5cm,srcport,dstport] (dly.e1)
+  (add.w1) edge[s,-|-,<-,deviate=-.5cm,srcport,dstport] (dly.w1)
+  (mul) edge[s,-|-,->,srcport,dstport] (add.w2)
+  (add) edge[trans={f,srcport}{mac-east}{s,srcport,dstport,->}] (plot);
+
+  \node[anchor=south,red] at (mac.north) {\tiny\it composite process};
+  \node[anchor=north,red] at (plot.south) {\tiny\it leaf process};
+  \node[anchor=north west,red, shift={(-1.2,-.2)}] at (dly.west) {\tiny\it signal};
+  \node[anchor=north west,red, shift={(.4,-.2)}] at (mac.w1) {\tiny\it port binding};
+  \node[anchor=north east,red] at (mac.w2) {\tiny\it port};
+\end{tikzpicture}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

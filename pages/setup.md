@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Setup
-permalink: setup.html
+permalink: setup
 ---
 
 # Setting Up the ForSyDe-SystemC Modeling Environment

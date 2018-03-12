@@ -1,0 +1,37 @@
+% Title    : SDF process network example
+% Author   : George Ungureanu
+% Category : tikz
+\documentclass{standalone}
+\usepackage[tikz]{forsyde}
+
+
+\begin{document}
+\begin{tikzpicture}[constructors=systemc,
+  namesig/.style args = {#1:#2:#3}{%
+    decoration={name=markings,mark=at position #2 with {\node[anchor=#1]{\tiny\it #3};}%
+    },%
+    postaction=decorate%
+  }]
+  \standard[process, moc=sdf, ni=2, type=comb2, f={\noexpand\texttt{avg\char`_func}}] (avg) {avg1};
+  \standard[process, moc=sdf, type=delay, f={\noexpand\texttt{[0,0]}}, above of=avg] (dly) {avginit};
+  \cluster[composite,inner ysep=15pt, inner xsep=30pt] <(avg)(dly)> {compAvg1};
+  \standard[process, moc=sdf, type=comb, f={\noexpand\texttt{us\char`_func}}, xshift=-3cm] (us) <$(avg)!.5!(dly)$> {us1};
+  \standard[process, moc=sdf, type=comb, f={\noexpand\texttt{ds\char`_func}}, xshift=3cm] (ds) <$(avg)!.5!(dly)$> {ds1};
+
+  \resetportinfo{us}\wpinfo{1}\epinfo{1}
+  \resetportinfo{ds}\wpinfo{3}\epinfo{2}
+  \resetportinfo{avg}\wpinfo{2}\wpinfo{3}\epinfo{2}
+  \resetportinfo{dly}\wpinfo{2}\epinfo{2}
+  
+  \path[s]
+  (us) edge[<-,namesig=south west:1:src] ++(-2,0) edge[-|-=.6,->,namesig=north:.8:upsrc] (avg.w2)
+  (avg.e1) edge[-|-,->,namesig=north:.2:res] (ds.w1) edge[-|-,->,deviate=.77cm] (dly.e1)
+  (dly.w1) edge[-|-,->,deviate=-.5cm,namesig=west:.5:dout] (avg.w1)
+  (ds) edge[->,namesig=south east:1:downres] ++(2,0);
+\end{tikzpicture}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

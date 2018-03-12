@@ -1,0 +1,27 @@
+% Title    : CT process network example
+% Author   : George Ungureanu
+% Category : tikz
+\documentclass{standalone}
+\usepackage[tikz]{forsyde}
+\begin{document}
+\begin{tikzpicture}[constructors=systemc]
+  \standard[process, moc=ct, type=cosine] (cos) {cosine1};
+  \standard[process, moc=ct, type=gaussian, below of=cos] (gau) {gaussian1};
+  \standard[process, moc=ct, ni=2, type=add, xshift=3cm] (add) <$(gau)!.5!(cos)$> {add1};
+  \standard[process, moc=ct, type=filter, right of=add] (filt) {filter1};
+  \standard[process, moc=ct, type=traceSig, xshift=8cm] (plot1) <cos> {report1};
+  \standard[process, moc=ct, type=traceSig, below of=plot1] (plot2) {report2};
+
+  \path[s]
+  (cos) edge[-|-,->] (add.w1)
+  (gau) edge[-|-,->] (add.w2)
+  (add) edge[->] (filt)
+  (filt) edge[-|-,->] (plot1)
+  (add) edge[-|-=.2,->] (plot2);
+\end{tikzpicture}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

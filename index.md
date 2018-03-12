@@ -21,11 +21,13 @@ The latest version of our supporting modeling libraries and development tools ca
 
 ## Installation and usage
 
-Following the link, you can find instructions on [setting up ForSyDe-SystemC on your machine](setup.html).
+Following the link, you can find instructions on [setting up ForSyDe-SystemC on your machine](setup).
 
 ## Documentation
 
 You can find additional documentation on ForSyDe-SystemC by following links below:
 
-* [SY MoC Tutorial](sy-tutorial.html): a small example of modeling a synchronous process network in ForSyDe-SystemC.
+* [SY MoC Tutorial](sy-tutorial): a small example of modeling a synchronous process network in ForSyDe-SystemC.
+* [SDF MoC Tutorial](sdf-tutorial): an example of up/down sampler modeled in the synchronous data flow MoC in ForSyDe-SystemC.
+* [CT MoC Tutorial](ct-tutorial): an example of a low-pass filter modeled in the continuous time MoC in ForSyDe-SystemC.
 * [API documentation](api/index.html): extended documentation generated with Doxygen. 

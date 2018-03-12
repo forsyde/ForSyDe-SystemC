@@ -1,7 +1,7 @@
 ---
 layout: default
 title: SY Tutorial
-permalink: sy-tutorial.html
+permalink: sy-tutorial
 ---
 
 # The ForSyDe-SystemC Tutorial for the Synchronous MoC #
@@ -16,7 +16,7 @@ The running example for this tutorial is a simple multiply-accumulator system wi
 
 
 <p align="center">
-<img width="800px" src="assets/images/mulacc.svg">
+<img width="800px" src="assets/svg/sy-tutorial.svg">
 </p>
 
 
