@@ -27,6 +27,11 @@
 /*! General namespace that includes everything provided by the SFF.
  * Each MoC has its own sub-namespace.
  */
+
+#include <sstream>
+#include <fstream>
+
+
 namespace ForSyDe
 {
 
