@@ -52,7 +52,19 @@ using signal = SDF2SDF<T>;
 
 //! The SY_in port is used for input ports of SY processes
 template <typename T>
-using SDF_in = UT::UT_in<T>;
+class SDF_in: public ForSyDe::UT::UT_in<T>
+{
+public:
+    SDF_in() : ForSyDe::UT::UT_in<T>(){}
+    SDF_in(const char* name) : ForSyDe::UT::UT_in<T>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "SDF";
+    }
+#endif
+};
 
 //! The SDF::in_port is an alias for SDF::SDF_in
 template <typename T>
@@ -60,7 +72,19 @@ using in_port = SDF_in<T>;
 
 //! The SY_out port is used for output ports of SY processes
 template <typename T>
-using SDF_out = UT::UT_out<T>;
+class SDF_out: public ForSyDe::UT::UT_out<T>
+{
+public:
+    SDF_out() : ForSyDe::UT::UT_out<T>(){}
+    SDF_out(const char* name) : ForSyDe::UT::UT_out<T>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "SDF";
+    }
+#endif
+};
 
 //! The SDF::out_port is an alias for SDF::SDF_out
 template <typename T>

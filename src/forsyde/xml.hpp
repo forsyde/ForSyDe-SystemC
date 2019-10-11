@@ -267,6 +267,19 @@ public:
         if (port != NULL)
         {
             allocate_append_attribute(p_node, const_name, dynamic_cast<sc_object*>(port)->basename());
+            char* moc_name;
+            if (port->moc()=="SDF") moc_name = const_sdf;
+            else if (port->moc()=="UT") moc_name = const_ut;
+            else if (port->moc()=="SY") moc_name = const_sy;
+            else if (port->moc()=="DDE") moc_name = const_dde;
+            else if (port->moc()=="DT") moc_name = const_dt;
+            else if (port->moc()=="CT") moc_name = const_ct;
+            else
+            {
+                SC_REPORT_ERROR("XML Backend", "MoC could not be deduced from kind.");
+                return;
+            }
+            allocate_append_attribute(p_node, const_moc, moc_name);
             allocate_append_attribute(p_node, const_type, port->token_type());
             allocate_append_attribute(p_node, const_direction, dir);
         }

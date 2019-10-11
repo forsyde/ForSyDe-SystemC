@@ -58,6 +58,13 @@ class DDE_in: public ForSyDe::in_port<T,ttn_event<T>,signal<T>>
 public:
     DDE_in() : ForSyDe::in_port<T,ttn_event<T>,signal<T>>(){}
     DDE_in(const char* name) : ForSyDe::in_port<T,ttn_event<T>,signal<T>>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "DDE";
+    }
+#endif
 };
 
 //! The DDE::in_port is an alias for DDE::DDE_in
@@ -71,6 +78,13 @@ class DDE_out: public ForSyDe::out_port<T,ttn_event<T>,signal<T>>
 public:
     DDE_out() : ForSyDe::out_port<T,ttn_event<T>,signal<T>>(){}
     DDE_out(const char* name) : ForSyDe::out_port<T,ttn_event<T>,signal<T>>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "DDE";
+    }
+#endif
 };
 
 //! The DDE::out_port is an alias for DDE::DDE_out

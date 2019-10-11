@@ -58,6 +58,13 @@ class DT_in: public ForSyDe::in_port<T,abst_ext<T>,signal<T>>
 public:
     DT_in() : ForSyDe::in_port<T,abst_ext<T>,signal<T>>(){}
     DT_in(const char* name) : ForSyDe::in_port<T,abst_ext<T>,signal<T>>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "DT";
+    }
+#endif
 };
 
 //! The DT::in_port is an alias for DT::DT_in
@@ -71,6 +78,13 @@ class DT_out: public ForSyDe::out_port<T,abst_ext<T>,signal<T>>
 public:
     DT_out() : ForSyDe::out_port<T,abst_ext<T>,signal<T>>(){}
     DT_out(const char* name) : ForSyDe::out_port<T,abst_ext<T>,signal<T>>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "DT";
+    }
+#endif
 };
 
 //! The DT::out_port is an alias for DT::DT_out

@@ -58,6 +58,13 @@ class SY_in: public ForSyDe::in_port<T,abst_ext<T>,signal<T>>
 public:
     SY_in() : ForSyDe::in_port<T,abst_ext<T>,signal<T>>(){}
     SY_in(const char* name) : ForSyDe::in_port<T,abst_ext<T>,signal<T>>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "SY";
+    }
+#endif
 };
 
 //! The SY::in_port is an alias for SY::SY_in
@@ -71,6 +78,13 @@ class SY_out: public ForSyDe::out_port<T,abst_ext<T>,signal<T>>
 public:
     SY_out() : ForSyDe::out_port<T,abst_ext<T>,signal<T>>(){}
     SY_out(const char* name) : ForSyDe::out_port<T,abst_ext<T>,signal<T>>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "SY";
+    }
+#endif
 };
 
 //! The SY::out_port is an alias for SY::SY_out

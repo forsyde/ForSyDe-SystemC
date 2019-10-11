@@ -57,6 +57,13 @@ class UT_in: public ForSyDe::in_port<T,T,signal<T>>
 public:
     UT_in() : ForSyDe::in_port<T,T,signal<T>>(){}
     UT_in(const char* name) : ForSyDe::in_port<T,T,signal<T>>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "UT";
+    }
+#endif
 };
 
 //! The UT::in_port is an alias for UT::UT_in
@@ -70,6 +77,13 @@ class UT_out: public ForSyDe::out_port<T,T,signal<T>>
 public:
     UT_out() : ForSyDe::out_port<T,T,signal<T>>(){}
     UT_out(const char* name) : ForSyDe::out_port<T,T,signal<T>>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "UT";
+    }
+#endif
 };
 
 //! The UT::out_port is an alias for UT::UT_out

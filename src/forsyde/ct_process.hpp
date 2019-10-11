@@ -55,6 +55,13 @@ class CT_in: public ForSyDe::in_port<double,sub_signal,signal>
 public:
     CT_in() : ForSyDe::in_port<double,sub_signal,signal>(){}
     CT_in(const char* name) : ForSyDe::in_port<double,sub_signal,signal>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "CT";
+    }
+#endif
 };
 
 //! The CT::in_port is an alias for CT::CT_in
@@ -66,6 +73,13 @@ class CT_out: public ForSyDe::out_port<double,sub_signal,signal>
 public:
     CT_out() : ForSyDe::out_port<double,sub_signal,signal>(){}
     CT_out(const char* name) : ForSyDe::out_port<double,sub_signal,signal>(name){}
+#ifdef FORSYDE_INTROSPECTION
+    
+    virtual std::string moc() const
+    {
+        return "CT";
+    }
+#endif
 };
 
 //! The CT::out_port is an alias for CT::CT_out

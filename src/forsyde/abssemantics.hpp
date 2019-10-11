@@ -119,6 +119,9 @@ public:
     
     //! Name of the tokens of the port
     virtual const char* token_type() const = 0;
+
+    //! To which MoC does the signal belong
+    virtual std::string moc() const = 0;
 };
 
 //! The in_port port is used for input ports of ForSyDe processes
@@ -156,6 +159,8 @@ public:
     {
         return get_type_name<T>();
     }
+
+    virtual std::string moc() const = 0;
 #endif
 };
 
@@ -196,6 +201,8 @@ public:
     {
         return get_type_name<T>();
     }
+
+    virtual std::string moc() const = 0;
 #endif
 };
 
