@@ -14,6 +14,8 @@
 #ifndef ABSSEMANTICS_HPP
 #define ABSSEMANTICS_HPP
 
+#include "type_introspect.hpp"
+
 /*! \file abssemantics.hpp
  * \brief The common abstract semantics for all MoCs.
  * 
@@ -94,7 +96,7 @@ public:
     //! Returns the name of the token type
     virtual const char* token_type() const
     {
-        return get_type_name<T>();
+        return IntrospectiveType::traverse<T>();
     }
     
     virtual std::string moc() const = 0;
@@ -157,7 +159,7 @@ public:
     //! Returns the plain name of the token type
     virtual const char* token_type() const
     {
-        return get_type_name<T>();
+        return IntrospectiveType::traverse<T>();
     }
 
     virtual std::string moc() const = 0;
@@ -199,7 +201,7 @@ public:
     //! Returns the name of the actual type (not abst_ext version)
     virtual const char* token_type() const
     {
-        return get_type_name<T>();
+        return IntrospectiveType::traverse<T>();
     }
 
     virtual std::string moc() const = 0;
