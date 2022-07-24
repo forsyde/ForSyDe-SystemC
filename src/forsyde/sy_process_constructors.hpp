@@ -581,10 +581,36 @@ private:
     void bindInfo()
     {
         boundInChans.resize(sizeof...(Ts));     // input ports
-        for (int i=0;i<sizeof...(Ts);i++)
-        	// boundInChans[i].port = &std::get<i>(iport);
+        register_in_ports(boundInChans, iport);
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
+    }
+
+    template<size_t N, class T>
+    struct register_ports_helper
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            register_ports_helper<N-1,T>::reg_port(boundChans,t);
+            boundChans[N].port = &std::get<N>(t);
+        }
+    };
+
+    template<class T>
+    struct register_ports_helper<0,T>
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            boundChans[0].port = &std::get<0>(t);
+        }
+    };
+
+    template<class... T>
+    void register_in_ports(std::vector<PortInfo>& boundChans,
+                             std::tuple<SY_in<T>...>& ports)
+    {
+        register_ports_helper<sizeof...(T)-1,
+                              std::tuple<SY_in<T>...>&>::reg_port(boundChans,ports);
     }
 #endif
 };
@@ -694,7 +720,7 @@ private:
         static void write(const R& vals, T& t)
         {
             fifo_write_helper<N-1,R,T>::write(vals,t);
-            std::get<N>(t).write(std::get<N>(vals));
+            WRITE_MULTIPORT(std::get<N>(t), std::get<N>(vals))
         }
     };
 
@@ -703,7 +729,7 @@ private:
     {
         static void write(const R& vals, T& t)
         {
-            std::get<0>(t).write(std::get<0>(vals));
+            WRITE_MULTIPORT(std::get<0>(t), std::get<0>(vals))
         }
     };
 
@@ -2186,7 +2212,7 @@ private:
         static void write(const R& vals, T& t)
         {
             fifo_write_helper<N-1,R,T>::write(vals,t);
-            std::get<N>(t).write(std::get<N>(vals));
+            WRITE_MULTIPORT(std::get<N>(t), std::get<N>(vals))
         }
     };
 
@@ -2195,7 +2221,7 @@ private:
     {
         static void write(const R& vals, T& t)
         {
-            std::get<0>(t).write(std::get<0>(vals));
+            WRITE_MULTIPORT(std::get<0>(t), std::get<0>(vals))
         }
     };
 

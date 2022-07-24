@@ -752,7 +752,7 @@ private:
         static void write(const R& vals, T& t)
         {
             fifo_write_helper<N-1,R,T>::write(vals,t);
-            std::get<N>(t).write(std::get<N>(vals));
+            WRITE_MULTIPORT(std::get<N>(t), std::get<N>(vals))
         }
     };
 
@@ -761,7 +761,7 @@ private:
     {
         static void write(const R& vals, T& t)
         {
-            std::get<0>(t).write(std::get<0>(vals));
+            WRITE_MULTIPORT(std::get<0>(t), std::get<0>(vals))
         }
     };
 
@@ -2164,7 +2164,7 @@ private:
         static void write(const R& vals, T& t)
         {
             fifo_write_helper<N-1,R,T>::write(vals,t);
-            std::get<N>(t).write(std::get<N>(vals));
+            WRITE_MULTIPORT(std::get<N>(t), std::get<N>(vals))
         }
     };
 
@@ -2173,7 +2173,7 @@ private:
     {
         static void write(const R& vals, T& t)
         {
-            std::get<0>(t).write(std::get<0>(vals));
+            WRITE_MULTIPORT(std::get<0>(t), std::get<0>(vals))
         }
     };
 
