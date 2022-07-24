@@ -589,6 +589,180 @@ private:
 #endif
 };
 
+//! Process constructor for a combinational process with M inputs and N outputs
+/*! similar to comb with M inputs and an unzip with N outputs
+ */
+template<typename TO_tuple, typename TI_tuple> class combMN;
+
+template <typename... TOs, typename... TIs>
+class combMN<std::tuple<TOs...>,std::tuple<TIs...>> : public sy_process
+{
+public:
+    std::tuple<SY_in<TIs>...>  iport;///< tuple of ports for the input channels
+    std::tuple<SY_out<TOs>...> oport;///< tuple of ports for the output channels
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(std::tuple<abst_ext<TOs>...>&, const std::tuple<abst_ext<TIs>...>&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output port
+     */
+    combMN(const sc_module_name& _name,      ///< process name
+           const functype& _func             ///< function to be passed
+          ) : sy_process(_name), _func(_func)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "SY::combMN";}
+    
+private:
+    // Input and output variables
+    std::tuple<abst_ext<TOs>...>* ovals;
+    std::tuple<abst_ext<TIs>...>* ivals;
+    
+    //! The function passed to the process constructor
+    functype _func;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        ovals = new std::tuple<abst_ext<TOs>...>;
+        ivals = new std::tuple<abst_ext<TIs>...>;
+    }
+    
+    void prep()
+    {
+        *ivals = sc_fifo_tuple_read<TIs...>(iport);
+    }
+    
+    void exec()
+    {
+        _func(*ovals, *ivals);
+    }
+    
+    void prod()
+    {
+        fifo_tuple_write<TOs...>(*ovals, oport);
+    }
+    
+    void clean()
+    {
+        delete ivals;
+        delete ovals;
+    }
+
+    template<size_t N,class R,  class T>
+    struct fifo_read_helper
+    {
+        static void read(R& ret, T& t)
+        {
+            fifo_read_helper<N-1,R,T>::read(ret,t);
+            std::get<N>(ret) = std::get<N>(t).read();
+        }
+    };
+
+    template<class R, class T>
+    struct fifo_read_helper<0,R,T>
+    {
+        static void read(R& ret, T& t)
+        {
+            std::get<0>(ret) = std::get<0>(t).read();
+        }
+    };
+
+    template<class... T>
+    std::tuple<abst_ext<T>...> sc_fifo_tuple_read(std::tuple<SY_in<T>...>& ports)
+    {
+        std::tuple<abst_ext<T>...> ret;
+        fifo_read_helper<sizeof...(T)-1,
+                         std::tuple<abst_ext<T>...>,
+                         std::tuple<SY_in<T>...>>::read(ret,ports);
+        return ret;
+    }
+
+    template<size_t N,class R,  class T>
+    struct fifo_write_helper
+    {
+        static void write(const R& vals, T& t)
+        {
+            fifo_write_helper<N-1,R,T>::write(vals,t);
+            std::get<N>(t).write(std::get<N>(vals));
+        }
+    };
+
+    template<class R, class T>
+    struct fifo_write_helper<0,R,T>
+    {
+        static void write(const R& vals, T& t)
+        {
+            std::get<0>(t).write(std::get<0>(vals));
+        }
+    };
+
+    template<class... T>
+    void fifo_tuple_write(const std::tuple<abst_ext<T>...>& vals,
+                             std::tuple<SY_out<T>...>& ports)
+    {
+        fifo_write_helper<sizeof...(T)-1,
+                          std::tuple<abst_ext<T>...>,
+                          std::tuple<SY_out<T>...>>::write(vals,ports);
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(TIs));     // input ports
+        register_in_ports(boundInChans, iport);
+        boundOutChans.resize(sizeof...(TOs));    // output ports
+        register_out_ports(boundOutChans, oport);
+    }
+
+    template<size_t N, class T>
+    struct register_ports_helper
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            register_ports_helper<N-1,T>::reg_port(boundChans,t);
+            boundChans[N].port = &std::get<N>(t);
+        }
+    };
+
+    template<class T>
+    struct register_ports_helper<0,T>
+    {
+        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
+        {
+            boundChans[0].port = &std::get<0>(t);
+        }
+    };
+
+    template<class... T>
+    void register_in_ports(std::vector<PortInfo>& boundChans,
+                             std::tuple<SY_in<T>...>& ports)
+    {
+        register_ports_helper<sizeof...(T)-1,
+                              std::tuple<SY_in<T>...>&>::reg_port(boundChans,ports);
+    }
+
+    template<class... T>
+    void register_out_ports(std::vector<PortInfo>& boundChans,
+                             std::tuple<SY_out<T>...>& ports)
+    {
+        register_ports_helper<sizeof...(T)-1,
+                              std::tuple<SY_out<T>...>&>::reg_port(boundChans,ports);
+    }
+
+#endif
+};
+
 //! Process constructor for a delay element
 /*! This class is used to build the most basic sequential process which
  * is a delay element. Given an initial value, it inserts this value at
