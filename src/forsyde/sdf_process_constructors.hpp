@@ -108,7 +108,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, o1vals)
+        write_vec_multiport(oport1, o1vals);
     }
     
     void clean() {}
@@ -201,7 +201,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, o1vals)
+        write_vec_multiport(oport1, o1vals);
     }
     
     void clean() {}
@@ -304,7 +304,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, o1vals)
+        write_vec_multiport(oport1, o1vals);
     }
     
     void clean() {}
@@ -417,7 +417,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, o1vals)
+        write_vec_multiport(oport1, o1vals);
     }
     
     void clean() {}
@@ -484,7 +484,7 @@ private:
     void init()
     {
         val = new T;
-        WRITE_MULTIPORT(oport1, init_val);
+        write_multiport(oport1, init_val);
     }
     
     void prep()
@@ -496,7 +496,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val);
+        write_multiport(oport1, *val);
     }
     
     void clean()
@@ -564,7 +564,7 @@ private:
     {
         val = new T;
         for (unsigned int i=0; i<ns; i++)
-            WRITE_MULTIPORT(oport1, init_val);
+            write_multiport(oport1, init_val);
     }
     
     void prep()
@@ -576,7 +576,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val);
+        write_multiport(oport1, *val);
     }
     
     void clean()
@@ -649,7 +649,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, init_val);
+            write_multiport(oport1, init_val);
         else wait();
     }
     
@@ -720,7 +720,7 @@ private:
     {
         cur_st = new T;
         *cur_st = init_st;
-        WRITE_MULTIPORT(oport1, *cur_st);
+        write_multiport(oport1, *cur_st);
         if (take==0) infinite = true;
         tok_cnt = 1;
     }
@@ -735,7 +735,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, *cur_st);
+            write_multiport(oport1, *cur_st);
         else wait();
     }
     
@@ -827,7 +827,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *cur_val);
+        write_multiport(oport1, *cur_val);
     }
     
     void clean()
@@ -893,7 +893,7 @@ private:
     {
         if (itr != in_vec.end())
         {
-            WRITE_MULTIPORT(oport1, *itr);
+            write_multiport(oport1, *itr);
             ++itr;
         }
         else
@@ -1175,7 +1175,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,std::make_tuple(ival1,ival2));  // write to the output
+        write_multiport(oport1,std::make_tuple(ival1,ival2));  // write to the output
     }
     
     void clean() {}
@@ -1240,7 +1240,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,*in_val);    // write to the output;
+        write_multiport(oport1,*in_val);    // write to the output;
     }
     
     void clean()
@@ -1371,8 +1371,8 @@ private:
     void prod()
     {
         
-        WRITE_VEC_MULTIPORT(oport1,std::get<0>(*in_val))  // write to the output 1
-        WRITE_VEC_MULTIPORT(oport2,std::get<1>(*in_val))  // write to the output 2
+        write_vec_multiport(oport1,std::get<0>(*in_val));  // write to the output 1
+        write_vec_multiport(oport2,std::get<1>(*in_val));  // write to the output 2
     }
     
     void clean()
@@ -1563,7 +1563,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val);
+        write_multiport(oport1, *val);
     }
     
     void clean()

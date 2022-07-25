@@ -173,7 +173,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval1)
+        write_multiport(oport1, *oval1)
     }
     
     void clean()
@@ -340,7 +340,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval1)
+        write_multiport(oport1, *oval1)
     }
     
     void clean()

@@ -39,14 +39,17 @@ using namespace sc_core;
 
 // Auxilliary Macro definitions
 template<typename T, typename If>
-void inline WRITE_MULTIPORT(If& PORT, const T& VAL)  {
-    for (int WMPi=0;WMPi<PORT.size();WMPi++) PORT[WMPi]->write(VAL);
+void inline write_multiport(If& PORT, const T& VAL)  {
+    for (int WMPi=0;WMPi<PORT.size();WMPi++)
+        PORT[WMPi]->write(VAL);
 }
 
-#define WRITE_VEC_MULTIPORT(PORT,VEC) \
-    for (int WMPi=0;WMPi<PORT.size();WMPi++) \
-        for (auto WMPit=VEC.begin();WMPit!=VEC.end();WMPit++) \
+template<typename T, typename If>
+void inline write_vec_multiport(If& PORT, const std::vector<T>& VEC)  {
+    for (int WMPi=0;WMPi<PORT.size();WMPi++)
+        for (auto WMPit=VEC.begin();WMPit!=VEC.end();WMPit++)
             PORT[WMPi]->write(*WMPit);
+}
 
 //! Type of the object bound to a port
 enum bound_type {PORT, CHANNEL};
