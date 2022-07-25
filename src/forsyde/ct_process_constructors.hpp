@@ -102,7 +102,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, oval)
+        WRITE_MULTIPORT(oport1, oval);
         wait(get_end_time(oval) - sc_time_stamp());
     }
     
@@ -209,7 +209,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, oss)
+        WRITE_MULTIPORT(oport1, oss);
         wait(tl - sc_time_stamp());
     }
     
@@ -313,7 +313,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, oss)
+        WRITE_MULTIPORT(oport1, oss);
         wait(tl - sc_time_stamp());
     }
     
@@ -380,7 +380,7 @@ private:
                 sub_signal(SC_ZERO_TIME, delay_time, 
                     [](const sc_time& t){return 0;}
                 )
-            )
+            );
             wait(delay_time);
         }
     }
@@ -398,7 +398,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, val)
+        WRITE_MULTIPORT(oport1, val);
         wait(get_end_time(val) - sc_time_stamp());
     }
     
@@ -461,7 +461,7 @@ private:
                 sub_signal(SC_ZERO_TIME, delay_time, 
                     [](const sc_time& t){return 0;}
                 )
-            )
+            );
             wait(delay_time);
         }
     }
@@ -484,7 +484,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, val)
+        WRITE_MULTIPORT(oport1, val);
         wait(get_end_time(val) - sc_time_stamp());
     }
     
@@ -546,7 +546,7 @@ private:
         auto ss = sub_signal(sc_time(0,SC_NS), end_time, 
                         [this](const sc_time& t){return init_val;}
                   );
-        WRITE_MULTIPORT(oport1, ss)
+        WRITE_MULTIPORT(oport1, ss);
         wait(get_end_time(ss) - sc_time_stamp());
     }
     
@@ -625,7 +625,7 @@ private:
                                     return res;
                                 }
                             );
-        WRITE_MULTIPORT(oport1, ss)
+        WRITE_MULTIPORT(oport1, ss);
         wait(get_end_time(ss) - sc_time_stamp());
     }
     
@@ -846,7 +846,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        WRITE_MULTIPORT(oport1, *val);
         wait(get_end_time(*val) - sc_time_stamp());
     }
     
