@@ -100,7 +100,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -184,7 +184,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -276,7 +276,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -375,7 +375,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -460,7 +460,7 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
 
     void clean()
@@ -529,7 +529,11 @@ private:
     
     void prep()
     {
-        *ivals = sc_fifo_tuple_read<Ts...>(iport);
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                ((val = port.read()), ...);
+            }, *ivals);
+        }, iport);
     }
     
     void exec()
@@ -539,42 +543,13 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
     {
         delete ivals;
         delete oval;
-    }
-
-    template<size_t N,class R,  class T>
-    struct fifo_read_helper
-    {
-        static void read(R& ret, T& t)
-        {
-            fifo_read_helper<N-1,R,T>::read(ret,t);
-            std::get<N>(ret) = std::get<N>(t).read();
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_read_helper<0,R,T>
-    {
-        static void read(R& ret, T& t)
-        {
-            std::get<0>(ret) = std::get<0>(t).read();
-        }
-    };
-
-    template<class... T>
-    std::tuple<abst_ext<T>...> sc_fifo_tuple_read(std::tuple<SY_in<T>...>& ports)
-    {
-        std::tuple<abst_ext<T>...> ret;
-        fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<abst_ext<T>...>,
-                         std::tuple<SY_in<T>...>>::read(ret,ports);
-        return ret;
     }
     
 #ifdef FORSYDE_INTROSPECTION
@@ -646,7 +621,11 @@ private:
     
     void prep()
     {
-        *ivals = sc_fifo_tuple_read<TIs...>(iport);
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                ((val = port.read()), ...);
+            }, *ivals);
+        }, iport);
     }
     
     void exec()
@@ -656,70 +635,17 @@ private:
     
     void prod()
     {
-        fifo_tuple_write<TOs...>(*ovals, oport);
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (WRITE_MULTIPORT(port, val), ...);
+            }, *ovals);
+        }, oport);
     }
     
     void clean()
     {
         delete ivals;
         delete ovals;
-    }
-
-    template<size_t N,class R,  class T>
-    struct fifo_read_helper
-    {
-        static void read(R& ret, T& t)
-        {
-            fifo_read_helper<N-1,R,T>::read(ret,t);
-            std::get<N>(ret) = std::get<N>(t).read();
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_read_helper<0,R,T>
-    {
-        static void read(R& ret, T& t)
-        {
-            std::get<0>(ret) = std::get<0>(t).read();
-        }
-    };
-
-    template<class... T>
-    std::tuple<abst_ext<T>...> sc_fifo_tuple_read(std::tuple<SY_in<T>...>& ports)
-    {
-        std::tuple<abst_ext<T>...> ret;
-        fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<abst_ext<T>...>,
-                         std::tuple<SY_in<T>...>>::read(ret,ports);
-        return ret;
-    }
-
-    template<size_t N,class R,  class T>
-    struct fifo_write_helper
-    {
-        static void write(const R& vals, T& t)
-        {
-            fifo_write_helper<N-1,R,T>::write(vals,t);
-            WRITE_MULTIPORT(std::get<N>(t), std::get<N>(vals))
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_write_helper<0,R,T>
-    {
-        static void write(const R& vals, T& t)
-        {
-            WRITE_MULTIPORT(std::get<0>(t), std::get<0>(vals))
-        }
-    };
-
-    template<class... T>
-    void fifo_tuple_write(const std::tuple<abst_ext<T>...>& vals,
-                             std::tuple<SY_out<T>...>& ports)
-    {
-        fifo_write_helper<sizeof...(T)-1,
-                          std::tuple<abst_ext<T>...>,
-                          std::tuple<SY_out<T>...>>::write(vals,ports);
     }
     
 #ifdef FORSYDE_INTROSPECTION
@@ -795,7 +721,7 @@ private:
     void init()
     {
         val = new abst_ext<T>;
-        WRITE_MULTIPORT(oport1, init_val)
+        WRITE_MULTIPORT(oport1, init_val);
     }
     
     void prep()
@@ -807,7 +733,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        WRITE_MULTIPORT(oport1, *val);
     }
     
     void clean()
@@ -877,7 +803,7 @@ private:
     {
         val = new abst_ext<T>;
         for (int i=0; i<ns; i++)
-            WRITE_MULTIPORT(oport1, init_val)
+            WRITE_MULTIPORT(oport1, init_val);
     }
     
     void prep()
@@ -889,7 +815,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        WRITE_MULTIPORT(oport1, *val);
     }
     
     void clean()
@@ -998,7 +924,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -1102,7 +1028,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -1180,7 +1106,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -1258,7 +1184,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        WRITE_MULTIPORT(oport1, *oval);
     }
     
     void clean()
@@ -1334,7 +1260,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, init_val)
+            WRITE_MULTIPORT(oport1, init_val);
         else wait();
     }
     
@@ -1407,7 +1333,7 @@ private:
     {
         cur_st = new abst_ext<T>;
         *cur_st = init_st;
-        WRITE_MULTIPORT(oport1, *cur_st)
+        WRITE_MULTIPORT(oport1, *cur_st);
         infinite = take==0 ? true : false;
         tok_cnt = 1;
     }
@@ -1422,7 +1348,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, *cur_st)
+            WRITE_MULTIPORT(oport1, *cur_st);
         else wait();
     }
     
@@ -1513,7 +1439,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *cur_val)
+        WRITE_MULTIPORT(oport1, *cur_val);
     }
     
     void clean()
@@ -1579,7 +1505,7 @@ private:
     {
         if (tok_cnt < in_vec.size())
         {
-            WRITE_MULTIPORT(oport1, in_vec[tok_cnt])
+            WRITE_MULTIPORT(oport1, in_vec[tok_cnt]);
             tok_cnt++;
         }
         else
@@ -1804,12 +1730,12 @@ private:
         if (ival1->is_absent() && ival2->is_absent())
         {
             
-            WRITE_MULTIPORT(oport1,abst_ext<TT>())  // write to the output 1
+            WRITE_MULTIPORT(oport1,abst_ext<TT>());  // write to the output 1
         }
         else
         {
             abst_ext<TT> oval(std::make_tuple(*ival1,*ival2));
-            WRITE_MULTIPORT(oport1,oval)  // write to the output
+            WRITE_MULTIPORT(oport1,oval);  // write to the output
         }
     }
     
@@ -1872,11 +1798,11 @@ private:
         typedef std::array<abst_ext<T1>,N> TT;
         if (std::all_of(ival.begin(), ival.end(), [](abst_ext<T1> ivalx){return ivalx.is_absent();}))
         {
-            WRITE_MULTIPORT(oport1,abst_ext<TT>())  // write to the output 1
+            WRITE_MULTIPORT(oport1,abst_ext<TT>());  // write to the output 1
         }
         else
         {
-            WRITE_MULTIPORT(oport1,abst_ext<TT>(ival))  // write to the output
+            WRITE_MULTIPORT(oport1,abst_ext<TT>(ival));  // write to the output
         }
     }
     
@@ -1926,50 +1852,41 @@ private:
     
     void prep()
     {
-        *in_vals = sc_fifo_tuple_read<Ts...>(iport);
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                ((val = port.read()), ...);
+            }, *in_vals);
+        }, iport);
     }
     
     void exec() {}
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,abst_ext<std::tuple<abst_ext<Ts>...>>(*in_vals))    // write to the output
+        WRITE_MULTIPORT(oport1,abst_ext<std::tuple<abst_ext<Ts>...>>(*in_vals));    // write to the output
     }
     
     void clean()
     {
         delete in_vals;
     }
-    
-    template<size_t N,class R,  class T>
-    struct fifo_read_helper
-    {
-        static void read(R& ret, T& t)
-        {
-            fifo_read_helper<N-1,R,T>::read(ret,t);
-            std::get<N>(ret) = std::get<N>(t).read();
-        }
-    };
 
-    template<class R, class T>
-    struct fifo_read_helper<0,R,T>
+ #ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
     {
-        static void read(R& ret, T& t)
-        {
-            std::get<0>(ret) = std::get<0>(t).read();
-        }
-    };
-
-    template<class... T>
-    std::tuple<abst_ext<T>...> sc_fifo_tuple_read(std::tuple<SY_in<T>...>& ports)
-    {
-        std::tuple<abst_ext<T>...> ret;
-        fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<abst_ext<T>...>,
-                         std::tuple<SY_in<T>...>>::read(ret,ports);
-        return ret;
+        boundInChans.resize(sizeof...(Ts));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
     }
-
+#endif
 };
 
 //! The unzip process with one input and two outputs
@@ -2014,13 +1931,13 @@ private:
     {
         if (in_val->is_absent())
         {
-            WRITE_MULTIPORT(oport1,abst_ext<T1>())  // write to the output 1
-            WRITE_MULTIPORT(oport2,abst_ext<T2>())  // write to the output 2
+            WRITE_MULTIPORT(oport1,abst_ext<T1>());  // write to the output 1
+            WRITE_MULTIPORT(oport2,abst_ext<T2>());  // write to the output 2
         }
         else
         {
-            WRITE_MULTIPORT(oport1,abst_ext<T1>(std::get<0>(in_val->unsafe_from_abst_ext())))  // write to the output 1
-            WRITE_MULTIPORT(oport2,abst_ext<T2>(std::get<1>(in_val->unsafe_from_abst_ext())))  // write to the output 2
+            WRITE_MULTIPORT(oport1,abst_ext<T1>(std::get<0>(in_val->unsafe_from_abst_ext())));  // write to the output 1
+            WRITE_MULTIPORT(oport2,abst_ext<T2>(std::get<1>(in_val->unsafe_from_abst_ext())));  // write to the output 2
         }
     }
     
@@ -2083,12 +2000,12 @@ private:
         if (in_val->is_absent())
         {
             for (size_t i=0; i<N; i++)
-                WRITE_MULTIPORT(oport[i],abst_ext<T1>())  // write to the output i
+                WRITE_MULTIPORT(oport[i],abst_ext<T1>());  // write to the output i
         }
         else
         {
             for (size_t i=0; i<N; i++)
-                WRITE_MULTIPORT(oport[i],abst_ext<T1>(in_val->unsafe_from_abst_ext()[i]))  // write to the output i
+                WRITE_MULTIPORT(oport[i],abst_ext<T1>(in_val->unsafe_from_abst_ext()[i]));  // write to the output i
         }
     }
     
@@ -2170,7 +2087,7 @@ private:
         static void write(const R& vals, T& t)
         {
             fifo_write_helper<N-1,R,T>::write(vals,t);
-            WRITE_MULTIPORT(std::get<N>(t), std::get<N>(vals))
+            WRITE_MULTIPORT(std::get<N>(t), std::get<N>(vals));
         }
     };
 
@@ -2179,7 +2096,7 @@ private:
     {
         static void write(const R& vals, T& t)
         {
-            WRITE_MULTIPORT(std::get<0>(t), std::get<0>(vals))
+            WRITE_MULTIPORT(std::get<0>(t), std::get<0>(vals));
         }
     };
 
@@ -2272,11 +2189,11 @@ private:
     {
         if (samples_took==samples)
         {
-            WRITE_MULTIPORT(oport1, abst_ext<std::vector<abst_ext<T>>>(*oval))
+            WRITE_MULTIPORT(oport1, abst_ext<std::vector<abst_ext<T>>>(*oval));
             samples_took = 0;
         }
         else
-            WRITE_MULTIPORT(oport1, abst_ext<std::vector<abst_ext<T>>>())
+            WRITE_MULTIPORT(oport1, abst_ext<std::vector<abst_ext<T>>>());
     }
     
     void clean()
@@ -2341,7 +2258,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        WRITE_MULTIPORT(oport1, *val);
     }
     
     void clean()
