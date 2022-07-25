@@ -160,7 +160,7 @@ private:
                         //~ return res;
                     //~ }
                //~ );
-        //~ WRITE_MULTIPORT(oport1, oval)
+        //~ write_multiport(oport1, oval)
         //~ time += h;
         //~ wait(time - sc_time_stamp());
         ival1 = iport1.read();
@@ -201,7 +201,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, oval)
+        write_multiport(oport1, oval)
         time += h;
         wait(time - sc_time_stamp());
     }
