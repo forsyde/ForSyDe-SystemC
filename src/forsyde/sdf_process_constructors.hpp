@@ -25,6 +25,8 @@
 #include <functional>
 #include <tuple>
 #include <vector>
+#include <initializer_list>
+
 
 #include "sdf_process.hpp"
 
@@ -1128,7 +1130,7 @@ class zip : public sdf_process
 public:
     SDF_in<T1> iport1;        ///< port for the input channel 1
     SDF_in<T2> iport2;        ///< port for the input channel 2
-    SDF_out<std::tuple<std::vector<T1>,std::vector<T2>>> oport1;///< port for the output channel
+    SDF_out<token_tuple<T1,T2>> oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input ports,
@@ -1153,29 +1155,27 @@ private:
     unsigned i1toks;
     unsigned i2toks;
     
-    // intermediate values
-    std::vector<T1> ival1;
-    std::vector<T2> ival2;
+    token_tuple<T1,T2> ival;
+
     
     void init()
     {
-        ival1.resize(i1toks);
-        ival2.resize(i2toks);
+    	ival.resize({i1toks, i2toks});
     }
     
     void prep()
     {
         for (auto i=0; i<i1toks; i++)
-            ival1[i] = iport1.read();
+            ival.get<0>(i) = iport1.read();
         for (auto i=0; i<i2toks; i++)
-            ival2[i] = iport2.read();    
+        	ival.get<1>(i) = iport2.read();
     }
     
     void exec() {}
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,std::make_tuple(ival1,ival2))  // write to the output
+        WRITE_MULTIPORT(oport1,ival)  // write to the output
     }
     
     void clean() {}
@@ -1200,15 +1200,15 @@ class zipN : public sdf_process
 {
 public:
     std::tuple <SDF_in<Ts>...> iport;///< tuple of ports for the input channels
-    SDF_out<std::tuple<std::vector<Ts>...> > oport1;///< port for the output channel
+    SDF_out<token_tuple<Ts...> > oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * zips them together and writes the results using the output port
      */
     zipN(sc_module_name _name,
-         std::vector<unsigned> in_toks)
-          :sdf_process(_name), oport1("oport1"), in_toks(in_toks)
+		 std::initializer_list<unsigned> in_toks)
+          :sdf_process(_name), oport1("oport1"), in_toks(std::vector<unsigned>(in_toks))
     {
         if (in_toks.size()!=sizeof...(Ts))
             SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
@@ -1224,16 +1224,16 @@ public:
 private:
     std::vector<unsigned> in_toks;
     // intermediate values
-    std::tuple<std::vector<Ts>...>* in_val;
+    token_tuple<Ts...>* in_val;
     
     void init()
     {
-        in_val = new std::tuple<std::vector<Ts>...>;
+        in_val = new token_tuple<Ts...>;
     }
     
     void prep()
     {
-        *in_val = sc_fifo_tuple_read<Ts...>(iport, in_toks);
+        in_val->t = sc_fifo_tuple_read<Ts...>(iport, in_toks);
     }
     
     void exec() {}
@@ -1326,7 +1326,7 @@ template <class T1, class T2>
 class unzip : public sdf_process
 {
 public:
-    SDF_in<std::tuple<std::vector<T1>,std::vector<T2>>> iport1;///< port for the input channel
+    SDF_in<token_tuple<T1,T2>> iport1;///< port for the input channel
     SDF_out<T1> oport1;        ///< port for the output channel 1
     SDF_out<T2> oport2;        ///< port for the output channel 2
 
@@ -1363,7 +1363,7 @@ private:
     
     void prep()
     {
-        *in_val = iport1.read();
+        *in_val = iport1.read().t;
     }
     
     void exec() {}
@@ -1399,7 +1399,7 @@ template <class... Ts>
 class unzipN : public sdf_process
 {
 public:
-    SDF_in<std::tuple<std::vector<Ts>...>> iport1;///< port for the input channel
+    SDF_in<token_tuple<Ts...>> iport1;///< port for the input channel
     std::tuple<SDF_out<Ts>...> oport;///< tuple of ports for the output channels
 
     //! The constructor requires the module name
@@ -1407,8 +1407,8 @@ public:
      * unzips it and writes the results using the output ports
      */
     unzipN(sc_module_name _name,
-            std::vector<unsigned> out_toks)
-          :sdf_process(_name), iport1("iport1"), out_toks(out_toks)
+            std::initializer_list<unsigned> out_toks)
+          :sdf_process(_name), iport1("iport1"), out_toks(std::vector<unsigned>(out_toks))
     {
         if (out_toks.size()!=sizeof...(Ts))
             SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
@@ -1433,7 +1433,7 @@ private:
     
     void prep()
     {
-        *in_val = iport1.read();
+        *in_val = iport1.read().t;
     }
     
     void exec() {}

@@ -23,6 +23,7 @@
  */
 
 #include <algorithm>
+#include <fstream>
 #include "rapidxml_print.hpp"
 
 #include "abssemantics.hpp"
@@ -41,6 +42,7 @@ void get_moc_and_pc(const std::string& kind, std::string& moc, std::string& pc)
     moc = kind.substr(0, kind.find(':'));
     pc = kind.substr(kind.rfind(':')+1, kind.length());
 }
+
 
 //! Abstract class used to Export a system as an XML file
 /*! This class provides basic facilities to export a ForSyDe-SystemC
@@ -94,11 +96,12 @@ public:
     /*! It initiates the translation job which is a recursive traversal
      * of the process network.
      */
+
     void traverse(sc_module* top)
     {
         // Initiate the XML file for this level of hierarchy
         xml_node<>* pn_node = init(top);
-        
+
         // Get the list of module children (ports and other processes)
         std::vector<sc_object*> children = top->get_child_objects();
         
@@ -145,7 +148,8 @@ public:
         printXML(path + name_str + std::string(".xml"));
         
     }
-    
+
+private:
     //! The init member initiates the XML DOM and performs initial settings.
     /*! 
      */
@@ -164,7 +168,7 @@ public:
         
         return pn_node;
     }
-    
+
     //! The print method writes the XML file to the output.
     /*! The XML structure is already generated, so this command only
      * checks for the availability of the output file and dumps the XML
@@ -345,6 +349,7 @@ private:
     
     //! The RapidXML DOM
     xml_document<> xml_doc;
+
     
     //! Some global constant names
     char *const_name, *const_leaf_process, *const_composite_process, 
@@ -354,7 +359,7 @@ private:
          *const_port_dir, *const_direction, *const_in, *const_out,
          *const_signal, *const_component_name, *const_argument, *const_value,
          *const_source, *const_source_port, *const_target, *const_target_port,
-         *const_bound_process, *const_bound_port;
+         *const_bound_process, *const_bound_port, *const_data_type;
     
     inline xml_node<>* allocate_append_node(xml_node<>* top, const char* name)
     {
