@@ -37,10 +37,6 @@ SC_MODULE(top)
     SDF::signal<Pfloat> e8, e10;
     SDF::signal<r_t> e12, e13, e14;
     SDF::signal<rc_t> e17;
-    SDF::signal<tuple_of_vectors<L_av_t,L_av_t>> e1_2;
-    SDF::signal<tuple_of_vectors<rav1_t,short,pvad_acf0_t,short,short>> e4_5_6_9_18;
-    SDF::signal<tuple_of_vectors<pvad_acf0_t,Pfloat>> e6_8;
-    SDF::signal<tuple_of_vectors<rvad_t,Pfloat>> e7_10;
     SDF::signal<tuple_of_vectors<r_t,r_t,r_t,short,short,rc_t,short>> e12_13_14_15_16_17_18;
     
     SC_CTOR(top)
@@ -59,27 +55,48 @@ SC_MODULE(top)
         
         SDF::make_comb("ToneDetection1", ToneDetection_func, 1, 1, e9, e17);
         
-        SDF::make_comb3("EnergyComputation1", EnergyComputation_func, 1, 1, 1, 1, e6_8, e7d, e13, e16);
-        SDF::make_unzip("EnergyComputation1_unzip", e6_8, 1, 1, e6, e8);
+        auto EnergyComputation1 = new SDF::combMN<std::tuple<pvad_acf0_t,Pfloat>,std::tuple<rvad_t,r_t,short>>(
+            "EnergyComputation1",
+            EnergyComputation_func,
+            {1,1},
+            {1,1,1}
+        );
+        std::get<0>(EnergyComputation1->iport)(e7d);
+        std::get<1>(EnergyComputation1->iport)(e13);
+        std::get<2>(EnergyComputation1->iport)(e16);
+        std::get<0>(EnergyComputation1->oport)(e6);
+        std::get<1>(EnergyComputation1->oport)(e8);
         
-        SDF::make_comb3("ACFAveraging1", ACFAveraging_func, 1, 1, 1, 1, e1_2, e12, e14, e15);
-        SDF::make_unzip("ACFAveraging1_unzip", e1_2, 1, 1, e1, e2);
+        auto ACFAveraging1 = new SDF::combMN<std::tuple<L_av_t,L_av_t>,std::tuple<r_t,r_t,short>>(
+            "ACFAveraging1",
+            ACFAveraging_func,
+            {1,1},
+            {1,1,1}
+        );
+        std::get<0>(ACFAveraging1->iport)(e12);
+        std::get<1>(ACFAveraging1->iport)(e14);
+        std::get<2>(ACFAveraging1->iport)(e15);
+        std::get<0>(ACFAveraging1->oport)(e1);
+        std::get<1>(ACFAveraging1->oport)(e2);
         
         auto PredictorValues1 = SDF::make_comb("PredictorValues1", PredictorValues_func, 1, 1, e3, e2);
         PredictorValues1->oport1(e4);
         
         SDF::make_comb2("SpectralComparison1", SpectralComparison_func, 1, 1, 1, e5, e1, e3);
         
-        //~ SDF::make_comb5("ThresholdAdaptation1", ThresholdAdaptation_func, , , , e7_10, e4, e5, e6, e9, e18);
-        auto ThresholdAdaptation1_zip = new SDF::zipN<rav1_t,short,pvad_acf0_t,short,short>("ThresholdAdaptation1_zip", {1,1,1,1,1});
-        ThresholdAdaptation1_zip->oport1(e4_5_6_9_18);
-        std::get<0>(ThresholdAdaptation1_zip->iport)(e4);
-        std::get<1>(ThresholdAdaptation1_zip->iport)(e5);
-        std::get<2>(ThresholdAdaptation1_zip->iport)(e6);
-        std::get<3>(ThresholdAdaptation1_zip->iport)(e9);
-        std::get<4>(ThresholdAdaptation1_zip->iport)(e18);
-        SDF::make_comb("ThresholdAdaptation1", ThresholdAdaptation_func, 1, 1, e7_10, e4_5_6_9_18);
-        SDF::make_unzip("ThresholdAdaptation1_unzip", e7_10, 1, 1, e7, e10);
+        auto ThresholdAdaptation1 = new SDF::combMN<std::tuple<rvad_t,Pfloat>,std::tuple<rav1_t,short,pvad_acf0_t,short,short>>(
+            "ThresholdAdaptation1",
+            ThresholdAdaptation_func,
+            {1,1},
+            {1,1,1,1,1}
+        );
+        std::get<0>(ThresholdAdaptation1->iport)(e4);
+        std::get<1>(ThresholdAdaptation1->iport)(e5);
+        std::get<2>(ThresholdAdaptation1->iport)(e6);
+        std::get<3>(ThresholdAdaptation1->iport)(e9);
+        std::get<4>(ThresholdAdaptation1->iport)(e18);
+        std::get<0>(ThresholdAdaptation1->oport)(e7);
+        std::get<1>(ThresholdAdaptation1->oport)(e10);
         
         std::array<short,9> rvad_init = {{0x6000,0,0,0,0,0,0,0,0}}; short scal_init = 7;
         SDF::make_delay("e7_init", std::make_tuple(rvad_init,scal_init), e7d, e7);
@@ -90,8 +107,6 @@ SC_MODULE(top)
         
         SDF::make_file_sink("VADFilesink1", VADFilesink_func, "sink_data.txt", e19);
         
-        // FIXME: REMOVE! only for test:
-        //~ SDF::make_sink("test_sink", [](rav1_t val){std::cout << val << std::endl;}, e4);
     }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()
