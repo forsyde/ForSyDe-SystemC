@@ -36,11 +36,17 @@ SC_MODULE(top)
             out[0] = std::get<0>(inp[0]);
         }, 1, zip_control, from_detector2);
         
-        // auto zipU1 = new UT::zipU <int, std::tuple<unsigned int, unsigned int, scenrio_func>, unsigned int>("zipU1", gamma_func_zipa, gamma_func_zipb);
+        /// -> without helper 
+        
+        /* auto zipU1 = new UT::zipU <int, std::tuple<unsigned int, unsigned int, scenrio_func>, unsigned int>("zipU1", gamma_func_zipa, gamma_func_zipb);
         // zipU1->iport1 (from_source);   
         // zipU1->iport2 (from_detector);
         // zipU1->controlport (zip_control);
-        // zipU1->oport1 (from_zip);
+         zipU1->oport1 (from_zip); 
+         */ 
+        
+        // -> Using helper 
+        
         UT::make_zipU("zipU1", gamma_func_zipa, gamma_func_zipb, from_zip, from_source, from_detector, zip_control);
         UT::make_comb ("kernels",
                         kernel_func,
