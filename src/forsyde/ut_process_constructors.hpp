@@ -1041,6 +1041,160 @@ private:
 #endif
 };
 
+//! Process constructor for a Mealy machine
+/*! This class is used to build a finite state machine of type Mealy.
+ * Given an initial state, a next-state function, and an output decoding
+ * function it creates a Mealy process.
+ */
+template<typename TO_tuple, typename TI_tuple, typename TS_tuple> class mealyMN;
+
+template <typename... TOs, typename... TIs, typename... TSs>
+class mealyMN<std::tuple<TOs...>,std::tuple<TIs...>,std::tuple<TSs...>>: public ut_process
+{
+public:
+    std::tuple<UT_in<TIs>...>  iport;///< tuple of ports for the input channels
+    std::tuple<UT_out<TOs>...> oport;///< tuple of ports for the output channels
+    
+    //! Type of the partitioning function to be passed to the process constructor
+    typedef std::function<void(std::array<size_t, sizeof...(TIs)>&,
+                                const std::tuple<TSs...>&)> gamma_functype;
+    
+    //! Type of the next-state function to be passed to the process constructor
+    typedef std::function<void(std::tuple<TSs...>&,
+                                const std::tuple<TSs...>&,
+                                const std::tuple<std::vector<TIs>...>&)> ns_functype;
+    
+    //! Type of the output-decoding function to be passed to the process constructor
+    typedef std::function<void(std::tuple<std::vector<TOs>...>&,
+                                const std::tuple<TSs...>&,
+                                const std::tuple<std::vector<TIs>...>&)> od_functype;
+    
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented functions to the input and current
+     * state and writes the results using the output port
+     */
+    mealyMN(const sc_module_name& _name,        ///< The module name
+            const gamma_functype& _gamma_func,  ///< The partitioning function
+            const ns_functype& _ns_func,        ///< The next_state function
+            const od_functype& _od_func,        ///< The output-decoding function
+            const std::tuple<TSs...>& init_st   ///< Initial state
+            ) : ut_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
+              _od_func(_od_func), init_st(init_st)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_gamma_func",func_name+std::string("_gamma_func")));
+        arg_vec.push_back(std::make_tuple("_ns_func",func_name+std::string("_ns_func")));
+        arg_vec.push_back(std::make_tuple("_od_func",func_name+std::string("_od_func")));
+        std::stringstream ss;
+        ss << init_st;
+        arg_vec.push_back(std::make_tuple("init_st",ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "UT::mealyMN";}
+    
+private:
+    //! The functions passed to the process constructor
+    gamma_functype _gamma_func;
+    ns_functype _ns_func;
+    od_functype _od_func;
+    // Initial value
+    std::tuple<TSs...> init_st;
+    // consumption rates
+    std::array<size_t, sizeof...(TOs)> otoks;
+    std::array<size_t, sizeof...(TIs)> itoks;
+    
+    // Input, output, current state, and next state variables
+    std::tuple<std::vector<TOs>...>* ovals;
+    std::tuple<TSs...>* stvals;
+    std::tuple<TSs...>* nsvals;
+    std::tuple<std::vector<TIs>...>* ivals;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        ovals = new std::tuple<std::vector<TOs>...>;
+        stvals = new std::tuple<TSs...>;
+        *stvals = init_st;
+        nsvals = new std::tuple<TSs...>;
+        ivals = new std::tuple<std::vector<TIs>...>;
+    }
+    
+    void prep()
+    {
+        _gamma_func(itoks, *stvals);    // determine how many tokens to read
+        // Size the input buffers
+        std::apply([&](auto&... ival) {
+            std::apply([&](auto&... itok) {
+                (ival.resize(itok), ...);
+            }, itoks);
+        }, *ivals);
+        // Read the input tokens
+        std::apply([&](auto&... inport) {
+            std::apply([&](auto&... ival) {
+                (
+                    [&ival,&inport](){
+                        for (auto it=ival.begin();it!=ival.end();it++)
+                            *it = inport.read();
+                    }()
+                , ...);
+            }, *ivals);
+        }, iport);
+    }
+    
+    void exec()
+    {
+        _ns_func(*nsvals, *stvals, *ivals);
+        _od_func(*ovals, *stvals, *ivals);
+        *stvals = *nsvals;
+    }
+    
+    void prod()
+    {
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (write_vec_multiport(port, val), ...);
+                (val.clear(), ...);
+            }, *ovals);
+        }, oport);
+    }
+    
+    void clean()
+    {
+        delete ivals;
+        delete ovals;
+        delete stvals;
+        delete nsvals;
+    }
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(TIs));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(sizeof...(TOs));    // output ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
+    }
+#endif
+};
+
 //! Process constructor for a constant source process
 /*! This class is used to build a souce process with constant output.
  * Its main purpose is to be used in test-benches.
