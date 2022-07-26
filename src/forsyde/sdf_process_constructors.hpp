@@ -436,6 +436,133 @@ private:
 #endif
 };
 
+//! Process constructor for a combinational process with M inputs and N outputs
+/*! similar to comb with M inputs and unzipN
+ */
+template<typename TO_tuple, typename TI_tuple> class combMN;
+
+template <typename... TOs, typename... TIs>
+class combMN<std::tuple<TOs...>,std::tuple<TIs...>> : public sdf_process
+{
+public:
+    std::tuple<SDF_in<TIs>...>  iport;///< tuple of ports for the input channels
+    std::tuple<SDF_out<TOs>...> oport;///< tuple of ports for the output channels
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(std::tuple<std::vector<TOs>...>&, 
+                                const std::tuple<std::vector<TIs>...>&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output ports
+     */
+    combMN(sc_module_name _name,      ///< process name
+          functype _func,            ///< function to be passed
+          std::array<size_t, sizeof...(TOs)> otoks, ///< consumption rate for the outputs
+          std::array<size_t, sizeof...(TIs)> itoks  ///< consumption rates for the inputs
+          ) : sdf_process(_name), otoks(otoks), itoks(itoks), _func(_func)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+        std::apply([&](auto&... args) {
+            std::size_t n{0};
+            (arg_vec.push_back(std::make_tuple("otoks"+std::to_string(n++), std::to_string(args))), ...);
+        }, otoks);
+        std::apply([&](auto&... args) {
+            std::size_t n{0};
+            (arg_vec.push_back(std::make_tuple("itoks"+std::to_string(n++), std::to_string(args))), ...);
+        }, itoks);
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SDF::combMN";}
+private:
+    // consumption rates
+    std::array<size_t, sizeof...(TOs)> otoks;
+    std::array<size_t, sizeof...(TIs)> itoks;
+    
+    // Inputs and output variables
+    std::tuple<std::vector<TOs>...> ovals;
+    std::tuple<std::vector<TIs>...> ivals;
+    
+    //! The function passed to the process constructor
+    functype _func;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        std::apply([&](auto&... oval) {
+            std::apply([&](auto&... otok) {
+                (oval.resize(otok), ...);
+            }, otoks);
+        }, ovals);
+
+        std::apply([&](auto&... ival) {
+            std::apply([&](auto&... itok) {
+                (ival.resize(itok), ...);
+            }, itoks);
+        }, ivals);
+    }
+    
+    void prep()
+    {
+        std::apply([&](auto&... inport) {
+            std::apply([&](auto&... ival) {
+                (
+                    [&ival,&inport](){
+                        for (auto it=ival.begin();it!=ival.end();it++)
+                            *it = inport.read();
+                    }()
+                , ...);
+            }, ivals);
+        }, iport);
+    }
+    
+    void exec()
+    {
+        _func(ovals, ivals);
+    }
+    
+    void prod()
+    {
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (write_vec_multiport(port, val), ...);
+            }, ovals);
+        }, oport);
+    }
+    
+    void clean() {}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(TIs));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(sizeof...(TOs));    // output ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
+    }
+#endif
+};
+
 //! Process constructor for a delay element
 /*! This class is used to build the most basic sequential process which
  * is a delay element. Given an initial value, it inserts this value at
