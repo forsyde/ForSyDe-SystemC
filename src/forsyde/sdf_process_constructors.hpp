@@ -467,14 +467,12 @@ public:
         std::string func_name = std::string(basename());
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
-        std::apply([&](auto&... args) {
-            std::size_t n{0};
-            (arg_vec.push_back(std::make_tuple("otoks"+std::to_string(n++), std::to_string(args))), ...);
-        }, otoks);
-        std::apply([&](auto&... args) {
-            std::size_t n{0};
-            (arg_vec.push_back(std::make_tuple("itoks"+std::to_string(n++), std::to_string(args))), ...);
-        }, itoks);
+        std::stringstream ss;
+        ss << itoks;
+        arg_vec.push_back(std::make_tuple("otoks",ss.str()));
+        ss.clear();
+        ss << otoks;
+        arg_vec.push_back(std::make_tuple("itoks",ss.str()));
 #endif
     }
     
@@ -1334,11 +1332,9 @@ public:
      * zips them together and writes the results using the output port
      */
     zipN(sc_module_name _name,
-         std::vector<unsigned> in_toks)
+         std::array<size_t, sizeof...(Ts)> in_toks)
           :sdf_process(_name), oport1("oport1"), in_toks(in_toks)
     {
-        if (in_toks.size()!=sizeof...(Ts))
-            SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
 #ifdef FORSYDE_INTROSPECTION
         std::stringstream ss;
         ss << in_toks;
@@ -1349,18 +1345,32 @@ public:
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "SDF::zipN";}
 private:
-    std::vector<unsigned> in_toks;
+    std::array<size_t, sizeof...(Ts)> in_toks;
     // intermediate values
     std::tuple<std::vector<Ts>...>* in_val;
     
     void init()
     {
         in_val = new std::tuple<std::vector<Ts>...>;
+        std::apply([&](auto&... ival) {
+            std::apply([&](auto&... itok) {
+                (ival.resize(itok), ...);
+            }, in_toks);
+        }, *in_val);
     }
     
     void prep()
     {
-        *in_val = sc_fifo_tuple_read<Ts...>(iport, in_toks);
+        std::apply([&](auto&... inport) {
+            std::apply([&](auto&... ival) {
+                (
+                    [&ival,&inport](){
+                        for (auto it=ival.begin();it!=ival.end();it++)
+                            *it = inport.read();
+                    }()
+                , ...);
+            }, *in_val);
+        }, iport);
     }
     
     void exec() {}
@@ -1374,73 +1384,21 @@ private:
     {
         delete in_val;
     }
-    
-    template<size_t N,class R,  class T>
-    struct fifo_read_helper
-    {
-        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
-        {
-            fifo_read_helper<N-1,R,T>::read(ret,t,itoks);
-            for (unsigned int i=0;i<itoks[N];i++)
-                std::get<N>(ret).push_back(std::get<N>(t).read());
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_read_helper<0,R,T>
-    {
-        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
-        {
-            for (unsigned int i=0;i<itoks[0];i++)
-                std::get<0>(ret).push_back(std::get<0>(t).read());
-        }
-    };
-
-    template<class... T>
-    std::tuple<std::vector<T>...> sc_fifo_tuple_read(std::tuple<SDF_in<T>...>& ports,
-                                                     const std::vector<unsigned int>& itoks)
-    {
-        std::tuple<std::vector<T>...> ret;
-        fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<std::vector<T>...>,
-                         std::tuple<SDF_in<T>...>>::read(ret,ports,itoks);
-        return ret;
-    }
 
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
         boundInChans.resize(sizeof...(Ts));    // two output ports
-        register_ports(boundInChans, iport);
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
         boundOutChans.resize(1);     // only one input port
         boundOutChans[0].port = &oport1;
-    }
-    
-    template<size_t N, class T>
-    struct register_ports_helper
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            register_ports_helper<N-1,T>::reg_port(boundChans,t);
-            boundChans[N].port = &std::get<N>(t);
-        }
-    };
-
-    template<class T>
-    struct register_ports_helper<0,T>
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            boundChans[0].port = &std::get<0>(t);
-        }
-    };
-
-    template<class... T>
-    void register_ports(std::vector<PortInfo>& boundChans,
-                             std::tuple<SDF_in<T>...>& ports)
-    {
-        register_ports_helper<sizeof...(T)-1,
-                              std::tuple<SDF_in<T>...>&>::reg_port(boundChans,ports);
     }
 #endif
 
@@ -1534,11 +1492,9 @@ public:
      * unzips it and writes the results using the output ports
      */
     unzipN(sc_module_name _name,
-            std::vector<unsigned> out_toks)
+            std::array<size_t, sizeof...(Ts)> out_toks)
           :sdf_process(_name), iport1("iport1"), out_toks(out_toks)
     {
-        if (out_toks.size()!=sizeof...(Ts))
-            SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
 #ifdef FORSYDE_INTROSPECTION
         std::stringstream ss;
         ss << out_toks;
@@ -1549,13 +1505,18 @@ public:
     //! Specifying from which process constructor is the module built
     std::string forsyde_kind() const {return "SDF::unzipN";}
 private:
-    std::vector<unsigned> out_toks;
+    std::array<size_t, sizeof...(Ts)> out_toks;
     // intermediate values
     std::tuple<std::vector<Ts>...>* in_val;
     
     void init()
     {
         in_val = new std::tuple<std::vector<Ts>...>;
+        std::apply([&](auto&... ival) {
+            std::apply([&](auto&... otok) {
+                (ival.resize(otok), ...);
+            }, out_toks);
+        }, *in_val);
     }
     
     void prep()
@@ -1567,81 +1528,34 @@ private:
     
     void prod()
     {
-        fifo_tuple_write<Ts...>(*in_val, oport);
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (write_vec_multiport(port, val), ...);
+            }, *in_val);
+        }, oport);
     }
     
     void clean()
     {
         delete in_val;
     }
-    
-    template<size_t N,class R,  class T>
-    struct fifo_write_helper
-    {
-        static void write(const R& vals, T& t)
-        {
-            fifo_write_helper<N-1,R,T>::write(vals,t);
-            for (unsigned int i=0;i<(std::get<N>(vals)).size();i++)
-                std::get<N>(t).write(std::get<N>(vals)[i]);
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_write_helper<0,R,T>
-    {
-        static void write(const R& vals, T& t)
-        {
-            for (unsigned int i=0;i<(std::get<0>(vals)).size();i++)
-                std::get<0>(t).write(std::get<0>(vals)[i]);
-        }
-    };
-
-    template<class... T>
-    void fifo_tuple_write(const std::tuple<std::vector<T>...>& vals,
-                             std::tuple<SDF_out<T>...>& ports)
-    {
-        fifo_write_helper<sizeof...(T)-1,
-                          std::tuple<std::vector<T>...>,
-                          std::tuple<SDF_out<T>...>>::write(vals,ports);
-    }
-
+ 
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
         boundOutChans.resize(sizeof...(Ts));    // two output ports
-        register_ports(boundOutChans, oport);
-    }
-    
-    template<size_t N, class T>
-    struct register_ports_helper
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            register_ports_helper<N-1,T>::reg_port(boundChans,t);
-            boundChans[N].port = &std::get<N>(t);
-        }
-    };
-
-    template<class T>
-    struct register_ports_helper<0,T>
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            boundChans[0].port = &std::get<0>(t);
-        }
-    };
-
-    template<class... T>
-    void register_ports(std::vector<PortInfo>& boundChans,
-                             std::tuple<SDF_out<T>...>& ports)
-    {
-        register_ports_helper<sizeof...(T)-1,
-                              std::tuple<SDF_out<T>...>&>::reg_port(boundChans,ports);
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
     }
 #endif
-
 };
 
 //! Process constructor for a fan-out process with one input and one output
