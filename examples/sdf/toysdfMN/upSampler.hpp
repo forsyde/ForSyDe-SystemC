@@ -15,12 +15,14 @@
 
 #include <forsyde.hpp>
 
-void upSampler_func(std::vector<double>& out1,
-                    const std::vector<double>& inp1)
+using namespace std;
+
+void upSampler_func(tuple<vector<double>>& outs,
+                    const tuple<vector<double>>& inps)
 {
 #pragma ForSyDe begin upSampler_func
-    out1[0] = inp1[0];
-    out1[1] = inp1[0];
+    std::get<0>(outs)[0] = std::get<0>(inps)[0];
+    std::get<0>(outs)[1] = std::get<0>(inps)[0];
 #pragma ForSyDe end
 }
 
