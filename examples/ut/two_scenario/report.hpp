@@ -1,16 +1,3 @@
-/**********************************************************************
-    * report.hpp -- prints the output to console                      *
-    *                                                                 *
-    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
-    *                                                                 *
-    * Purpose: Demonstration of a simple example in the untimed MoC.  *
-    *                                                                 *
-    * Usage:   amplifier example                                      *
-    *                                                                 *
-    * License: BSD3                                                   *
-    *******************************************************************/
-
-
 #ifndef REPORT_HPP
 #define REPORT_HPP
 
