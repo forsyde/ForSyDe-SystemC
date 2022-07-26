@@ -25,7 +25,7 @@ SC_MODULE(top)
     
     SC_CTOR(top)
     {
-        SDF::make_source("stimuli1", stimuli_func, 0.0, 0, src);
+        SDF::make_source("stimuli1", stimuli_func, 0.0, 20, src);
       
         SDF::make_comb("upSampler1", upSampler_func, 2, 1, upsrc, src);
 

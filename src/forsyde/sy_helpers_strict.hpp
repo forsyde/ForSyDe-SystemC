@@ -184,10 +184,45 @@ inline scombN<T0,Ts...>* make_scombN(const std::string& pName,
     std::tuple<IsIf<Ts>...>& inpsS)
 {
     auto p = new scombN<T0,Ts...>(pName.c_str(), _func);
-    
-    for(int i=0;i<sizeof...(Ts);i++)
-    	std::get<i>((*p).iport)(std::get<i>(inpsS));
+
+    std::apply([&](auto&&... port){
+        std::apply([&](auto&&... sig){
+            (port(sig), ...);
+        }, inpsS);
+    }, (*p).iport);
     (*p).oport1(outS);
+    
+    return p;
+}
+
+//! Helper function to construct a strict combMN process
+/*! This function is used to construct a process (SystemC module) and
+ * connect its input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <class... TOs, template <class> class... OsIf,
+          class... TIs, template <class> class... IsIf>
+inline scombMN<std::tuple<TOs...>,std::tuple<TIs...>>* make_scombN(
+    const std::string& pName,
+    const typename scombMN<std::tuple<TOs...>,std::tuple<TIs...>>::functype& _func,
+    std::tuple<OsIf<TOs>...>& outsS,
+    std::tuple<IsIf<TIs>...>& inpsS)
+{
+    auto p = new scombMN<std::tuple<TOs...>,std::tuple<TIs...>>(pName.c_str(), _func);
+
+    std::apply([&](auto&&... port){
+        std::apply([&](auto&&... sig){
+            (port(sig), ...);
+        }, inpsS);
+    }, (*p).iport);
+    
+    std::apply([&](auto&&... port){
+        std::apply([&](auto&&... sig){
+            (port(sig), ...);
+        }, inpsS);
+    }, (*p).iport);
     
     return p;
 }

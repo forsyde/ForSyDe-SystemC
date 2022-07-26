@@ -46,4 +46,11 @@ SC_MODULE(Top)
         
         SDF::make_sink("report1", report_func, downres);
     }
+#ifdef FORSYDE_INTROSPECTION
+    void start_of_simulation()
+    {
+        ForSyDe::XMLExport dumper("gen/");
+        dumper.traverse(this);
+    }
+#endif
 };
