@@ -6,16 +6,15 @@
 typedef std::function <std::vector<int>(const std::vector<int>&)> scenrio_func;
 
 ///!< gamma function for the zipU process of the top module
-unsigned int gamma_func_zipa (const unsigned int &ca)
+size_t gamma_func_zipa (const size_t &ca)
 {   
     return ca;
 }
 
-unsigned int gamma_func_zipb (const unsigned int &ca)
+size_t gamma_func_zipb (const size_t &ca)
 {   
     return 1;
 }
-
 
 ///<! Mealy Detector process 
 void gamma_detector_func(unsigned int& tokens, const int& state)
@@ -37,7 +36,7 @@ void next_state_detector_func(int& next_state, const int& cur_state, const std::
 void output_decode_detector_func(
     std::vector<
         std::tuple<
-            unsigned int, unsigned int, scenrio_func            
+            size_t, size_t, scenrio_func            
         >
     >& out, const int& cur_state, const std::vector<int>& inp
 )
@@ -63,11 +62,9 @@ void output_decode_detector_func(
 }
 
 ///<! Kernels Function
-
-void kernel_func(std::vector<int>& out, const std::vector<std::tuple<std::vector<int>,std::vector<std::tuple<unsigned int, unsigned int, scenrio_func>>>>& inp)
+void kernel_func(std::vector<int>& out, const std::vector<std::tuple<std::vector<int>,std::vector<std::tuple<size_t, size_t, scenrio_func>>>>& inp)
 {
     out = std::get<2>(std::get<1>(inp[0])[0])(std::get<0>(inp[0]));
-    std::cout<<"Kernel: "<<std::get<0>(inp[0])<<", "<<out[0]<<std::endl;
 }
 
 
