@@ -496,6 +496,14 @@ inline fanout<T>* make_fanout(const std::string& pName,
     return p;
 }
 
+//! Helper function to construct a zipU process
+/*! This function is used to construct a zipU process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+
 template <class T1, template <class> class I1If,
            class T2, template <class> class I2If,
            class TCS, template <class> class I3If,
