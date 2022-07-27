@@ -1754,7 +1754,7 @@ public:
     UT_in<TCS> controlport;                                      ///< port for the control signal   
     UT_out<std::tuple<std::vector<T1>,std::vector<T2>>> oport1; ///< port for the output channel
 
-    typedef std::function<size_t& (const TCS&)> gamma_functype;
+    typedef std::function<size_t (const TCS&)> gamma_functype;
 
 
     //! The constructor requires the module name
