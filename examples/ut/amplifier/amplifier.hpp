@@ -31,7 +31,7 @@ SC_MODULE(amplifier)
     
     SC_CTOR(amplifier)
     {
-        UT::make_zip("A1p", 1, 5, s1, s3, iport1);
+        UT::make_zips("A1p", 1, 5, s1, s3, iport1);
         
         auto A2p1 = UT::make_comb("A2p1", A2p_func, 1, s4, s1);
         A2p1->oport1(oport1);

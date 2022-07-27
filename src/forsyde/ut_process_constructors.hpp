@@ -1631,11 +1631,11 @@ private:
 #endif
 };
 
-//! The zip process with two inputs and one output
+//! The zips process with two inputs and one output
 /*! This process "zips" two incoming signals into one signal of tuples.
  */
 template <class T1, class T2>
-class zip : public ut_process
+class zips : public ut_process
 {
 public:
     UT_in<T1> iport1;        ///< port for the input channel 1
@@ -1646,7 +1646,7 @@ public:
     /*! It creates an SC_THREAD which reads data from its input port,
      * zips them together and writes the results using the output port
      */
-    zip(const sc_module_name& _name,
+    zips(const sc_module_name& _name,
         const unsigned int& i1toks,
         const unsigned int& i2toks
         ) : ut_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1"),
@@ -1654,7 +1654,7 @@ public:
     { }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "UT::zip";}
+    std::string forsyde_kind() const {return "UT::zips";}
     
 private:
     unsigned int i1toks, i2toks;
@@ -1697,26 +1697,24 @@ private:
 #endif
 };
 
-//! The zip process with variable number of inputs and one output
+//! The zips process with variable number of inputs and one output
 /*! This process "zips" the incoming signals into one signal of tuples.
  */
 template <class... Ts>
-class zipN : public ut_process
+class zipsN : public ut_process
 {
 public:
-    std::tuple <UT_in<Ts>...> iport;///< tuple of ports for the input channels
-    UT_out<std::tuple<std::vector<Ts>...> > oport1;///< port for the output channel
+    std::tuple <UT_in<Ts>...> iport;                ///< tuple of ports for the input channels
+    UT_out<std::tuple<std::vector<Ts>...> > oport1; ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * zips them together and writes the results using the output port
      */
-    zipN(const sc_module_name& _name,
-         const std::vector<unsigned>& in_toks)
-          :ut_process(_name), in_toks(in_toks), oport1("iport1")
+    zipsN(const sc_module_name& _name,                  ///< process name
+            std::array<size_t, sizeof...(Ts)> in_toks   ///< consumption rates for the inputs
+            ) : ut_process(_name), in_toks(in_toks), oport1("iport1")
     {
-        if (in_toks.size()!=sizeof...(Ts))
-            SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
 #ifdef FORSYDE_INTROSPECTION
         std::stringstream ss;
         ss << in_toks;
@@ -1725,20 +1723,34 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "UT::zipN";}
+    std::string forsyde_kind() const {return "UT::zipsN";}
 private:
-    std::vector<unsigned> in_toks;
+    std::array<size_t, sizeof...(Ts)> in_toks;
     // intermediate values
     std::tuple<std::vector<Ts>...>* in_val;
     
     void init()
     {
         in_val = new std::tuple<std::vector<Ts>...>;
+        std::apply([&](auto&... ival) {
+            std::apply([&](auto&... itok) {
+                (ival.resize(itok), ...);
+            }, in_toks);
+        }, *in_val);
     }
     
     void prep()
     {
-        *in_val = sc_fifo_tuple_read<Ts...>(iport, in_toks);
+        std::apply([&](auto&... inport) {
+            std::apply([&](auto&... ival) {
+                (
+                    [&ival,&inport](){
+                        for (auto it=ival.begin();it!=ival.end();it++)
+                            *it = inport.read();
+                    }()
+                , ...);
+            }, *in_val);
+        }, iport);
     }
     
     void exec() {}
@@ -1752,73 +1764,21 @@ private:
     {
         delete in_val;
     }
-    
-    template<size_t N,class R,  class T>
-    struct fifo_read_helper
-    {
-        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
-        {
-            fifo_read_helper<N-1,R,T>::read(ret,t,itoks);
-            for (unsigned int i=0;i<itoks[N];i++)
-                std::get<N>(ret).push_back(std::get<N>(t).read());
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_read_helper<0,R,T>
-    {
-        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
-        {
-            for (unsigned int i=0;i<itoks[0];i++)
-                std::get<0>(ret).push_back(std::get<0>(t).read());
-        }
-    };
-
-    template<class... T>
-    std::tuple<std::vector<T>...> sc_fifo_tuple_read(std::tuple<UT_in<T>...>& ports,
-                                                     const std::vector<unsigned int>& itoks)
-    {
-        std::tuple<std::vector<T>...> ret;
-        fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<std::vector<T>...>,
-                         std::tuple<UT_in<T>...>>::read(ret,ports,itoks);
-        return ret;
-    }
-
+ 
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
         boundInChans.resize(sizeof...(Ts));    // two output ports
-        register_ports(boundInChans, iport);
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
         boundOutChans.resize(1);     // only one input port
         boundInChans[0].port = &oport1;
-    }
-    
-    template<size_t N, class T>
-    struct register_ports_helper
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            register_ports_helper<N-1,T>::reg_port(boundChans,t);
-            boundChans[N].port = &std::get<N>(t);
-        }
-    };
-
-    template<class T>
-    struct register_ports_helper<0,T>
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            boundChans[0].port = &std::get<0>(t);
-        }
-    };
-
-    template<class... T>
-    void register_ports(std::vector<PortInfo>& boundChans,
-                             std::tuple<UT_in<T>...>& ports)
-    {
-        register_ports_helper<sizeof...(T)-1,
-                              std::tuple<UT_in<T>...>&>::reg_port(boundChans,ports);
     }
 #endif
 
@@ -1922,42 +1882,16 @@ private:
     
     void prod()
     {
-        fifo_tuple_write<Ts...>(*in_val, oport);
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (write_vec_multiport(port, val), ...);
+            }, *in_val);
+        }, oport);
     }
     
     void clean()
     {
         delete in_val;
-    }
-    
-    template<size_t N,class R,  class T>
-    struct fifo_write_helper
-    {
-        static void write(const R& vals, T& t)
-        {
-            fifo_write_helper<N-1,R,T>::write(vals,t);
-            for (unsigned int i=0;i<(std::get<N>(vals)).size();i++)
-                std::get<N>(t).write(std::get<N>(vals)[i]);
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_write_helper<0,R,T>
-    {
-        static void write(const R& vals, T& t)
-        {
-            for (unsigned int i=0;i<(std::get<0>(vals)).size();i++)
-                std::get<0>(t).write(std::get<0>(vals)[i]);
-        }
-    };
-
-    template<class... T>
-    void fifo_tuple_write(const std::tuple<std::vector<T>...>& vals,
-                             std::tuple<UT_out<T>...>& ports)
-    {
-        fifo_write_helper<sizeof...(T)-1,
-                          std::tuple<std::vector<T>...>,
-                          std::tuple<UT_out<T>...>>::write(vals,ports);
     }
 
 #ifdef FORSYDE_INTROSPECTION
@@ -1966,34 +1900,14 @@ private:
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
         boundOutChans.resize(sizeof...(Ts));    // two output ports
-        register_ports(boundOutChans, oport);
-    }
-    
-    template<size_t N, class T>
-    struct register_ports_helper
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            register_ports_helper<N-1,T>::reg_port(boundChans,t);
-            boundChans[N].port = &std::get<N>(t);
-        }
-    };
-
-    template<class T>
-    struct register_ports_helper<0,T>
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            boundChans[0].port = &std::get<0>(t);
-        }
-    };
-
-    template<class... T>
-    void register_ports(std::vector<PortInfo>& boundChans,
-                             std::tuple<UT_out<T>...>& ports)
-    {
-        register_ports_helper<sizeof...(T)-1,
-                              std::tuple<UT_out<T>...>&>::reg_port(boundChans,ports);
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
     }
 #endif
 
