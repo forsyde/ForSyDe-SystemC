@@ -20,20 +20,20 @@
 using namespace ForSyDe;
 
 void A2p_gamma_func(std::array<size_t,2>& itoks,
-                    const std::tuple<bool>& csts)
+                    const std::tuple<>& csts)
 {
     itoks[0] = 1;
     itoks[1] = 5;
 }
 
-void A2p_ns_func(std::tuple<bool>& nsts,
-                const std::tuple<bool>& csts,
+void A2p_ns_func(std::tuple<>& nsts,
+                const std::tuple<>& csts,
                 const std::tuple<std::vector<int>,std::vector<int>>& inps)
 {
 }
 
 void A2p_od_func(std::tuple<std::vector<int>>& outs,
-                const std::tuple<bool>& csts,
+                const std::tuple<>& csts,
                 const std::tuple<std::vector<int>,std::vector<int>>& inps)
 {
     auto inp1 = std::get<0>(inps);

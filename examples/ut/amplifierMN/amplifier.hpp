@@ -30,8 +30,8 @@ SC_MODULE(amplifier)
     
     SC_CTOR(amplifier)
     {
-        auto A2P1 = new UT::mealyMN<std::tuple<int>,std::tuple<int,int>,std::tuple<bool>>(
-                        "A2P1", A2p_gamma_func, A2p_ns_func, A2p_od_func, std::make_tuple(0));
+        auto A2P1 = new UT::mealyMN<std::tuple<int>,std::tuple<int,int>,std::tuple<>>(
+                        "A2P1", A2p_gamma_func, A2p_ns_func, A2p_od_func, std::make_tuple());
         std::get<0>(A2P1->iport)(s3);
         std::get<1>(A2P1->iport)(iport1);
         std::get<0>(A2P1->oport)(s4);
