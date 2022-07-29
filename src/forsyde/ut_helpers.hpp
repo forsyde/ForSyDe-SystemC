@@ -392,8 +392,8 @@ inline sink<T>* make_sink(const std::string& pName,
     return p;
 }
 
-//! Helper function to construct a zip process
-/*! This function is used to construct a zip process (SystemC module) and
+//! Helper function to construct a zips process
+/*! This function is used to construct a zips process (SystemC module) and
  * connect its output and output signals.
  * It provides a more functional style definition of a ForSyDe process.
  * It also removes bilerplate code by using type-inference feature of
@@ -402,7 +402,7 @@ inline sink<T>* make_sink(const std::string& pName,
 template <class T1, template <class> class I1If,
            class T2, template <class> class I2If,
            template <class> class OIf>
-inline zip<T1,T2>* make_zip(const std::string& pName,
+inline zips<T1,T2>* make_zips(const std::string& pName,
     const unsigned int& i1toks,
     const unsigned int& i2toks,
     OIf<std::tuple<std::vector<T1>,std::vector<T2>>>& outS,
@@ -410,7 +410,7 @@ inline zip<T1,T2>* make_zip(const std::string& pName,
     I2If<T2>& inp2S
     )
 {
-    auto p = new zip<T1,T2>(pName.c_str(), i1toks, i2toks);
+    auto p = new zips<T1,T2>(pName.c_str(), i1toks, i2toks);
     
     (*p).iport1(inp1S);
     (*p).iport2(inp2S);

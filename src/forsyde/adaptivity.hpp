@@ -33,7 +33,7 @@ namespace SY
 using namespace sc_core;
 
 // Auxilliary Macro definitions
-#define WRITE_MULTIPORT(PORT,VAL) \
+#define write_multiport(PORT,VAL) \
     for (int WMPi=0;WMPi<PORT.size();WMPi++) PORT[WMPi]->write(VAL);
 
 
@@ -77,7 +77,7 @@ private:
             in_val = iport.read();  // read from input
             cur_f = unsafe_from_abst_ext(fport.read());  // read the function
             out_val = cur_f(in_val);// do the calculation
-            WRITE_MULTIPORT(oport,out_val);    // write to the output
+            write_multiport(oport,out_val);    // write to the output
         }
     }
 };

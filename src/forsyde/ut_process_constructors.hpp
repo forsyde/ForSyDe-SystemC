@@ -105,7 +105,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, o1vals)
+        write_vec_multiport(oport1, o1vals);
         o1vals.clear();
     }
     
@@ -196,7 +196,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, o1vals)
+        write_vec_multiport(oport1, o1vals);
         o1vals.clear();
     }
     
@@ -297,7 +297,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, o1vals)
+        write_vec_multiport(oport1, o1vals);
         o1vals.clear();
     }
     
@@ -408,7 +408,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, o1vals)
+        write_vec_multiport(oport1, o1vals);
         o1vals.clear();
     }
     
@@ -476,7 +476,7 @@ private:
     void init()
     {
         val = new T;
-        WRITE_MULTIPORT(oport1, init_val)
+        write_multiport(oport1, init_val);
     }
     
     void prep()
@@ -488,7 +488,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        write_multiport(oport1, *val);
     }
     
     void clean()
@@ -556,7 +556,7 @@ private:
     {
         val = new T;
         for (unsigned int i=0; i<ns; i++)
-            WRITE_MULTIPORT(oport1, init_val)
+            write_multiport(oport1, init_val);
     }
     
     void prep()
@@ -568,7 +568,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        write_multiport(oport1, *val);
     }
     
     void clean()
@@ -669,7 +669,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *stval)
+        write_multiport(oport1, *stval);
     }
     
     void clean()
@@ -786,7 +786,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *stval)
+        write_multiport(oport1, *stval);
     }
     
     void clean()
@@ -911,7 +911,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, ovals)
+        write_vec_multiport(oport1, ovals);
         ovals.clear();
     }
     
@@ -927,6 +927,174 @@ private:
         boundInChans[0].port = &iport1;
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a Moore machine
+/*! This class is used to build a finite state machine of type Moore.
+ * Given an initial state, a next-state function, and an output decoding
+ * function it creates a Mealy process.
+ */
+template<typename TO_tuple, typename TI_tuple, typename TS_tuple> class mooreMN;
+
+template <typename... TOs, typename... TIs, typename... TSs>
+class mooreMN<std::tuple<TOs...>,std::tuple<TIs...>,std::tuple<TSs...>>: public ut_process
+{
+public:
+    std::tuple<UT_in<TIs>...>  iport;///< tuple of ports for the input channels
+    std::tuple<UT_out<TOs>...> oport;///< tuple of ports for the output channels
+    
+    //! Type of the partitioning function to be passed to the process constructor
+    typedef std::function<void(std::array<size_t, sizeof...(TIs)>&,
+                                const std::tuple<TSs...>&)> gamma_functype;
+    
+    //! Type of the next-state function to be passed to the process constructor
+    typedef std::function<void(std::tuple<TSs...>&,
+                                const std::tuple<TSs...>&,
+                                const std::tuple<std::vector<TIs>...>&)> ns_functype;
+    
+    //! Type of the output-decoding function to be passed to the process constructor
+    typedef std::function<void(std::tuple<std::vector<TOs>...>&,
+                                const std::tuple<TSs...>&)> od_functype;
+    
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented functions to the input and current
+     * state and writes the results using the output port
+     */
+    mooreMN(const sc_module_name& _name,        ///< The module name
+            const gamma_functype& _gamma_func,  ///< The partitioning function
+            const ns_functype& _ns_func,        ///< The next_state function
+            const od_functype& _od_func,        ///< The output-decoding function
+            const std::tuple<TSs...>& init_st   ///< Initial state
+            ) : ut_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
+              _od_func(_od_func), init_st(init_st)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_gamma_func",func_name+std::string("_gamma_func")));
+        arg_vec.push_back(std::make_tuple("_ns_func",func_name+std::string("_ns_func")));
+        arg_vec.push_back(std::make_tuple("_od_func",func_name+std::string("_od_func")));
+        std::stringstream ss;
+        ss << init_st;
+        arg_vec.push_back(std::make_tuple("init_st",ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "UT::mooreMN";}
+    
+private:
+    //! The functions passed to the process constructor
+    gamma_functype _gamma_func;
+    ns_functype _ns_func;
+    od_functype _od_func;
+    // Initial value
+    std::tuple<TSs...> init_st;
+    // consumption rates
+    std::array<size_t, sizeof...(TOs)> otoks;
+    std::array<size_t, sizeof...(TIs)> itoks;
+
+    bool first_run;
+    
+    // Input, output, current state, and next state variables
+    std::tuple<std::vector<TOs>...>* ovals;
+    std::tuple<TSs...>* stvals;
+    std::tuple<TSs...>* nsvals;
+    std::tuple<std::vector<TIs>...>* ivals;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        ovals = new std::tuple<std::vector<TOs>...>;
+        stvals = new std::tuple<TSs...>;
+        *stvals = init_st;
+        nsvals = new std::tuple<TSs...>;
+        ivals = new std::tuple<std::vector<TIs>...>;
+        // First evaluation cycle
+        first_run = true;
+    }
+    
+    void prep()
+    {
+        if (!first_run)
+        {
+            _gamma_func(itoks, *stvals);    // determine how many tokens to read
+            // Size the input buffers
+            std::apply([&](auto&... ival) {
+                std::apply([&](auto&... itok) {
+                    (ival.resize(itok), ...);
+                }, itoks);
+            }, *ivals);
+            // Read the input tokens
+            std::apply([&](auto&... inport) {
+                std::apply([&](auto&... ival) {
+                    (
+                        [&ival,&inport](){
+                            for (auto it=ival.begin();it!=ival.end();it++)
+                                *it = inport.read();
+                        }()
+                    , ...);
+                }, *ivals);
+            }, iport);
+        }
+    }
+    
+    void exec()
+    {
+        if (!first_run)
+        {
+            _ns_func(*nsvals, *stvals, *ivals);
+            _od_func(*ovals, *stvals);
+            *stvals = *nsvals;
+        }
+        else
+        {
+            first_run = false;
+            _od_func(*ovals, *stvals);
+        }
+    }
+    
+    void prod()
+    {
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (write_vec_multiport(port, val), ...);
+                (val.clear(), ...);
+            }, *ovals);
+        }, oport);
+    }
+    
+    void clean()
+    {
+        delete ivals;
+        delete ovals;
+        delete stvals;
+        delete nsvals;
+    }
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(TIs));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(sizeof...(TOs));    // output ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
     }
 #endif
 };
@@ -1021,7 +1189,7 @@ private:
     
     void prod()
     {
-        WRITE_VEC_MULTIPORT(oport1, ovals)
+        write_vec_multiport(oport1, ovals);
         ovals.clear();
     }
     
@@ -1037,6 +1205,160 @@ private:
         boundInChans[0].port = &iport1;
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a Mealy machine
+/*! This class is used to build a finite state machine of type Mealy.
+ * Given an initial state, a next-state function, and an output decoding
+ * function it creates a Mealy process.
+ */
+template<typename TO_tuple, typename TI_tuple, typename TS_tuple> class mealyMN;
+
+template <typename... TOs, typename... TIs, typename... TSs>
+class mealyMN<std::tuple<TOs...>,std::tuple<TIs...>,std::tuple<TSs...>>: public ut_process
+{
+public:
+    std::tuple<UT_in<TIs>...>  iport;///< tuple of ports for the input channels
+    std::tuple<UT_out<TOs>...> oport;///< tuple of ports for the output channels
+    
+    //! Type of the partitioning function to be passed to the process constructor
+    typedef std::function<void(std::array<size_t, sizeof...(TIs)>&,
+                                const std::tuple<TSs...>&)> gamma_functype;
+    
+    //! Type of the next-state function to be passed to the process constructor
+    typedef std::function<void(std::tuple<TSs...>&,
+                                const std::tuple<TSs...>&,
+                                const std::tuple<std::vector<TIs>...>&)> ns_functype;
+    
+    //! Type of the output-decoding function to be passed to the process constructor
+    typedef std::function<void(std::tuple<std::vector<TOs>...>&,
+                                const std::tuple<TSs...>&,
+                                const std::tuple<std::vector<TIs>...>&)> od_functype;
+    
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented functions to the input and current
+     * state and writes the results using the output port
+     */
+    mealyMN(const sc_module_name& _name,        ///< The module name
+            const gamma_functype& _gamma_func,  ///< The partitioning function
+            const ns_functype& _ns_func,        ///< The next_state function
+            const od_functype& _od_func,        ///< The output-decoding function
+            const std::tuple<TSs...>& init_st   ///< Initial state
+            ) : ut_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
+              _od_func(_od_func), init_st(init_st)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_gamma_func",func_name+std::string("_gamma_func")));
+        arg_vec.push_back(std::make_tuple("_ns_func",func_name+std::string("_ns_func")));
+        arg_vec.push_back(std::make_tuple("_od_func",func_name+std::string("_od_func")));
+        std::stringstream ss;
+        ss << init_st;
+        arg_vec.push_back(std::make_tuple("init_st",ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "UT::mealyMN";}
+    
+private:
+    //! The functions passed to the process constructor
+    gamma_functype _gamma_func;
+    ns_functype _ns_func;
+    od_functype _od_func;
+    // Initial value
+    std::tuple<TSs...> init_st;
+    // consumption rates
+    std::array<size_t, sizeof...(TOs)> otoks;
+    std::array<size_t, sizeof...(TIs)> itoks;
+    
+    // Input, output, current state, and next state variables
+    std::tuple<std::vector<TOs>...>* ovals;
+    std::tuple<TSs...>* stvals;
+    std::tuple<TSs...>* nsvals;
+    std::tuple<std::vector<TIs>...>* ivals;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        ovals = new std::tuple<std::vector<TOs>...>;
+        stvals = new std::tuple<TSs...>;
+        *stvals = init_st;
+        nsvals = new std::tuple<TSs...>;
+        ivals = new std::tuple<std::vector<TIs>...>;
+    }
+    
+    void prep()
+    {
+        _gamma_func(itoks, *stvals);    // determine how many tokens to read
+        // Size the input buffers
+        std::apply([&](auto&... ival) {
+            std::apply([&](auto&... itok) {
+                (ival.resize(itok), ...);
+            }, itoks);
+        }, *ivals);
+        // Read the input tokens
+        std::apply([&](auto&... inport) {
+            std::apply([&](auto&... ival) {
+                (
+                    [&ival,&inport](){
+                        for (auto it=ival.begin();it!=ival.end();it++)
+                            *it = inport.read();
+                    }()
+                , ...);
+            }, *ivals);
+        }, iport);
+    }
+    
+    void exec()
+    {
+        _ns_func(*nsvals, *stvals, *ivals);
+        _od_func(*ovals, *stvals, *ivals);
+        *stvals = *nsvals;
+    }
+    
+    void prod()
+    {
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (write_vec_multiport(port, val), ...);
+                (val.clear(), ...);
+            }, *ovals);
+        }, oport);
+    }
+    
+    void clean()
+    {
+        delete ivals;
+        delete ovals;
+        delete stvals;
+        delete nsvals;
+    }
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(TIs));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(sizeof...(TOs));    // output ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
     }
 #endif
 };
@@ -1096,7 +1418,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, init_val)
+            write_multiport(oport1, init_val);
         else wait();
     }
     
@@ -1167,7 +1489,7 @@ private:
     {
         cur_st = new T;
         *cur_st = init_st;
-        WRITE_MULTIPORT(oport1, *cur_st)
+        write_multiport(oport1, *cur_st);
         if (take==0) infinite = true;
         tok_cnt = 1;
     }
@@ -1182,7 +1504,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, *cur_st)
+            write_multiport(oport1, *cur_st);
         else wait();
     }
     
@@ -1233,7 +1555,7 @@ private:
         for (itr=in_vec.begin();itr!=in_vec.end();itr++)
         {
             OTYP out_val = *itr;
-            WRITE_MULTIPORT(oport1,out_val)    // write to the output
+            write_multiport(oport1,out_val);    // write to the output
         }
     }
 };
@@ -1309,11 +1631,11 @@ private:
 #endif
 };
 
-//! The zip process with two inputs and one output
+//! The zips process with two inputs and one output
 /*! This process "zips" two incoming signals into one signal of tuples.
  */
 template <class T1, class T2>
-class zip : public ut_process
+class zips : public ut_process
 {
 public:
     UT_in<T1> iport1;        ///< port for the input channel 1
@@ -1324,7 +1646,7 @@ public:
     /*! It creates an SC_THREAD which reads data from its input port,
      * zips them together and writes the results using the output port
      */
-    zip(const sc_module_name& _name,
+    zips(const sc_module_name& _name,
         const unsigned int& i1toks,
         const unsigned int& i2toks
         ) : ut_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1"),
@@ -1332,7 +1654,7 @@ public:
     { }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "UT::zip";}
+    std::string forsyde_kind() const {return "UT::zips";}
     
 private:
     unsigned int i1toks, i2toks;
@@ -1358,7 +1680,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,std::make_tuple(i1vals,i2vals))  // write to the output
+        write_multiport(oport1,std::make_tuple(i1vals,i2vals));  // write to the output
     }
     
     void clean() {}
@@ -1375,26 +1697,24 @@ private:
 #endif
 };
 
-//! The zip process with variable number of inputs and one output
+//! The zips process with variable number of inputs and one output
 /*! This process "zips" the incoming signals into one signal of tuples.
  */
 template <class... Ts>
-class zipN : public ut_process
+class zipsN : public ut_process
 {
 public:
-    std::tuple <UT_in<Ts>...> iport;///< tuple of ports for the input channels
-    UT_out<std::tuple<std::vector<Ts>...> > oport1;///< port for the output channel
+    std::tuple <UT_in<Ts>...> iport;                ///< tuple of ports for the input channels
+    UT_out<std::tuple<std::vector<Ts>...> > oport1; ///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * zips them together and writes the results using the output port
      */
-    zipN(const sc_module_name& _name,
-         const std::vector<unsigned>& in_toks)
-          :ut_process(_name), in_toks(in_toks), oport1("iport1")
+    zipsN(const sc_module_name& _name,                  ///< process name
+            std::array<size_t, sizeof...(Ts)> in_toks   ///< consumption rates for the inputs
+            ) : ut_process(_name), in_toks(in_toks), oport1("iport1")
     {
-        if (in_toks.size()!=sizeof...(Ts))
-            SC_REPORT_ERROR(name(),"Wrong number of production rates provided");
 #ifdef FORSYDE_INTROSPECTION
         std::stringstream ss;
         ss << in_toks;
@@ -1403,100 +1723,62 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "UT::zipN";}
+    std::string forsyde_kind() const {return "UT::zipsN";}
 private:
-    std::vector<unsigned> in_toks;
+    std::array<size_t, sizeof...(Ts)> in_toks;
     // intermediate values
     std::tuple<std::vector<Ts>...>* in_val;
     
     void init()
     {
         in_val = new std::tuple<std::vector<Ts>...>;
+        std::apply([&](auto&... ival) {
+            std::apply([&](auto&... itok) {
+                (ival.resize(itok), ...);
+            }, in_toks);
+        }, *in_val);
     }
     
     void prep()
     {
-        *in_val = sc_fifo_tuple_read<Ts...>(iport, in_toks);
+        std::apply([&](auto&... inport) {
+            std::apply([&](auto&... ival) {
+                (
+                    [&ival,&inport](){
+                        for (auto it=ival.begin();it!=ival.end();it++)
+                            *it = inport.read();
+                    }()
+                , ...);
+            }, *in_val);
+        }, iport);
     }
     
     void exec() {}
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,*in_val);    // write to the output
+        write_multiport(oport1,*in_val);    // write to the output;
     }
     
     void clean()
     {
         delete in_val;
     }
-    
-    template<size_t N,class R,  class T>
-    struct fifo_read_helper
-    {
-        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
-        {
-            fifo_read_helper<N-1,R,T>::read(ret,t,itoks);
-            for (unsigned int i=0;i<itoks[N];i++)
-                std::get<N>(ret).push_back(std::get<N>(t).read());
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_read_helper<0,R,T>
-    {
-        static void read(R& ret, T& t, const std::vector<unsigned int>& itoks)
-        {
-            for (unsigned int i=0;i<itoks[0];i++)
-                std::get<0>(ret).push_back(std::get<0>(t).read());
-        }
-    };
-
-    template<class... T>
-    std::tuple<std::vector<T>...> sc_fifo_tuple_read(std::tuple<UT_in<T>...>& ports,
-                                                     const std::vector<unsigned int>& itoks)
-    {
-        std::tuple<std::vector<T>...> ret;
-        fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<std::vector<T>...>,
-                         std::tuple<UT_in<T>...>>::read(ret,ports,itoks);
-        return ret;
-    }
-
+ 
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
         boundInChans.resize(sizeof...(Ts));    // two output ports
-        register_ports(boundInChans, iport);
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
         boundOutChans.resize(1);     // only one input port
         boundInChans[0].port = &oport1;
-    }
-    
-    template<size_t N, class T>
-    struct register_ports_helper
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            register_ports_helper<N-1,T>::reg_port(boundChans,t);
-            boundChans[N].port = &std::get<N>(t);
-        }
-    };
-
-    template<class T>
-    struct register_ports_helper<0,T>
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            boundChans[0].port = &std::get<0>(t);
-        }
-    };
-
-    template<class... T>
-    void register_ports(std::vector<PortInfo>& boundChans,
-                             std::tuple<UT_in<T>...>& ports)
-    {
-        register_ports_helper<sizeof...(T)-1,
-                              std::tuple<UT_in<T>...>&>::reg_port(boundChans,ports);
     }
 #endif
 
@@ -1542,8 +1824,8 @@ private:
     void prod()
     {
         
-        WRITE_VEC_MULTIPORT(oport1,std::get<0>(*in_val))  // write to the output 1
-        WRITE_VEC_MULTIPORT(oport2,std::get<1>(*in_val))  // write to the output 2
+        write_vec_multiport(oport1,std::get<0>(*in_val));  // write to the output 1
+        write_vec_multiport(oport2,std::get<1>(*in_val));  // write to the output 2
     }
     
     void clean()
@@ -1600,42 +1882,16 @@ private:
     
     void prod()
     {
-        fifo_tuple_write<Ts...>(*in_val, oport);
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (write_vec_multiport(port, val), ...);
+            }, *in_val);
+        }, oport);
     }
     
     void clean()
     {
         delete in_val;
-    }
-    
-    template<size_t N,class R,  class T>
-    struct fifo_write_helper
-    {
-        static void write(const R& vals, T& t)
-        {
-            fifo_write_helper<N-1,R,T>::write(vals,t);
-            for (unsigned int i=0;i<(std::get<N>(vals)).size();i++)
-                std::get<N>(t).write(std::get<N>(vals)[i]);
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_write_helper<0,R,T>
-    {
-        static void write(const R& vals, T& t)
-        {
-            for (unsigned int i=0;i<(std::get<0>(vals)).size();i++)
-                std::get<0>(t).write(std::get<0>(vals)[i]);
-        }
-    };
-
-    template<class... T>
-    void fifo_tuple_write(const std::tuple<std::vector<T>...>& vals,
-                             std::tuple<UT_out<T>...>& ports)
-    {
-        fifo_write_helper<sizeof...(T)-1,
-                          std::tuple<std::vector<T>...>,
-                          std::tuple<UT_out<T>...>>::write(vals,ports);
     }
 
 #ifdef FORSYDE_INTROSPECTION
@@ -1644,34 +1900,14 @@ private:
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
         boundOutChans.resize(sizeof...(Ts));    // two output ports
-        register_ports(boundOutChans, oport);
-    }
-    
-    template<size_t N, class T>
-    struct register_ports_helper
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            register_ports_helper<N-1,T>::reg_port(boundChans,t);
-            boundChans[N].port = &std::get<N>(t);
-        }
-    };
-
-    template<class T>
-    struct register_ports_helper<0,T>
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            boundChans[0].port = &std::get<0>(t);
-        }
-    };
-
-    template<class... T>
-    void register_ports(std::vector<PortInfo>& boundChans,
-                             std::tuple<UT_out<T>...>& ports)
-    {
-        register_ports_helper<sizeof...(T)-1,
-                              std::tuple<UT_out<T>...>&>::reg_port(boundChans,ports);
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
     }
 #endif
 
@@ -1723,7 +1959,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        write_multiport(oport1, *val);
     }
     
     void clean()

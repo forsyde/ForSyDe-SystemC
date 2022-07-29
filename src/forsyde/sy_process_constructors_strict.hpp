@@ -103,7 +103,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T0>(*oval))
+        write_multiport(oport1, abst_ext<T0>(*oval));
     }
     
     void clean()
@@ -190,7 +190,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T0>(*oval))
+        write_multiport(oport1, abst_ext<T0>(*oval));
     }
     
     void clean()
@@ -287,7 +287,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T0>(*oval))
+        write_multiport(oport1, abst_ext<T0>(*oval));
     }
     
     void clean()
@@ -392,7 +392,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T0>(*oval))
+        write_multiport(oport1, abst_ext<T0>(*oval));
     }
     
     void clean()
@@ -481,7 +481,7 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T0>(*oval))
+        write_multiport(oport1, abst_ext<T0>(*oval));
     }
 
     void clean()
@@ -497,6 +497,210 @@ private:
         	boundInChans[i].port = &iport[i];
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a strict combinational process with an array of inputs and one output
+/*! similar to comb with an array of inputs
+ */
+template <typename T0, typename... Ts>
+class scombN : public sy_process
+{
+public:
+    std::tuple <SY_in<Ts>...> iport;///< tuple of ports for the input channels
+    SY_out<T0> oport1;        ///< port for the output channel
+
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(T0&, const std::tuple<Ts...>&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output port
+     */
+    scombN(const sc_module_name& _name,      ///< process name
+           const functype& _func             ///< function to be passed
+          ) : sy_process(_name), oport1("oport1"), _func(_func)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+#endif
+    }
+
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "SY::scombN";}
+
+private:
+    // Inputs and output variables
+    T0* oval;
+    std::tuple<Ts...>* ivals;
+
+    //! The function passed to the process constructor
+    functype _func;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        oval = new T0;
+        ivals = new std::tuple<Ts...>;
+    }
+
+    void prep()
+    {
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (
+                    [&](){
+                        auto val_temp = port.read();
+                        if (is_absent(val_temp)) SC_REPORT_ERROR("scombN","Unexpected absent value received in");
+                        val = unsafe_from_abst_ext(val_temp);
+                    }()
+                , ...);
+            }, *ivals);
+        }, iport);
+    }
+
+    void exec()
+    {
+        _func(*oval, *ivals);
+    }
+
+    void prod()
+    {
+        write_multiport(oport1, abst_ext<T0>(*oval));
+    }
+
+    void clean()
+    {
+        delete oval;
+    }
+
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(Ts));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a combinational process with M inputs and N outputs
+/*! similar to comb with M inputs and an unzip with N outputs
+ */
+template<typename TO_tuple, typename TI_tuple> class scombMN;
+
+template <typename... TOs, typename... TIs>
+class scombMN<std::tuple<TOs...>,std::tuple<TIs...>> : public sy_process
+{
+public:
+    std::tuple<SY_in<TIs>...>  iport;///< tuple of ports for the input channels
+    std::tuple<SY_out<TOs>...> oport;///< tuple of ports for the output channels
+    
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(std::tuple<TOs...>&, const std::tuple<TIs...>&)> functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output port
+     */
+    scombMN(const sc_module_name& _name,      ///< process name
+           const functype& _func             ///< function to be passed
+          ) : sy_process(_name), _func(_func)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "SY::scombMN";}
+    
+private:
+    // Input and output variables
+    std::tuple<TOs...>* ovals;
+    std::tuple<TIs...>* ivals;
+    
+    //! The function passed to the process constructor
+    functype _func;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        ovals = new std::tuple<TOs...>;
+        ivals = new std::tuple<TIs...>;
+    }
+    
+    void prep()
+    {
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (
+                    [&](){
+                        auto val_temp = port.read();
+                        if (is_absent(val_temp)) SC_REPORT_ERROR("scombMN","Unexpected absent value received in");
+                        val = unsafe_from_abst_ext(val_temp);
+                    }()
+                , ...);
+            }, *ivals);
+        }, iport);
+    }
+    
+    void exec()
+    {
+        _func(*ovals, *ivals);
+    }
+    
+    void prod()
+    {
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (write_multiport(port, val), ...);
+            }, *ovals);
+        }, oport);
+    }
+    
+    void clean()
+    {
+        delete ivals;
+        delete ovals;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(TIs));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(sizeof...(TOs));    // output ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
     }
 #endif
 };
@@ -565,7 +769,7 @@ private:
     void prod()
     {
         auto tempval = abst_ext<std::array<T0,N>>(oval);
-        WRITE_MULTIPORT(oport1, tempval)
+        write_multiport(oport1, tempval);
     }
 
     void clean() {}
@@ -666,7 +870,7 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T0>(*oval))
+        write_multiport(oport1, abst_ext<T0>(*oval));
     }
 
     void clean()
@@ -754,7 +958,7 @@ private:
     void prod()
     {
         auto tempval = abst_ext<std::array<T0,N>>(oval);
-        WRITE_MULTIPORT(oport1, tempval)
+        write_multiport(oport1, tempval);
     }
 
     void clean() {}
@@ -818,7 +1022,7 @@ private:
     void init()
     {
         val = new T;
-        WRITE_MULTIPORT(oport1, abst_ext<T>(init_val))
+        write_multiport(oport1, abst_ext<T>(init_val));
     }
     
     void prep()
@@ -832,7 +1036,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T>(*val))
+        write_multiport(oport1, abst_ext<T>(*val));
     }
     
     void clean()
@@ -902,7 +1106,7 @@ private:
     {
         val = new T;
         for (int i=0; i<ns; i++)
-            WRITE_MULTIPORT(oport1, abst_ext<T>(init_val))
+            write_multiport(oport1, abst_ext<T>(init_val));
     }
     
     void prep()
@@ -916,7 +1120,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T>(*val))
+        write_multiport(oport1, abst_ext<T>(*val));
     }
     
     void clean()
@@ -1029,7 +1233,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<OT>(*oval))
+        write_multiport(oport1, abst_ext<OT>(*oval));
     }
     
     void clean()
@@ -1133,7 +1337,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<OT>(*oval))
+        write_multiport(oport1, abst_ext<OT>(*oval));
     }
     
     void clean()
@@ -1211,7 +1415,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, abst_ext<T>(init_val))
+            write_multiport(oport1, abst_ext<T>(init_val));
         else wait();
     }
     
@@ -1284,7 +1488,7 @@ private:
     {
         cur_st = new T;
         *cur_st = init_st;
-        WRITE_MULTIPORT(oport1, abst_ext<T>(*cur_st))
+        write_multiport(oport1, abst_ext<T>(*cur_st));
         infinite = take==0 ? true : false;
         tok_cnt = 1;
     }
@@ -1299,7 +1503,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, abst_ext<T>(*cur_st))
+            write_multiport(oport1, abst_ext<T>(*cur_st));
         else wait();
     }
     
@@ -1365,7 +1569,7 @@ private:
     {
         if (tok_cnt < in_vec.size())
         {
-            WRITE_MULTIPORT(oport1, abst_ext<T>(in_vec[tok_cnt]))
+            write_multiport(oport1, abst_ext<T>(in_vec[tok_cnt]));
             tok_cnt++;
         }
         else
@@ -1505,7 +1709,7 @@ private:
     void prod()
     {
         auto outval = abst_ext<std::tuple<T1,T2>>(std::make_tuple(*ival1,*ival2));
-        WRITE_MULTIPORT(oport1, outval)  // write to the output
+        write_multiport(oport1, outval);  // write to the output
     }
     
     void clean()
@@ -1569,7 +1773,7 @@ private:
     void prod()
     {
         auto oval = abst_ext<std::array<T1,N>>(ival);
-        WRITE_MULTIPORT(oport1,oval)  // write to the output
+        write_multiport(oport1,oval);  // write to the output
     }
     
     void clean() {}
@@ -1618,53 +1822,47 @@ private:
     
     void prep()
     {
-        *in_vals = sc_fifo_tuple_read<Ts...>(iport);
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (
+                    [&](){
+                        auto val_temp = port.read();
+                        if (is_absent(val_temp)) SC_REPORT_ERROR("szipN","Unexpected absent value received in");
+                        val = unsafe_from_abst_ext(val_temp);
+                    }()
+                , ...);
+            }, *in_vals);
+        }, iport);
     }
     
     void exec() {}
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,abst_ext<std::tuple<Ts...>>(*in_vals))    // write to the output
+        write_multiport(oport1,abst_ext<std::tuple<Ts...>>(*in_vals));    // write to the output
     }
     
     void clean()
     {
         delete in_vals;
     }
-    
-    template<size_t N,class R,  class T>
-    struct fifo_read_helper
-    {
-        static void read(R& ret, T& t)
-        {
-            fifo_read_helper<N-1,R,T>::read(ret,t);
-            std::get<N>(ret) = std::get<N>(t).read();
-        }
-    };
 
-    template<class R, class T>
-    struct fifo_read_helper<0,R,T>
+ #ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
     {
-        static void read(R& ret, T& t)
-        {
-            auto ival_temp = std::get<0>(t).read();
-            //~ CHECK_PRESENCE(ival_temp);
-            if (is_absent(ival_temp)) SC_REPORT_ERROR("szipN","Unexpected absent value received in");
-            std::get<0>(ret) = unsafe_from_abst_ext(ival_temp);
-        }
-    };
-
-    template<class... T>
-    std::tuple<T...> sc_fifo_tuple_read(std::tuple<SY_in<T>...>& ports)
-    {
-        std::tuple<T...> ret;
-        fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<T...>,
-                         std::tuple<SY_in<T>...>>::read(ret,ports);
-        return ret;
+        boundInChans.resize(sizeof...(Ts));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
     }
-
+#endif
 };
 
 //! The strict unzip process with one input and two outputs
@@ -1708,8 +1906,8 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,abst_ext<T1>(std::get<0>(*in_val)))  // write to the output 1
-        WRITE_MULTIPORT(oport2,abst_ext<T2>(std::get<1>(*in_val)))  // write to the output 2
+        write_multiport(oport1,abst_ext<T1>(std::get<0>(*in_val)));  // write to the output 1
+        write_multiport(oport2,abst_ext<T2>(std::get<1>(*in_val)));  // write to the output 2
     }
     
     void clean()
@@ -1770,7 +1968,7 @@ private:
     void prod()
     {
         for (size_t i=0; i<N; i++)
-            WRITE_MULTIPORT(oport[i],abst_ext<T1>(in_val->unsafe_from_abst_ext()[i]))  // write to the output i
+            write_multiport(oport[i],abst_ext<T1>(in_val->unsafe_from_abst_ext()[i]));  // write to the output i
     }
     
     void clean()
@@ -1830,76 +2028,30 @@ private:
     
     void prod()
     {
-        fifo_tuple_write<Ts...>(in_val->unsafe_from_abst_ext(), oport);
+        std::apply([&](auto&&... port){
+            (write_multiport(port, in_val->unsafe_from_abst_ext()), ...);
+        }, oport);
     }
     
     void clean()
     {
         delete in_val;
     }
-    
-    template<size_t N,class R,  class T>
-    struct fifo_write_helper
-    {
-        static void write(const R& vals, T& t)
-        {
-            fifo_write_helper<N-1,R,T>::write(vals,t);
-            std::get<N>(t).write(std::get<N>(vals));
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_write_helper<0,R,T>
-    {
-        static void write(const R& vals, T& t)
-        {
-            std::get<0>(t).write(std::get<0>(vals));
-        }
-    };
-
-    template<class... T>
-    void fifo_tuple_write(const std::tuple<T...>& vals,
-                             std::tuple<SY_out<T>...>& ports)
-    {
-        fifo_write_helper<sizeof...(T)-1,
-                          std::tuple<T...>,
-                          std::tuple<SY_out<T>...>>::write(vals,ports);
-    }
-
+ 
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
         boundInChans.resize(1);     // only one input port
         boundInChans[0].port = &iport1;
         boundOutChans.resize(sizeof...(Ts));    // two output ports
-        register_ports(boundOutChans, oport);
-    }
-    
-    template<size_t N, class T>
-    struct register_ports_helper
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            register_ports_helper<N-1,T>::reg_port(boundChans,t);
-            boundChans[N].port = &std::get<N>(t);
-        }
-    };
-
-    template<class T>
-    struct register_ports_helper<0,T>
-    {
-        static void reg_port(std::vector<PortInfo>& boundChans, T& t)
-        {
-            boundChans[0].port = &std::get<0>(t);
-        }
-    };
-
-    template<class... T>
-    void register_ports(std::vector<PortInfo>& boundChans,
-                             std::tuple<SY_out<T>...>& ports)
-    {
-        register_ports_helper<sizeof...(T)-1,
-                              std::tuple<SY_out<T>...>&>::reg_port(boundChans,ports);
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
     }
 #endif
 
@@ -1968,11 +2120,11 @@ private:
     {
         if (samples_took==samples)
         {
-            WRITE_MULTIPORT(oport1, abst_ext<std::vector<T>>(*oval))
+            write_multiport(oport1, abst_ext<std::vector<T>>(*oval));
             samples_took = 0;
         }
         else
-            WRITE_MULTIPORT(oport1, abst_ext<std::vector<T>>())
+            write_multiport(oport1, abst_ext<std::vector<T>>());
     }
     
     void clean()

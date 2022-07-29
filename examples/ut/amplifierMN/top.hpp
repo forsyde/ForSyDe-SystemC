@@ -1,8 +1,7 @@
 /**********************************************************************
-    * amplifier.hpp -- a an adaptive amplifier process                *
+    * top.hpp -- the top module and testbench for the amplifier example*
     *                                                                 *
     * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
-    *          taken from the book by Axel Jantsch (p. 114-122)       *
     *                                                                 *
     * Purpose: Demonstration of a simple example in the untimed MoC.  *
     *                                                                 *
@@ -11,35 +10,33 @@
     * License: BSD3                                                   *
     *******************************************************************/
 
-
-#ifndef AMPLIFIER_HPP
-#define AMPLIFIER_HPP
-
-#include <forsyde.hpp>
-#include "A2p.hpp"
-#include "A3p.hpp"
+#include "amplifier.hpp"
+#include "ramp.hpp"
+#include "report.hpp"
+#include <iostream>
 
 using namespace ForSyDe;
 
-SC_MODULE(amplifier)
+SC_MODULE(top)
 {
-    UT::in_port<int>  iport1;
-    UT::out_port<int> oport1;
+    UT::signal<int> src, result;
     
-    UT::signal<std::tuple<std::vector<int>,std::vector<int>>> s1;
-    UT::signal<int> s2, s3, s4;
-    
-    SC_CTOR(amplifier)
-    {
-        UT::make_zips("A1p", 1, 5, s1, s3, iport1);
+    SC_CTOR(top)
+    {        
+        UT::make_source("ramp1", ramp_func, 1, 20, src);
         
-        auto A2p1 = UT::make_comb("A2p1", A2p_func, 1, s4, s1);
-        A2p1->oport1(oport1);
-
-        UT::make_scan("A3p1", A3p_gamma_func, A3p_ns_func, 10, s2, s4);
+        auto amplifier1 = new amplifier("amplifier1");
+        amplifier1->iport1(src);
+        amplifier1->oport1(result);
         
-        UT::make_delay("A4p", 10, s3, s2);
+        UT::make_sink("report1", report_func, result);
     }
-};
-
+#ifdef FORSYDE_INTROSPECTION
+    void start_of_simulation()
+    {
+        ForSyDe::XMLExport dumper("gen/");
+        dumper.traverse(this);
+    }
 #endif
+
+};

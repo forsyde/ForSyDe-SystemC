@@ -115,7 +115,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, subsig)
+        write_multiport(oport1, subsig);
         wait(get_end_time(subsig) - sc_time_stamp());
         iter++;
         previousVal = currentVal;
@@ -195,7 +195,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, out_val)
+        write_multiport(oport1, out_val);
         wait(sampling_time - sc_time_stamp());
         sampling_time += sample_period;
     }
@@ -280,7 +280,7 @@ private:
             }
             if((samplingT >= get_start_time(f)) && (samplingT < get_end_time(f)))
             {
-                WRITE_MULTIPORT(oport1,ttn_event<T>(f(samplingT), samplingT))
+                write_multiport(oport1,ttn_event<T>(f(samplingT), samplingT));
                 wait(samplingT - sc_time_stamp());
             }
             else if(samplingT >= get_end_time(f))
@@ -290,7 +290,7 @@ private:
                     vecCTsignal.push_back(f);
                 if ((samplingT >= get_start_time(f)) && (samplingT < get_end_time(f)))
                 {
-                    WRITE_MULTIPORT(oport1,ttn_event<T>(f(samplingT), samplingT))
+                    write_multiport(oport1,ttn_event<T>(f(samplingT), samplingT));
                     wait(samplingT - sc_time_stamp());
                 }
                 else
@@ -301,7 +301,7 @@ private:
                         if(samplingType==0)
                             vecCTsignal.push_back(f);
                     }
-                    WRITE_MULTIPORT(oport1,ttn_event<T>(f(samplingT), samplingT))
+                    write_multiport(oport1,ttn_event<T>(f(samplingT), samplingT));
                     wait(samplingT - sc_time_stamp());
                 }
             }
@@ -314,7 +314,7 @@ private:
                         vecCTsignal.erase(vecCTsignal.begin());
                     else
                     {
-                        WRITE_MULTIPORT(oport1,ttn_event<T>(vecCTsignal.front()(samplingT), samplingT))
+                        write_multiport(oport1,ttn_event<T>(vecCTsignal.front()(samplingT), samplingT));
                         wait(samplingT - sc_time_stamp());
                         break;
                     }
@@ -407,7 +407,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1,ttn_event<T>(out_val, sampling_time))
+        write_multiport(oport1,ttn_event<T>(out_val, sampling_time));
         wait(sampling_time - sc_time_stamp());
         sampling_time += samp_period;
     }
@@ -509,7 +509,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, subsig)
+        write_multiport(oport1, subsig);
         wait(get_end_time(subsig) - sc_time_stamp());
         previousVal = currentVal;
         previousT = currentT;
@@ -580,7 +580,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        write_multiport(oport1, *val);
     }
     
     void clean()
@@ -648,7 +648,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T>(*val))
+        write_multiport(oport1, abst_ext<T>(*val));
     }
     
     void clean() {}
@@ -722,7 +722,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, tt_event<T>(*val,cur_time))
+        write_multiport(oport1, tt_event<T>(*val,cur_time));
         wait(cur_time - sc_time_stamp());
         cur_time += sample_period;
     }
@@ -805,7 +805,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, abst_ext<T>(*prev_val))
+        write_multiport(oport1, abst_ext<T>(*prev_val));
         cur_time += sample_period;
     }
     

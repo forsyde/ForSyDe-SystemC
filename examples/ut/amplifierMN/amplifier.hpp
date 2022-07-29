@@ -26,18 +26,22 @@ SC_MODULE(amplifier)
     UT::in_port<int>  iport1;
     UT::out_port<int> oport1;
     
-    UT::signal<std::tuple<std::vector<int>,std::vector<int>>> s1;
     UT::signal<int> s2, s3, s4;
     
     SC_CTOR(amplifier)
     {
-        UT::make_zips("A1p", 1, 5, s1, s3, iport1);
-        
-        auto A2p1 = UT::make_comb("A2p1", A2p_func, 1, s4, s1);
-        A2p1->oport1(oport1);
+        auto A2P1 = new UT::mealyMN<std::tuple<int>,std::tuple<int,int>,std::tuple<>>(
+                        "A2P1", A2p_gamma_func, A2p_ns_func, A2p_od_func, std::make_tuple());
+        std::get<0>(A2P1->iport)(s3);
+        std::get<1>(A2P1->iport)(iport1);
+        std::get<0>(A2P1->oport)(s4);
+        std::get<0>(A2P1->oport)(oport1);
 
-        UT::make_scan("A3p1", A3p_gamma_func, A3p_ns_func, 10, s2, s4);
-        
+        auto A3P1 = new UT::mealyMN<std::tuple<int>,std::tuple<int>,std::tuple<int>>(
+                        "A3P1", A3p_gamma_func, A3p_ns_func, A3p_od_func, std::make_tuple(10));
+        std::get<0>(A3P1->iport)(s4);
+        std::get<0>(A3P1->oport)(s2);
+
         UT::make_delay("A4p", 10, s3, s2);
     }
 };

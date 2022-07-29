@@ -106,7 +106,7 @@ private:
     void prod()
     {
         auto oev = ttn_event<T0>(*oval, get_time(*iev1));
-        WRITE_MULTIPORT(oport1, oev)
+        write_multiport(oport1, oev);
         // synchronization with kernel time
         wait(get_time(oev) - sc_time_stamp());
     }
@@ -226,7 +226,7 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, ttn_event<T0>(*oval,tl))
+        write_multiport(oport1, ttn_event<T0>(*oval,tl));
         wait(tl - sc_time_stamp());
     }
 
@@ -304,7 +304,7 @@ private:
     {
         ev = new ttn_event<T>;
         auto oev = ttn_event<T>(init_val, SC_ZERO_TIME);
-        WRITE_MULTIPORT(oport1, oev)
+        write_multiport(oport1, oev);
         wait(SC_ZERO_TIME);
     }
 
@@ -320,7 +320,7 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *ev)
+        write_multiport(oport1, *ev);
         wait(get_time(*ev) - sc_time_stamp());
     }
 
@@ -427,7 +427,7 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, ttn_event<OT>(*oval,get_time(*itok)+delay_time))
+        write_multiport(oport1, ttn_event<OT>(*oval,get_time(*itok)+delay_time));
     }
 
     void clean()
@@ -577,7 +577,7 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, ttn_event<OT>(*oval,tl+delay_time))
+        write_multiport(oport1, ttn_event<OT>(*oval,tl+delay_time));
         wait(tl - sc_time_stamp());
     }
 
@@ -707,7 +707,7 @@ private:
         k4 = MatrixDouble(numState,1);
 
         // initial sampling time tag
-        WRITE_MULTIPORT(oport2,ttn_event<unsigned int>(0, samplingTimeTag))
+        write_multiport(oport2,ttn_event<unsigned int>(0, samplingTimeTag));
         // read initial input
         auto in_ev = iport1.read();
         u(0,0) = unsafe_from_abst_ext(get_value(in_ev)); // FIXME: assumes non-null inputs
@@ -715,10 +715,10 @@ private:
         // calculate and write initial output
         y1 = boost::numeric::ublas::prod(c,x) + boost::numeric::ublas::prod(d,u);
         *out_ev = ttn_event<T>(y1(0,0), t);
-        WRITE_MULTIPORT(oport1, *out_ev)
+        write_multiport(oport1, *out_ev);
         // step signal
-        WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step/2))
-        WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step))
+        write_multiport(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step/2));
+        write_multiport(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step));
         u_1(0,0) = u(0,0);
         t_1 = t;
         roundingFactor = 1.0001;
@@ -754,9 +754,9 @@ private:
           x = x0;
           samplingTimeTag = t;
           // TODO: move the following line to the prod stage
-          WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(1, samplingTimeTag)) // commitment
+          write_multiport(oport2, ttn_event<unsigned int>(1, samplingTimeTag)); // commitment
           *out_ev = ttn_event<T>(y0(0,0), t);
-          WRITE_MULTIPORT(oport1, *out_ev)
+          write_multiport(oport1, *out_ev);
           u(0,0) = u0(0,0);
           u_1(0,0) = u(0,0);
           t_1 = t;
@@ -768,8 +768,8 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step/2))
-        WRITE_MULTIPORT(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step))
+        write_multiport(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step/2));
+        write_multiport(oport2, ttn_event<unsigned int>(0, samplingTimeTag+step));
     }
 
     void clean()
@@ -963,7 +963,7 @@ private:
         // calculate and write initial output
         y = boost::numeric::ublas::prod(c,x) + boost::numeric::ublas::prod(d,u);
         *out_ev = ttn_event<T>(y(0,0), t);
-        WRITE_MULTIPORT(oport1, *out_ev)
+        write_multiport(oport1, *out_ev);
         wait(t - sc_time_stamp());
         u_1(0,0) = u(0,0);
         t_1 = t;
@@ -986,7 +986,7 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *out_ev)
+        write_multiport(oport1, *out_ev);
         wait(t - sc_time_stamp());
         x_1 = x;
         u_1(0,0) = u(0,0);
@@ -1154,7 +1154,7 @@ private:
     {
         cur_st = new ttn_event<T>;
         *cur_st = init_st;
-        WRITE_MULTIPORT(oport1, *cur_st)
+        write_multiport(oport1, *cur_st);
         wait(get_time(*cur_st) - sc_time_stamp());
         if (take==0) infinite = true;
         tok_cnt = 1;
@@ -1171,7 +1171,7 @@ private:
     {
         if (tok_cnt++ < take || infinite)
         {
-            WRITE_MULTIPORT(oport1, *cur_st)
+            write_multiport(oport1, *cur_st);
             wait(get_time(*cur_st) - sc_time_stamp());
         }
         else wait();
@@ -1244,13 +1244,13 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, ttn_event<T>(abst_ext<T>(values[iter]), offsets[iter]))
+        write_multiport(oport1, ttn_event<T>(abst_ext<T>(values[iter]), offsets[iter]));
         wait(offsets[iter] - sc_time_stamp());
         iter++;
         if (iter == values.size())
         {
             // Promise no more values
-            WRITE_MULTIPORT(oport1, ttn_event<T>(abst_ext<T>(), sc_max_time()))
+            write_multiport(oport1, ttn_event<T>(abst_ext<T>(), sc_max_time()));
             wait();
         }
     }
@@ -1424,7 +1424,7 @@ private:
     void prod()
     {
         auto temp_event = ttn_event<std::tuple<abst_ext<T1>,abst_ext<T2>>>(*oval,tl);
-        WRITE_MULTIPORT(oport1,temp_event)
+        write_multiport(oport1,temp_event);
         wait(tl - sc_time_stamp());
     }
 
@@ -1526,7 +1526,7 @@ private:
     void prod()
     {
         auto temp_event = ttn_event<std::array<abst_ext<T1>,N>>(*oval,tl);
-        WRITE_MULTIPORT(oport1,temp_event)
+        write_multiport(oport1,temp_event);
         wait(tl - sc_time_stamp());
     }
 
@@ -1603,8 +1603,8 @@ private:
     void prod()
     {
         sc_time te(get_time(*in_ev));
-        WRITE_MULTIPORT(oport1,ttn_event<T1>(*out_val1,te))  // write to the output 1
-        WRITE_MULTIPORT(oport2,ttn_event<T2>(*out_val2,te))  // write to the output 2
+        write_multiport(oport1,ttn_event<T1>(*out_val1,te));  // write to the output 1
+        write_multiport(oport2,ttn_event<T2>(*out_val2,te));  // write to the output 2
     }
 
     void clean()
@@ -1689,7 +1689,7 @@ private:
     void prod()
     {
         for (size_t i=0; i<N; i++)
-            WRITE_MULTIPORT(oport[i],oevs[i])  // write to the output i
+            write_multiport(oport[i],oevs[i]);  // write to the output i
         wait(tl - sc_time_stamp());
     }
 
@@ -1757,7 +1757,7 @@ private:
 
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        write_multiport(oport1, *val);
     }
 
     void clean()

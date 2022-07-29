@@ -114,7 +114,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        write_multiport(oport1, *oval);
     }
     
     void clean()
@@ -219,7 +219,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        write_multiport(oport1, *oval);
     }
     
     void clean()
@@ -337,7 +337,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        write_multiport(oport1, *oval);
     }
     
     void clean()
@@ -464,7 +464,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *oval)
+        write_multiport(oport1, *oval);
     }
     
     void clean()
@@ -538,7 +538,7 @@ private:
     void init()
     {
         val = new abst_ext<T>;
-        WRITE_MULTIPORT(oport1, init_val)
+        write_multiport(oport1, init_val);
     }
     
     void prep()
@@ -550,7 +550,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        write_multiport(oport1, *val);
     }
     
     void clean()
@@ -618,7 +618,7 @@ private:
     {
         val = new abst_ext<T>;
         for (unsigned int i=0; i<ns; i++)
-            WRITE_MULTIPORT(oport1, abst_ext<T>())
+            write_multiport(oport1, abst_ext<T>());
     }
     
     void prep()
@@ -630,7 +630,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        write_multiport(oport1, *val);
     }
     
     void clean()
@@ -752,10 +752,10 @@ private:
     {
         // First write the required absent events to ensure casaulity
         for (unsigned int i=0; i<ti1-to1-1; i++)
-            WRITE_MULTIPORT(oport1, abst_ext<OT>())
+            write_multiport(oport1, abst_ext<OT>());
         to1 += ti1-to1-1;
         //Then write out the result
-        WRITE_VEC_MULTIPORT(oport1, ovals)
+        write_vec_multiport(oport1, ovals);
         to1 += itoks;
         // clean up the input and output vectors
         ivals.clear();
@@ -835,7 +835,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, init_val)
+            write_multiport(oport1, init_val);
         else wait();
     }
     
@@ -909,7 +909,7 @@ private:
     {
         cur_st = new abst_ext<T>;
         *cur_st = init_st;
-        WRITE_MULTIPORT(oport1, *cur_st)
+        write_multiport(oport1, *cur_st);
         if (take==0) infinite = true;
         tok_cnt = 1;
     }
@@ -924,7 +924,7 @@ private:
     void prod()
     {
         if (tok_cnt++ < take || infinite)
-            WRITE_MULTIPORT(oport1, *cur_st)
+            write_multiport(oport1, *cur_st);
         else wait();
     }
     
@@ -993,10 +993,10 @@ private:
     void prod()
     {
         if (std::get<0>(*it) > local_time)
-            WRITE_MULTIPORT(oport1, abst_ext<T>())
+            write_multiport(oport1, abst_ext<T>());
         else
         {
-            WRITE_MULTIPORT(oport1, std::get<1>(*it))
+            write_multiport(oport1, std::get<1>(*it));
             if (it != in_vec.end()-1) it++; else wait();
         }
             
@@ -1179,11 +1179,11 @@ private:
         if (ival1->is_absent() && ival2->is_absent())
         {
             typedef std::tuple<abst_ext<T1>,abst_ext<T2>> TT;
-            WRITE_MULTIPORT(oport1,abst_ext<TT>())  // write to the output 1
+            write_multiport(oport1,abst_ext<TT>());  // write to the output 1
         }
         else
         {
-            WRITE_MULTIPORT(oport1,std::make_tuple(ival1,ival2))  // write to the output
+            write_multiport(oport1,std::make_tuple(ival1,ival2));  // write to the output
         }
     }
     
@@ -1237,7 +1237,7 @@ private:
         while (1)
         {
             in_vals = sc_fifo_tuple_read<ITYPs...>(iport);
-            WRITE_MULTIPORT(oport1,in_vals)    // write to the output
+            write_multiport(oport1,in_vals);    // write to the output
         }
     }
     
@@ -1313,13 +1313,13 @@ private:
     {
         if (in_val->is_absent())
         {
-            WRITE_MULTIPORT(oport1,abst_ext<T1>())  // write to the output 1
-            WRITE_MULTIPORT(oport2,abst_ext<T2>())  // write to the output 2
+            write_multiport(oport1,abst_ext<T1>());  // write to the output 1
+            write_multiport(oport2,abst_ext<T2>());  // write to the output 2
         }
         else
         {
-            WRITE_MULTIPORT(oport1,std::get<0>(in_val->unsafe_from_abst_ext()))  // write to the output 1
-            WRITE_MULTIPORT(oport2,std::get<1>(in_val->unsafe_from_abst_ext()))  // write to the output 2
+            write_multiport(oport1,std::get<0>(in_val->unsafe_from_abst_ext()));  // write to the output 1
+            write_multiport(oport2,std::get<1>(in_val->unsafe_from_abst_ext()));  // write to the output 2
         }
     }
     
@@ -1511,7 +1511,7 @@ private:
     
     void prod()
     {
-        WRITE_MULTIPORT(oport1, *val)
+        write_multiport(oport1, *val);
     }
     
     void clean()
