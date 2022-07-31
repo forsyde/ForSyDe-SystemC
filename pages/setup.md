@@ -6,13 +6,13 @@ permalink: setup
 
 # Setting Up the ForSyDe-SystemC Modeling Environment
 
-This page provides information on how to set up the !ForSyDe-SystemC modeling library and simulate a model using it.
+This page provides information on how to set up the [ForSyDe-SystemC]({{ site.github.repository_url }}) modeling library and simulate a model using it.
 
 
 ## Prerequisites
 
 In order to model systems using ForSyDe-SystemC one would need
-- a C++ compiler with proper support for newly added C++11 features,
+- a C++ compiler with proper support for newly added C++17 features,
 - an installation of the SystemC system modeling library,
 - an installation of the Boost uBLAS library,
 - a copy of the (header only) ForSyDe-SystemC library on your system,
@@ -21,7 +21,7 @@ In order to model systems using ForSyDe-SystemC one would need
 ### The C++ Compiler 
 
 Depending on the platform of your choice, you might have different choices for the compiler.
-!ForSyDe-SystemC is mainly developed in Linux using gcc (but also tested with clang). Note that if you decide to use `gcc`, you will need a version newer or equal to `gcc4.7` and use the `-std#c++11` compiler flag.
+ForSyDe-SystemC is mainly developed in Linux using gcc (but also tested with clang). Note that if you decide to use `gcc`, you will need a version newer or equal to `gcc7` and use the `-std=c++17` compiler flag.
 
 ### The SystemC Modeling Library 
 
@@ -38,19 +38,19 @@ At the moment, ForSyDe-SystemC mainly uses the uBLAS library of Boost for matrix
 ForSyDe-SystemC is a C++ header-only library which means it does not need to be compiled during installation and linked againsted during model development.
 The reason for that is the heavy use of template classes and functions which provide type-safe polymorphism.
 After obtaining the library, either via the download section or the development code repository, it needs to be copied to a desired place on your system and referred to during compilation.
-Although there will be regular releases of the library available in the downloads section, we currently recommend using the HEAD version obtained directly from the svn code repository.
+Although there will be regular releases of the library available in the downloads section, we currently recommend using the HEAD version obtained directly from the git code repository.
 this is because ForSyDe-SystemC is actively developed and debugged and we try to keep the online tutorials synced with the latest version of the library.
 
 ### A Text Editor/IDE
 
 Any C++ code editor can used developing ForSyDe-SystemC models.
-However, we recommend choosing one which also supports recent C++11 additions to the language.
+However, we recommend choosing one which also supports recent C++17 additions to the language.
 
 ## Example Setups
 
 ### Ubuntu Linux
 
-In case you have a recent version of [http://www.ubuntu.com/ Ubuntu] installed (13.10 at the moment of writing this tutorial),
+In case you have a recent version of [Ubuntu](http://www.ubuntu.com/) installed (20.04 at the moment of writing this tutorial),
 - install the required tools needed for development using `gcc` by issuing the following command in a terminal
 
       sudo apt-get install build-essential
@@ -61,16 +61,16 @@ In case you have a recent version of [http://www.ubuntu.com/ Ubuntu] installed (
       cd systemc-<version>
       mkdir objdir
       cd objdir
-      ../configure
+      ../configure CXXFLAGS="-DSC_CPLUSPLUS=201703L -std=c++17"
       make
       make install
 
-Note that you can use the `--prefix#/your/install/dir/` switch in the configuration stage to install the libraries to a different location than the default system libraries path. In case you do this, do not forget to add the library paths during compilation and set the `LD_LIBRARY_PATH` environment variable during the execution of your models.
+Note that you can use the `--prefix=/your/install/dir/` switch in the configuration stage to install the libraries to a different location than the default system libraries path. In case you do this, do not forget to add the library paths during compilation and set the `LD_LIBRARY_PATH` environment variable during the execution of your models.
 - you can install the Boost libraries by
 
       sudo apt-get install libboost-all-dev
 
-- if you have not installed Subversion, you can install it first
+- if you have not installed git, you can install it first
 
       sudo apt-get install git
 
