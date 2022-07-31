@@ -36,460 +36,6 @@ namespace DT
 
 using namespace sc_core;
 
-//! Process constructor for a combinational process with one input and one output
-/*! This class is used to build combinational processes with one input
- * and one output. The class is parameterized for input and output
- * data-types.
- */
-template <typename T0, typename T1>
-class comb : public dt_process
-{
-public:
-    DT_in<T1>  iport1;       ///< port for the input channel
-    DT_out<T0> oport1;        ///< port for the output channel
-    
-    //! Type of the function to be passed to the process constructor
-    typedef std::function<void(T0&,const T1&)> functype;
-
-    //! The constructor requires the module name
-    /*! It creates an SC_THREAD which reads data from its input port,
-     * applies the user-imlpemented function to it and writes the
-     * results using the output port
-     */
-    comb(sc_module_name _name,      ///< process name
-         functype _func            ///< function to be passed
-         ) : dt_process(_name), iport1("iport1"), oport1("oport1"),
-             _func(_func), invoke(false)
-    {
-#ifdef FORSYDE_INTROSPECTION
-        std::string func_name = std::string(basename());
-        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
-        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
-#endif
-    }
-    
-    //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DT::comb";}
-
-private:
-    // Inputs and output variables
-    abst_ext<T0>* oval;
-    abst_ext<T1>* ival1;
-    
-    //! The function passed to the process constructor
-    functype _func;
-    
-    // whether the function should be invoked in this iteration
-    bool invoke;
-    
-    //Implementing the abstract semantics
-    void init()
-    {
-        oval = new abst_ext<T0>;
-        ival1 = new abst_ext<T1>;
-    }
-    
-    void prep()
-    {
-        auto tval1 = iport1.read();
-        if (is_present(tval1))
-        {
-            *ival1 = tval1;
-            invoke = true;
-        }
-    }
-    
-    void exec()
-    {
-        if (invoke)
-        {
-            auto tval = new T0;
-            _func(*tval, unsafe_from_abst_ext(*ival1));
-            set_val(*oval, *tval);
-            invoke = false;
-        }
-        else
-            set_abst(*oval);
-    }
-    
-    void prod()
-    {
-        write_multiport(oport1, *oval);
-    }
-    
-    void clean()
-    {
-        delete ival1;
-        delete oval;
-    }
-    
-#ifdef FORSYDE_INTROSPECTION
-    void bindInfo()
-    {
-        boundInChans.resize(1);     // only one input port
-        boundInChans[0].port = &iport1;
-        boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport1;
-    }
-#endif
-};
-
-//! Process constructor for a combinational process with two inputs and one output
-/*! similar to comb with two inputs
- */
-template <typename T0, typename T1, typename T2>
-class comb2 : public dt_process
-{
-public:
-    DT_in<T1> iport1;        ///< port for the input channel 1
-    DT_in<T2> iport2;        ///< port for the input channel 2
-    DT_out<T0> oport1;        ///< port for the output channel
-    
-    //! Type of the function to be passed to the process constructor
-    typedef std::function<void(T0&, const T1&, const T2&)> functype;
-
-    //! The constructor requires the module name
-    /*! It creates an SC_THREAD which reads data from its input ports,
-     * applies the user-imlpemented function to them and writes the
-     * results using the output port
-     */
-    comb2(sc_module_name _name,      ///< process name
-          functype _func             ///< function to be passed
-          ) : dt_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1"),
-              _func(_func)
-    {
-#ifdef FORSYDE_INTROSPECTION
-        std::string func_name = std::string(basename());
-        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
-        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
-#endif
-    }
-    
-    //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DT::comb2";}
-private:
-    // Inputs and output variables
-    abst_ext<T0>* oval;
-    abst_ext<T1>* ival1;
-    abst_ext<T2>* ival2;
-    
-    //! The function passed to the process constructor
-    functype _func;
-    
-    // whether the function should be invoked in this iteration
-    bool invoke;
-
-    //Implementing the abstract semantics
-    void init()
-    {
-        oval = new abst_ext<T0>;
-        ival1 = new abst_ext<T1>;
-        ival2 = new abst_ext<T2>;
-        invoke = false;
-    }
-    
-    void prep()
-    {
-        auto tval1 = iport1.read();
-        if (is_present(tval1))
-        {
-            *ival1 = tval1;
-            invoke = true;
-        }
-        auto tval2 = iport2.read();
-        if (is_present(tval2))
-        {
-            *ival2 = tval2;
-            invoke = true;
-        }
-    }
-    
-    void exec()
-    {
-        if (invoke)
-        {
-            auto tval = new T0;
-            _func(*tval, unsafe_from_abst_ext(*ival1), unsafe_from_abst_ext(*ival2));
-            set_val(*oval, *tval);
-            invoke = false;
-        }
-        else
-            set_abst(*oval);
-    }
-    
-    void prod()
-    {
-        write_multiport(oport1, *oval);
-    }
-    
-    void clean()
-    {
-        delete ival2;
-        delete ival1;
-        delete oval;
-    }
-    
-#ifdef FORSYDE_INTROSPECTION
-    void bindInfo()
-    {
-        boundInChans.resize(2);     // only one input port
-        boundInChans[0].port = &iport1;
-        boundInChans[1].port = &iport2;
-        boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport1;
-    }
-#endif
-};
-
-//! Process constructor for a combinational process with three inputs and one output
-/*! similar to comb with three inputs
- */
-template <typename T0, typename T1, typename T2, typename T3>
-class comb3 : public dt_process
-{
-public:
-    DT_in<T1> iport1;        ///< port for the input channel 1
-    DT_in<T2> iport2;        ///< port for the input channel 2
-    DT_in<T3> iport3;        ///< port for the input channel 3
-    DT_out<T0> oport1;        ///< port for the output channel
-    
-    //! Type of the function to be passed to the process constructor
-    typedef std::function<void(T0&, const T1&, const T2&, const T3&)> functype;
-    
-    
-    //! The constructor requires the module name
-    /*! It creates an SC_THREAD which reads data from its input ports,
-     * applies the user-imlpemented function to them and writes the
-     * results using the output port
-     */
-    comb3(sc_module_name _name,      ///< process name
-          functype _func             ///< function to be passed
-          ) : dt_process(_name), iport1("iport1"), iport2("iport2"), iport3("iport3"), 
-              oport1("oport1"), _func(_func)
-    {
-#ifdef FORSYDE_INTROSPECTION
-        std::string func_name = std::string(basename());
-        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
-        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
-#endif
-    }
-    
-    //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DT::comb3";}
-    
-private:
-    // Inputs and output variables
-    abst_ext<T0>* oval;
-    abst_ext<T1>* ival1;
-    abst_ext<T2>* ival2;
-    abst_ext<T3>* ival3;
-
-    //! The function passed to the process constructor
-    functype _func;
-
-    bool invoke;
-    
-    //Implementing the abstract semantics
-    void init()
-    {
-        oval = new abst_ext<T0>;
-        ival1 = new abst_ext<T1>;
-        ival2 = new abst_ext<T2>;
-        ival3 = new abst_ext<T3>;
-        invoke = false;
-    }
-    
-    void prep()
-    {
-        auto tval1 = iport1.read();
-        if (is_present(tval1))
-        {
-            *ival1 = tval1;
-            invoke = true;
-        }
-        auto tval2 = iport2.read();
-        if (is_present(tval2))
-        {
-            *ival2 = tval2;
-            invoke = true;
-        }
-        auto tval3 = iport3.read();
-        if (is_present(tval3))
-        {
-            *ival3 = tval3;
-            invoke = true;
-        }
-    }
-    
-    void exec()
-    {
-        if (invoke)
-        {
-            auto tval = new T0;
-            _func(*tval, unsafe_from_abst_ext(*ival1), unsafe_from_abst_ext(*ival2),
-                         unsafe_from_abst_ext(*ival3));
-            set_val(*oval, *tval);
-            invoke = false;
-        }
-        else
-            set_abst(*oval);
-    }
-    
-    void prod()
-    {
-        write_multiport(oport1, *oval);
-    }
-    
-    void clean()
-    {
-        delete ival3;
-        delete ival2;
-        delete ival1;
-        delete oval;
-    }
-    
-#ifdef FORSYDE_INTROSPECTION
-    void bindInfo()
-    {
-        boundInChans.resize(3);     // only one input port
-        boundInChans[0].port = &iport1;
-        boundInChans[1].port = &iport2;
-        boundInChans[2].port = &iport3;
-        boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport1;
-    }
-#endif
-};
-
-//! Process constructor for a combinational process with four inputs and one output
-/*! similar to comb with four inputs
- */
-template <typename T0, typename T1, typename T2, typename T3, typename T4>
-class comb4 : public dt_process
-{
-public:
-    DT_in<T1> iport1;       ///< port for the input channel 1
-    DT_in<T2> iport2;       ///< port for the input channel 2
-    DT_in<T3> iport3;       ///< port for the input channel 3
-    DT_in<T4> iport4;       ///< port for the input channel 4
-    DT_out<T0> oport1;        ///< port for the output channel
-    
-    //! Type of the function to be passed to the process constructor
-    typedef std::function<void(T0&, const T1&, const T2&, const T3&, const T4&)> functype;
-    //! The constructor requires the module name
-    /*! It creates an SC_THREAD which reads data from its input ports,
-     * applies the user-imlpemented function to them and writes the
-     * results using the output port
-     */
-    comb4(sc_module_name _name,      ///< process name
-          functype _func             ///< function to be passed
-          ) : dt_process(_name), iport1("iport1"), iport2("iport2"), 
-              iport3("iport3"), iport4("iport4"), _func(_func)
-    {
-#ifdef FORSYDE_INTROSPECTION
-        std::string func_name = std::string(basename());
-        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
-        arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
-#endif
-    }
-    
-    //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const{return "DT::comb4";}
-    
-private:
-    // Inputs and output variables
-    abst_ext<T0>* oval;
-    abst_ext<T1>* ival1;
-    abst_ext<T2>* ival2;
-    abst_ext<T3>* ival3;
-    abst_ext<T4>* ival4;
-    
-    //! The function passed to the process constructor
-    functype _func;
-    
-    bool invoke;
-    
-    //Implementing the abstract semantics
-    void init()
-    {
-        oval = new abst_ext<T0>;
-        ival1 = new abst_ext<T1>;
-        ival2 = new abst_ext<T2>;
-        ival3 = new abst_ext<T3>;
-        ival4 = new abst_ext<T4>;
-        invoke = false;
-    }
-    
-    void prep()
-    {
-        auto tval1 = iport1.read();
-        if (is_present(tval1))
-        {
-            *ival1 = tval1;
-            invoke = true;
-        }
-        auto tval2 = iport2.read();
-        if (is_present(tval2))
-        {
-            *ival2 = tval2;
-            invoke = true;
-        }
-        auto tval3 = iport3.read();
-        if (is_present(tval3))
-        {
-            *ival3 = tval3;
-            invoke = true;
-        }
-        auto tval4 = iport4.read();
-        if (is_present(tval4))
-        {
-            *ival4 = tval4;
-            invoke = true;
-        }
-    }
-    
-    void exec()
-    {
-        if (invoke)
-        {
-            auto tval = new T0;
-            _func(*tval, unsafe_from_abst_ext(*ival1), unsafe_from_abst_ext(*ival2),
-                         unsafe_from_abst_ext(*ival3), unsafe_from_abst_ext(*ival4));
-            set_val(*oval, *tval);
-            invoke = false;
-        }
-        else
-            set_abst(*oval);
-    }
-    
-    void prod()
-    {
-        write_multiport(oport1, *oval);
-    }
-    
-    void clean()
-    {
-        delete ival4;
-        delete ival3;
-        delete ival2;
-        delete ival1;
-        delete oval;
-    }
-    
-#ifdef FORSYDE_INTROSPECTION
-    void bindInfo()
-    {
-        boundInChans.resize(4);     // only one input port
-        boundInChans[0].port = &iport1;
-        boundInChans[1].port = &iport2;
-        boundInChans[2].port = &iport3;
-        boundInChans[3].port = &iport4;
-        boundOutChans.resize(1);    // only one output port
-        boundOutChans[0].port = &oport1;
-    }
-#endif
-};
-
 //! Process constructor for a delay element
 /*! This class is used to build the most basic sequential process which
  * is a delay element. Given an initial value, it inserts this value at
@@ -648,20 +194,20 @@ private:
 #endif
 };
 
-//! Process constructor for a MealyT machine
+//! Process constructor for a mealy machine
 /*! This class is used to build a timed Mealy state machine.
  * Given a partitioning function, a next-state function, an output decoding
  * function, and an initial state, it creates a timed Mealy process.
  */
 template <class IT, class ST, class OT>
-class mealyT : public dt_process
+class mealy : public dt_process
 {
 public:
     DT_in<IT>  iport1;        ///< port for the input channel
     DT_out<OT> oport1;        ///< port for the output channel
     
     //! Type of the partitioning function to be passed to the process constructor
-    typedef std::function<void(unsigned int&, const ST&)> p_functype;
+    typedef std::function<void(size_t&, const ST&)> gamma_functype;
     
     //! Type of the next-state function to be passed to the process constructor
     typedef std::function<void(ST&, 
@@ -678,11 +224,11 @@ public:
      * applies the user-imlpemented functions to the input and current
      * state and writes the results using the output port
      */
-    mealyT(sc_module_name _name,  ///< The module name
-           p_functype gamma,     ///< The input partitioning function
-           ns_functype _ns_func, ///< The next_state function
-           od_functype _od_func, ///< The output-decoding function
-           ST init_st             ///< Initial state
+    mealy(sc_module_name _name,    ///< The module name
+           gamma_functype gamma,    ///< The input partitioning function
+           ns_functype _ns_func,    ///< The next_state function
+           od_functype _od_func,    ///< The output-decoding function
+           ST init_st               ///< Initial state
           ) : dt_process(_name), gamma(gamma), _ns_func(_ns_func),
               _od_func(_od_func), init_st(init_st)
     {
@@ -699,11 +245,11 @@ public:
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const{return "DT::mealyT";}
+    std::string forsyde_kind() const{return "DT::mealy";}
     
 private:    
     //! The functions passed to the process constructor
-    p_functype gamma;
+    gamma_functype gamma;
     ns_functype _ns_func;
     od_functype _od_func;
     
@@ -716,18 +262,18 @@ private:
     ST* nsval;
     std::vector<abst_ext<OT>> ovals;
     
-    unsigned int itoks;
+    size_t itoks;
 
     // Whether the function should be invoked in this iteration
     bool invoke;
     
     // The current input/output time
-    unsigned long ti1, to1;
+    size_t k;
     
     //Implementing the abstract semantics
     void init()
     {
-        ti1 = to1 = 0;
+        k = 0;
         stval = new ST;
         *stval = init_st;
         nsval = new ST;
@@ -736,9 +282,13 @@ private:
     void prep()
     {
         gamma(itoks, *stval);
-        for (unsigned int i=0; i<itoks; i++)
-            ivals.push_back(iport1.read());
-        ti1 += itoks;
+        ivals.resize(itoks);
+        ovals.resize(itoks);
+        for (size_t i=0; i<itoks; i++)
+            ivals[i] = iport1.read();
+        ovals.resize(itoks);
+        // update k with the number of tokens read
+        k += itoks;
     }
     
     void exec()
@@ -750,14 +300,17 @@ private:
     
     void prod()
     {
-        // First write the required absent events to ensure casaulity
-        for (unsigned int i=0; i<ti1-to1-1; i++)
+        // First write the required k-1 absent events to ensure casaulity
+        for (size_t i=0; i<k-1; i++)
             write_multiport(oport1, abst_ext<OT>());
-        to1 += ti1-to1-1;
-        //Then write out the result
+
+        // Then write out the result
         write_vec_multiport(oport1, ovals);
-        to1 += itoks;
-        // clean up the input and output vectors
+
+        // update k with the number of tokens written
+        k -= ((k-1) + itoks);
+        
+        // clean up the input and output vectors (not necessary)
         ivals.clear();
         ovals.clear();
     }
@@ -774,6 +327,199 @@ private:
         boundInChans[0].port = &iport1;
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a Mealy machine
+/*! This class is used to build a finite state machine of type Mealy.
+ * Given an initial state, a next-state function, and an output decoding
+ * function it creates a Mealy process.
+ */
+template<typename TO_tuple, typename TI_tuple, typename TS_tuple> class mealyMN;
+
+template <typename... TOs, typename... TIs, typename... TSs>
+class mealyMN<std::tuple<TOs...>,std::tuple<TIs...>,std::tuple<TSs...>>: public dt_process
+{
+public:
+    std::tuple<DT_in<TIs>...>  iport;///< tuple of ports for the input channels
+    std::tuple<DT_out<TOs>...> oport;///< tuple of ports for the output channels
+    
+    //! Type of the partitioning function to be passed to the process constructor
+    typedef std::function<void(size_t&,
+                                const std::tuple<TSs...>&)> gamma_functype;
+    
+    //! Type of the next-state function to be passed to the process constructor
+    typedef std::function<void(std::tuple<TSs...>&,
+                                const std::tuple<TSs...>&,
+                                const std::tuple<std::vector<abst_ext<TIs>>...>&)> ns_functype;
+    
+    //! Type of the output-decoding function to be passed to the process constructor
+    typedef std::function<void(std::tuple<std::vector<abst_ext<TOs>>...>&,
+                                const std::tuple<TSs...>&,
+                                const std::tuple<std::vector<abst_ext<TIs>>...>&)> od_functype;
+    
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * applies the user-imlpemented functions to the input and current
+     * state and writes the results using the output port
+     */
+    mealyMN(const sc_module_name& _name,        ///< The module name
+            const gamma_functype& _gamma_func,  ///< The partitioning function
+            const ns_functype& _ns_func,        ///< The next_state function
+            const od_functype& _od_func,        ///< The output-decoding function
+            const std::tuple<TSs...>& init_st   ///< Initial state
+            ) : dt_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
+              _od_func(_od_func), init_st(init_st)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("_gamma_func",func_name+std::string("_gamma_func")));
+        arg_vec.push_back(std::make_tuple("_ns_func",func_name+std::string("_ns_func")));
+        arg_vec.push_back(std::make_tuple("_od_func",func_name+std::string("_od_func")));
+        std::stringstream ss;
+        ss << init_st;
+        arg_vec.push_back(std::make_tuple("init_st",ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const{return "DT::mealyMN";}
+    
+private:
+    //! The functions passed to the process constructor
+    gamma_functype _gamma_func;
+    ns_functype _ns_func;
+    od_functype _od_func;
+    // Initial value
+    std::tuple<TSs...> init_st;
+    // consumption rates
+    size_t itoks;
+    
+    // Input, output, current state, and next state variables
+    std::tuple<std::vector<abst_ext<TOs>>...>* ovals;
+    std::tuple<TSs...>* stvals;
+    std::tuple<TSs...>* nsvals;
+    std::tuple<std::vector<abst_ext<TIs>>...>* ivals;
+
+    // The current input/output time
+    size_t k;
+    // std::array<size_t, sizeof...(TIs)> tis;
+    // std::array<size_t, sizeof...(TOs)> tos;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        k = 0;
+        // std::fill_n(tis.begin(), sizeof...(TIs), 0);
+        // std::fill_n(tos.begin(), sizeof...(TOs), 0);
+        ovals = new std::tuple<std::vector<abst_ext<TOs>>...>;
+        stvals = new std::tuple<TSs...>;
+        *stvals = init_st;
+        nsvals = new std::tuple<TSs...>;
+        ivals = new std::tuple<std::vector<abst_ext<TIs>>...>;
+    }
+    
+    void prep()
+    {
+        _gamma_func(itoks, *stvals);    // determine how many tokens to read
+        // Size the input and output buffers
+        std::apply([&](auto&... ival) {
+            (ival.resize(itoks), ...);
+        }, *ivals);
+        std::apply([&](auto&... oval) {
+            (oval.resize(itoks), ...);
+        }, *ovals);
+        // Read the input tokens
+        std::apply([&](auto&... inport) {
+            std::apply([&](auto&... ival) {
+                (
+                    [&ival,&inport](){
+                        for (auto it=ival.begin();it!=ival.end();it++)
+                            *it = inport.read();
+                    }()
+                , ...);
+            }, *ivals);
+        }, iport);
+        // update input times with the number of tokens read
+        k += itoks;
+        // for (auto i=0;i<sizeof...(TIs);i++)
+        //     tis[i] += itoks[i];
+    }
+    
+    void exec()
+    {
+        _ns_func(*nsvals, *stvals, *ivals);
+        _od_func(*ovals, *stvals, *ivals);
+        *stvals = *nsvals;
+    }
+    
+    void prod()
+    {
+        // auto min_ti = *std::min_element(tis.begin(), tis.end());
+        // First write the required absent events to ensure casaulity
+        std::apply([&](auto&... oport) {
+            std::apply([&](auto&&... val){
+                (
+                    [&oport,this](){
+                        for (size_t i=0;i<k-1;i++)
+                        {   using T = std::decay_t<decltype(val[0])>;
+                            write_multiport(oport, T());
+                        }
+                    }()
+                , ...);
+            }, *ovals);
+        }, oport);
+        // Then write out the result
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                (write_vec_multiport(port, val), ...);
+                (val.clear(), ...);
+            }, *ovals);
+        }, oport);
+        // update k with the number of tokens written
+        k -= ((k-1) + itoks);
+    }
+    
+    void clean()
+    {
+        delete ivals;
+        delete ovals;
+        delete stvals;
+        delete nsvals;
+    }
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(TIs));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        [&]()
+        {
+            std::size_t n{0};
+            ((boundInChans[n++].portType = typeid(TIs).name()),...);
+        }();
+        boundOutChans.resize(sizeof...(TOs));    // output ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
+        [&]()
+        {
+            std::size_t n{0};
+            ((boundOutChans[n++].portType = typeid(TOs).name()),...);
+        }();
     }
 #endif
 };
@@ -960,7 +706,7 @@ public:
      * port.
      */
     vsource(sc_module_name _name,           ///< The module name
-            const std::vector<std::tuple<unsigned int,T>>& in_vec  ///< Initial vector
+            const std::vector<std::tuple<size_t,T>>& in_vec  ///< Initial vector
             ) : dt_process(_name), in_vec(in_vec)
     {
 #ifdef FORSYDE_INTROSPECTION
@@ -974,10 +720,10 @@ public:
     std::string forsyde_kind() const {return "DT::vsource";}
     
 private:
-    std::vector<std::tuple<unsigned int,T>> in_vec;
+    std::vector<std::tuple<size_t,T>> in_vec;
     
-    typename std::vector<std::tuple<unsigned int,T>>::iterator it;
-    unsigned int local_time;
+    typename std::vector<std::tuple<size_t,T>>::iterator it;
+    size_t local_time;
     
     //Implementing the abstract semantics
     void init()
@@ -1133,65 +879,68 @@ private:
     }
 };
 
-//! The zip process with two inputs and one output
+//! The zips process with two inputs and one output
 /*! This process "zips" two incoming signals into one signal of tuples.
  */
 template <class T1, class T2>
-class zip : public dt_process
+class zips : public dt_process
 {
 public:
     DT_in<T1> iport1;        ///< port for the input channel 1
     DT_in<T2> iport2;        ///< port for the input channel 2
-    DT_out<std::tuple<abst_ext<T1>,abst_ext<T2>>> oport1;///< port for the output channel
+    DT_out<std::tuple<std::vector<abst_ext<T1>>,std::vector<abst_ext<T2>>>> oport1;///< port for the output channel
 
     //! The constructor requires the module name
     /*! It creates an SC_THREAD which reads data from its input port,
      * zips them together and writes the results using the output port
      */
-    zip(sc_module_name _name)
-         :dt_process(_name), iport1("iport1"), iport2("iport2"), oport1("oport1")
+    zips(sc_module_name _name,  ///< The module name
+        size_t itoks            ///< The input/output token rate
+        ): dt_process(_name),
+        iport1("iport1"), iport2("iport2"), oport1("oport1"), itoks(itoks)
     { }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "DT::zip";}
+    std::string forsyde_kind() const {return "DT::zips";}
     
 private:
     // intermediate values
-    abst_ext<T1>* ival1;
-    abst_ext<T1>* ival2;
+    std::vector<abst_ext<T1>> ival1;
+    std::vector<abst_ext<T2>> ival2;
+
+    size_t itoks;
     
     void init()
     {
-        ival1 = new abst_ext<T1>;
-        ival2 = new abst_ext<T2>;
+        ival1.resize(itoks);
+        ival2.resize(itoks);
     }
     
     void prep()
     {
-        *ival1 = iport1.read();
-        *ival2 = iport2.read();
+        for (size_t i=0;i<itoks;i++)
+        {
+            ival1[i] = iport1.read();
+            ival2[i] = iport2.read();
+        }
     }
     
     void exec() {}
     
     void prod()
     {
-        if (ival1->is_absent() && ival2->is_absent())
-        {
-            typedef std::tuple<abst_ext<T1>,abst_ext<T2>> TT;
-            write_multiport(oport1,abst_ext<TT>());  // write to the output 1
-        }
-        else
-        {
-            write_multiport(oport1,std::make_tuple(ival1,ival2));  // write to the output
-        }
+        // write sufficient absent events to the output to ensure causality
+        for (size_t i=0;i<itoks-1;i++)
+            write_multiport(oport1,
+                abst_ext<std::tuple<std::vector<abst_ext<T1>>,std::vector<abst_ext<T2>>>>()
+            );
+        
+        // Write the zipped output
+        write_multiport(oport1,std::make_tuple(ival1,ival2));
     }
     
     void clean()
-    {
-        delete ival1;
-        delete ival2;
-    }
+    {}
     
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
@@ -1208,68 +957,214 @@ private:
 #endif
 };
 
+//! The zip process with two data inputs, one control input, and one output
+/*! This process "zips" two incoming signals into one signal of tuples.
+ */
+template <class T1, class T2, class TC>
+class zip : public dt_process
+{
+public:
+    DT_in<T1> iport1;       ///< port for the input channel 1
+    DT_in<T2> iport2;       ///< port for the input channel 2
+    DT_in<TC> iport3;   ///< port for the control channel
+    DT_out<std::tuple<std::vector<abst_ext<T1>>,std::vector<abst_ext<T2>>>> oport1;///< port for the output channel
+
+    //! Type of the partitioning function to be passed to the process constructor
+    typedef std::function<void(size_t&, const TC&)> gamma_functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input ports,
+     * zips them together and writes the results using the output port
+     */
+    zip(sc_module_name _name,   ///< The module name
+        gamma_functype gamma    ///< The input partitioning function
+    ): dt_process(_name), iport1("iport1"),
+        iport2("iport2"), iport3("iport3"), oport1("oport1"), gamma(gamma)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("gamma",func_name+std::string("_gamma")));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "DT::zip";}
+    
+private:
+    //! The functions passed to the process constructor
+    gamma_functype gamma;
+
+    // intermediate values
+    std::vector<abst_ext<T1>> ival1;
+    std::vector<abst_ext<T2>> ival2;
+    std::vector<abst_ext<TC>> ival3;
+
+    size_t itoks;
+    TC k;
+    
+    void init()
+    {
+        k = TC();
+    }
+    
+    void prep()
+    {
+        gamma(itoks, k);
+        ival1.resize(itoks);
+        ival2.resize(itoks);
+        ival3.resize(itoks);
+        for (size_t i=0;i<itoks;i++)
+        {
+            ival1[i] = iport1.read();
+            ival2[i] = iport2.read();
+            ival3[i] = iport3.read();
+        }
+
+        std::cout << "k = " << k << std::endl;
+        std::cout << "itoks = " << itoks << std::endl;
+        std::cout << "ival3[0] = " << ival3[0] << std::endl;
+
+        // update k for the next iteration
+        if (ival3[0].is_absent())
+            SC_REPORT_ERROR(name(), "Absent event received in zip control port");
+        else
+            k = unsafe_from_abst_ext(ival3[0]);
+
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        // write sufficient absent events to the output to ensure causality
+        for (size_t i=0;i<itoks-1;i++)
+            write_multiport(oport1,
+                abst_ext<std::tuple<std::vector<abst_ext<T1>>,std::vector<abst_ext<T2>>>>()
+            );
+        // Write the zipped output
+        write_multiport(oport1,std::make_tuple(ival1,ival2));
+    }
+    
+    void clean()
+    {}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(3);     // two input ports
+        boundInChans[0].port = &iport1;
+        boundInChans[0].portType = typeid(T1).name();
+        boundInChans[1].port = &iport2;
+        boundInChans[1].portType = typeid(T2).name();
+        boundInChans[2].port = &iport3;
+        boundInChans[2].portType = typeid(TC).name();
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+        boundOutChans[0].portType = typeid(std::tuple<T1,T2>).name();
+    }
+#endif
+};
+
 //! The zip process with variable number of inputs and one output
 /*! This process "zips" the incoming signals into one signal of tuples.
  */
-template <class... ITYPs>
-class zipN : public sc_module
+template <class TC, class... ITYPs>
+class zipN : public dt_process
 {
 public:
-    std::tuple <sc_fifo_in<ITYPs>...> iport;///< tuple of ports for the input channels
-    sc_fifo_out<std::tuple<ITYPs...> > oport1;///< port for the output channel
+    std::tuple<DT_in<ITYPs>...> iport;  ///< tuple of ports for the input channels
+    DT_in<TC> iport2;               ///< port for the control channel
+    DT_out<std::tuple<ITYPs...> > oport1;///< port for the output channel
 
+    //! Type of the partitioning function to be passed to the process constructor
+    typedef std::function<void(size_t&, const TC&)> gamma_functype;
+    
     //! The constructor requires the module name
-    /*! It creates an SC_THREAD which reads data from its input port,
+    /*! It creates an SC_THREAD which reads data from its input ports,
      * zips them together and writes the results using the output port
      */
-    zipN(sc_module_name _name)
-         :sc_module(_name)
+    zipN(sc_module_name _name,  ///< The module name
+        gamma_functype gamma    ///< The input partitioning function
+    ):  dt_process(_name), gamma(gamma), iport2("iport2"), oport1("oport1")
     {
-        SC_THREAD(worker);
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("gamma",func_name+std::string("_gamma")));
+#endif
     }
-private:
-    SC_HAS_PROCESS(zipN);
 
-    //! The main and only execution thread of the module
-    void worker()
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "DT::zipN";}
+
+private:
+   //! The functions passed to the process constructor
+    gamma_functype gamma;
+
+    // intermediate values
+    std::tuple<std::vector<abst_ext<ITYPs>>...> ival;
+    std::vector<abst_ext<TC>> ival3;
+
+    size_t itoks;
+    TC k;
+    
+    void init()
     {
-        std::tuple<ITYPs...> in_vals;
-        while (1)
-        {
-            in_vals = sc_fifo_tuple_read<ITYPs...>(iport);
-            write_multiport(oport1,in_vals);    // write to the output
-        }
+        k = TC();
     }
     
-    template<size_t N,class R,  class T>
-    struct fifo_read_helper
+    void prep()
     {
-        static void read(R& ret, T& t)
-        {
-            fifo_read_helper<N-1,R,T>::read(ret,t);
-            std::get<N>(ret) = std::get<N>(t).read();
-        }
-    };
-
-    template<class R, class T>
-    struct fifo_read_helper<0,R,T>
-    {
-        static void read(R& ret, T& t)
-        {
-            std::get<0>(ret) = std::get<0>(t).read();
-        }
-    };
-
-    template<class... T>
-    std::tuple<T...> sc_fifo_tuple_read(std::tuple<sc_fifo_in<T>...>& ports)
-    {
-        std::tuple<T...> ret;
-        fifo_read_helper<sizeof...(T)-1,
-                         std::tuple<T...>,
-                         std::tuple<sc_fifo_in<T>...>>::read(ret,ports);
-        return ret;
+        gamma(itoks, k);
+        std::apply([&](auto&... args) {
+            (..., args.resize(itoks));
+        }, ival);
+        std::apply([&](auto&... port) {
+            std::apply([&](auto&... val) {
+                (..., (val = port.read()));
+            }, ival);
+        }, iport);
+        // update k for the next iteration
+        k = ival3[0];
     }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        // write sufficient absent events to the output to ensure causality
+        for (size_t i=0;i<itoks-1;i++)
+            write_multiport(oport1,abst_ext<std::tuple<abst_ext<ITYPs>>...>());
+        // Write the zipped output
+        write_multiport(oport1,ival);
+    }
+    
+    void clean()
+    {}
 
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(ITYPs));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        [&]()
+        {
+            std::size_t n{0};
+            ((boundInChans[n++].portType = typeid(ITYPs).name()),...);
+        }();
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+        boundOutChans[0].portType = typeid(std::tuple<ITYPs...>).name();
+    }
+#endif
 };
 
 //! The unzip process with one input and two outputs
@@ -1287,8 +1182,8 @@ public:
     /*! It creates an SC_THREAD which reads data from its input ports,
      * unzips them and writes the results using the output ports
      */
-    unzip(sc_module_name _name)
-         :dt_process(_name), iport1("iport1"), oport1("oport1"), oport2("oport2")
+    unzip(const sc_module_name& _name      ///< process name
+        ): dt_process(_name), iport1("iport1"), oport1("oport1"), oport2("oport2")
     {}
     
     //! Specifying from which process constructor is the module built
@@ -1299,7 +1194,7 @@ private:
     
     void init()
     {
-        in_val = new abst_ext<std::tuple<abst_ext<T1>,abst_ext<T2>>>;
+        in_val = new abst_ext<std::tuple<abst_ext<T1>,abst_ext<T2>>>();
     }
     
     void prep()

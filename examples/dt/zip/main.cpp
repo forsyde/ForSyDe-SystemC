@@ -1,5 +1,5 @@
 /**********************************************************************
-    * swap.hpp -- a timed swapper process                             *
+    * main.cpp -- the main file and testbench for the swap example    *
     *                                                                 *
     * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
     *                                                                 *
@@ -10,38 +10,15 @@
     * License: BSD3                                                   *
     *******************************************************************/
 
+#include "top.hpp"
 
-#ifndef SWAP_HPP
-#define SWAP_HPP
-
-#include <forsyde.hpp>
-
-using namespace std;
-
-using namespace ForSyDe;
-
-void swap_gamma(size_t& out1, const int& inp1)
+int sc_main(int argc, char **argv)
 {
-#pragma ForSyDe begin swap_p_func 
-    out1 = 2;
-#pragma ForSyDe end
+    top top1("top1");
+
+    sc_start();
+        
+    return 0;
 }
 
-void swap_ns_func(int& out1, 
-                  const int& inp1, const vector<abst_ext<int>>& inp2)
-{
-#pragma ForSyDe begin swap_ns_func 
-    out1 = 0;
-#pragma ForSyDe end
-}
 
-void swap_od_func(vector<abst_ext<int>>& out1,
-                  const tuple<int>& inp1, const vector<abst_ext<int>>& inp2)
-{
-#pragma ForSyDe begin swap_od_func 
-    out1[0] = inp2[1];
-    out1[1] = inp2[0];
-#pragma ForSyDe end
-}
-
-#endif
