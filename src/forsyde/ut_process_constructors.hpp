@@ -1977,6 +1977,87 @@ private:
 #endif
 };
 
+//! The zipU process with two inputs and one output
+/*! This process "zips" the incoming two signals into one signal of tuples with using control signal
+ */
+ 
+template <class T1, class T2, class TCS>
+class zipU : public ut_process
+{
+public:
+    UT_in<T1> iport1;                                              ///< port for the input channel 1
+    UT_in<T2> iport2;                                             ///< port for the input channel 2
+    UT_in<TCS> controlport;                                      ///< port for the control signal   
+    UT_out<std::tuple<std::vector<T1>,std::vector<T2>>> oport1; ///< port for the output channel
+
+    typedef std::function<size_t (const TCS&)> gamma_functype;
+
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which reads data from its input port,
+     * zips them together and writes the results using the output port
+     */
+    zipU(const sc_module_name& _name,
+        const gamma_functype& _gamma_func_a,
+        const gamma_functype& _gamma_func_b
+        ) : ut_process(_name), iport1("iport1"), iport2("iport2"), controlport("controlport"), oport1("oport1"),
+        _gamma_func_a(_gamma_func_a), _gamma_func_b(_gamma_func_b) 
+    { }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "UT::zipU";}
+    
+private:
+
+    gamma_functype _gamma_func_a, _gamma_func_b;
+
+    // intermediate values
+    std::vector<T1> i1vals;
+    std::vector<T2> i2vals;
+    TCS control_tkn; 
+
+    void init()
+    {
+
+    }
+    
+    void prep()
+    {
+        control_tkn = controlport.read();
+        size_t c1 = _gamma_func_a(control_tkn);
+        size_t c2 = _gamma_func_b(control_tkn);
+        
+        i1vals.resize(c1);
+        i2vals.resize(c2);
+
+        for (auto it=i1vals.begin();it!=i1vals.end();it++)
+            *it = iport1.read();
+        for (auto it=i2vals.begin();it!=i2vals.end();it++)
+            *it = iport2.read();
+    }
+    
+    void exec() {}
+    
+    void prod()
+    {
+        WRITE_MULTIPORT(oport1,std::make_tuple(i1vals,i2vals))  // write to the output
+    }
+    
+    void clean() {}
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(2);     // two input ports
+        boundInChans[0].port = &iport1;
+        boundInChans[1].port = &iport2;
+        boundOutChans.resize(1);    // only one output port
+        boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+
 }
 }
 
