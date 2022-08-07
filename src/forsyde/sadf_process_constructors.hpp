@@ -595,8 +595,8 @@ public:
           const scenario_table_type& scenario_table,///< the detector scenario table
           const TS& init_sc,                        ///< Initial scenario
           const std::array<size_t,sizeof...(TIs)>& itoks    ///< consumption rate for the first input
-          ) : SADF_process(_name), init_sc(init_sc),
-          _cds_func(_cds_func), _kss_func(_kss_func), scenario_table(scenario_table), itoks(itoks)
+          ) : SADF_process(_name), itoks(itoks), init_sc(init_sc),
+          _cds_func(_cds_func), _kss_func(_kss_func), scenario_table(scenario_table)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
@@ -681,7 +681,7 @@ private:
                 std::apply([&](auto&&... otok){
                     (
                         [&val,&port,&otok](){
-                            for (size_t i=0;i<=otok;i++)
+                            for (size_t i=0;i<otok;i++)
                                 write_multiport(port, val);
                         }()
                     , ...);
