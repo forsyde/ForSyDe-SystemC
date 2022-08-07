@@ -278,78 +278,96 @@ private:
 #endif
 };
 
-//! Process constructor for a combinational process with M inputs and N outputs
-/*! similar to comb with M inputs and unzipN
+//! Process constructor for a kernel process with M inputs and N outputs
+/*! similar to kernel with M inputs and unzipN
  */
-template<typename TO_tuple, typename TI_tuple> class combMN;
+template<typename TO_tuple, typename TC, typename TI_tuple> class kernelMN;
 
-template <typename... TOs, typename... TIs>
-class combMN<std::tuple<TOs...>,std::tuple<TIs...>> : public SADF_process
+template <typename... TOs, typename TC, typename... TIs>
+class kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>> : public SADF_process
 {
 public:
+    SADF_in<TC>                 cport1;///< port for the control channel
     std::tuple<SADF_in<TIs>...>  iport;///< tuple of ports for the input channels
     std::tuple<SADF_out<TOs>...> oport;///< tuple of ports for the output channels
     
-    //! Type of the function to be passed to the process constructor
-    typedef std::function<void(std::tuple<std::vector<TOs>...>&, 
-                                const std::tuple<std::vector<TIs>...>&)> functype;
+    //! Type of the table of kernel's scennarios to be passed to the process constructor
+    /*! The table of kernel's scennarios is a map from the scenario ID to
+     * a tuple of the input consumtion and output production rates, each represented as an array.
+     */
+    typedef std::map<TC,std::tuple<
+                        std::array<size_t,sizeof...(TIs)>,
+                        std::array<size_t,sizeof...(TOs)>
+                    >> scenario_table_type;
 
-    //! The constructor requires the module name
-    /*! It creates an SC_THREAD which reads data from its input ports,
+    //! Type of the function to be passed to the process constructor
+    typedef std::function<void(
+                                std::tuple<std::vector<TOs>...>&,
+                                const TC&,
+                                const std::tuple<std::vector<TIs>...>&
+                            )> functype;
+
+    //! The constructor requires the module name, the kernel function, and the scenario table
+    /*! It creates an SC_THREAD which according to the current scenario, reads data from its input ports,
      * applies the user-imlpemented function to them and writes the
      * results using the output ports
      */
-    combMN(sc_module_name _name,      ///< process name
-          functype _func,            ///< function to be passed
-          std::array<size_t, sizeof...(TOs)> otoks, ///< consumption rate for the outputs
-          std::array<size_t, sizeof...(TIs)> itoks  ///< consumption rates for the inputs
-          ) : SADF_process(_name), otoks(otoks), itoks(itoks), _func(_func)
+    kernelMN(sc_module_name _name,      ///< process name
+          const functype& _func,        ///< function to be passed
+          const scenario_table_type& scenario_table///< the kernel scenario table
+          ) : SADF_process(_name), _func(_func), scenario_table(scenario_table)
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
         func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
         arg_vec.push_back(std::make_tuple("_func",func_name+std::string("_func")));
         std::stringstream ss;
-        ss << itoks;
-        arg_vec.push_back(std::make_tuple("otoks",ss.str()));
-        ss.clear();
-        ss << otoks;
-        arg_vec.push_back(std::make_tuple("itoks",ss.str()));
+        ss << scenario_table;
+        arg_vec.push_back(std::make_tuple("scenario_table",ss.str()));
 #endif
     }
     
     //! Specifying from which process constructor is the module built
-    std::string forsyde_kind() const {return "SADF::combMN";}
+    std::string forsyde_kind() const {return "SADF::kernelMN";}
 private:
-    // consumption rates
-    std::array<size_t, sizeof...(TOs)> otoks;
-    std::array<size_t, sizeof...(TIs)> itoks;
-    
-    // Inputs and output variables
+    // Control, input and output variables
     std::tuple<std::vector<TOs>...> ovals;
     std::tuple<std::vector<TIs>...> ivals;
+    TC* cval1;
     
     //! The function passed to the process constructor
     functype _func;
 
+    //! The table of kernel's scenarios to be passed to the process constructor
+    scenario_table_type scenario_table;
+
     //Implementing the abstract semantics
     void init()
     {
+        cval1 = new TC;
+    }
+    
+    void prep()
+    {
+        // Read the control port which is connected to the detector to determine the scenario for the kernel
+        *cval1 = cport1.read();
+
+        // Resize the input and output vectors according to 
+        // the consumption and production rates from the kernel's scenario table
+        // (consumption rate, production rate)
         std::apply([&](auto&... oval) {
             std::apply([&](auto&... otok) {
                 (oval.resize(otok), ...);
-            }, otoks);
+            }, std::get<1>(scenario_table[*cval1]));
         }, ovals);
 
         std::apply([&](auto&... ival) {
             std::apply([&](auto&... itok) {
                 (ival.resize(itok), ...);
-            }, itoks);
+            }, std::get<0>(scenario_table[*cval1]));
         }, ivals);
-    }
-    
-    void prep()
-    {
+
+        // Reading the input ports        
         std::apply([&](auto&... inport) {
             std::apply([&](auto&... ival) {
                 (
@@ -364,7 +382,8 @@ private:
     
     void exec()
     {
-        _func(ovals, ivals);
+        // Call the user-imlpemented kernel function with input and output vectors and the control value
+        _func(ovals, *cval1, ivals);
     }
     
     void prod()
@@ -376,17 +395,21 @@ private:
         }, oport);
     }
     
-    void clean() {}
+    void clean()
+    {
+        delete cval1;
+    }
     
 #ifdef FORSYDE_INTROSPECTION
     void bindInfo()
     {
-        boundInChans.resize(sizeof...(TIs));     // input ports
+        boundInChans.resize(1+sizeof...(TIs));     // control and input ports
+        boundInChans[0].port = &cport1;
         std::apply
         (
             [&](auto&... ports)
             {
-                std::size_t n{0};
+                std::size_t n{1};
                 ((boundInChans[n++].port = &ports),...);
             }, iport
         );
@@ -416,14 +439,14 @@ public:
     
     //! Type of the table of kernel's scennarios to be passed to the process constructor
     /*! The table of kernel's scennarios is a map from the scenario ID to
-     * a tuple of the input consumtion and output production rates.
+     * the output production rates.
      */
     typedef std::map<TS,size_t> scenario_table_type;
 
     //! Type of the current detector scenario function to be passed to the process constructor
     typedef std::function<void(TS&,
-                              const TS&,
-                              const std::vector<T1>&)> cds_functype;
+                                const TS&,
+                                const std::vector<T1>&)> cds_functype;
     
     //! Type of the kernel scenario selection function to be passed to the process constructor
     typedef std::function<void(T0&,
@@ -476,6 +499,7 @@ private:
     cds_functype _cds_func;
     kss_functype _kss_func;
 
+    //! The table of kernel's scenarios to be passed to the process constructor
     scenario_table_type scenario_table;
 
     //Implementing the abstract semantics
@@ -528,6 +552,170 @@ private:
         boundInChans[0].port = &iport1;
         boundOutChans.resize(1);    // only one output port
         boundOutChans[0].port = &oport1;
+    }
+#endif
+};
+
+//! Process constructor for a detector process (actor) with M data inputs and N control outputs
+/*! similar to detector with M inputs and unzipN
+ */
+template<typename TO_tuple, typename TI_tuple, typename TS> class detectorMN;
+
+template <typename... TOs, typename... TIs, typename TS>
+class detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS> : public SADF_process
+{
+public:
+    std::tuple<SADF_in<TIs>...>  iport;///< tuple of ports for the input channels
+    std::tuple<SADF_out<TOs>...> oport;///< tuple of ports for the output channels
+    
+    //! Type of the table of kernel's scennarios to be passed to the process constructor
+    /*! The table of kernel's scennarios is a map from the scenario ID to
+     * an array of the output production rates.
+     */
+    typedef std::map<TS,std::array<size_t,sizeof...(TOs)>> scenario_table_type;
+
+    //! Type of the current detector scenario function to be passed to the process constructor
+    typedef std::function<void(TS&,
+                                const TS&,
+                                const std::tuple<std::vector<TIs>...>&)> cds_functype;
+
+    //! Type of the kernel scenario selection function to be passed to the process constructor
+    typedef std::function<void(std::tuple<TOs...>&,
+                                const TS&,
+                                const std::tuple<std::vector<TIs>...>&)> kss_functype;
+
+    //! The constructor requires the module name
+    /*! It creates an SC_THREAD which according to the current scenario, reads data from its input ports,
+     * applies the user-imlpemented function to them and writes the
+     * results using the output ports
+     */
+    detectorMN(sc_module_name _name,                ///< process name
+          const cds_functype& _cds_func,            ///< current detector scenario function to be passed
+          const kss_functype& _kss_func,            ///< kernel scenario function to be passed
+          const scenario_table_type& scenario_table,///< the detector scenario table
+          const TS& init_sc,                        ///< Initial scenario
+          const std::array<size_t,sizeof...(TIs)>& itoks    ///< consumption rate for the first input
+          ) : SADF_process(_name), init_sc(init_sc),
+          _cds_func(_cds_func), _kss_func(_kss_func), scenario_table(scenario_table), itoks(itoks)
+    {
+#ifdef FORSYDE_INTROSPECTION
+        std::string func_name = std::string(basename());
+        func_name = func_name.substr(0, func_name.find_last_not_of("0123456789")+1);
+        arg_vec.push_back(std::make_tuple("cds_func",func_name+std::string("cds_func")));
+        arg_vec.push_back(std::make_tuple("kss_func",func_name+std::string("kss_func")));
+        std::stringstream ss;
+        ss << scenario_table;
+        arg_vec.push_back(std::make_tuple("scenario_table",ss.str()));
+        ss.clear();
+        ss << init_sc;
+        arg_vec.push_back(std::make_tuple("init_sc",ss.str()));
+        ss.clear();
+        ss << itoks;
+        arg_vec.push_back(std::make_tuple("itoks",ss.str()));
+#endif
+    }
+    
+    //! Specifying from which process constructor is the module built
+    std::string forsyde_kind() const {return "SADF::detectorMN";}
+private:
+    // consumption and production rates
+    std::array<size_t,sizeof...(TIs)> itoks;
+    std::array<size_t,sizeof...(TOs)> otoks;
+
+    // Input, output, current scenario, and previous scenario variables
+    std::tuple<TOs...> ovals;
+    std::tuple<std::vector<TIs>...> ivals;
+    TS* sc_val;
+    TS init_sc;
+    
+    //! The function passed to the process constructor
+    cds_functype _cds_func;
+    kss_functype _kss_func;
+
+    //! The table of kernel's scenarios to be passed to the process constructor
+    scenario_table_type scenario_table;
+
+    //Implementing the abstract semantics
+    void init()
+    {
+        std::apply([&](auto&... ival) {
+            std::apply([&](auto&... itok) {
+                (ival.resize(itok), ...);
+            }, itoks);
+        }, ivals);
+
+        sc_val = new TS;
+        *sc_val = init_sc;
+    }
+    
+    void prep()
+    {
+        // Reading the input ports        
+        std::apply([&](auto&... inport) {
+            std::apply([&](auto&... ival) {
+                (
+                    [&ival,&inport](){
+                        for (auto it=ival.begin();it!=ival.end();it++)
+                            *it = inport.read();
+                    }()
+                , ...);
+            }, ivals);
+        }, iport);
+    }
+    
+    void exec()
+    {
+        // Applying the current detector scenario function to the previous scenario and input tokens to get the operating scenario
+        _cds_func(*sc_val, *sc_val, ivals);
+
+        /*  Applying the kernel scenario selection function to the current scenario and the input tokens
+        *   to determine scenario for each output port (control token for sending to the kernel)
+        */
+        _kss_func(ovals, *sc_val, ivals);
+    }
+    
+    void prod()
+    {
+        std::apply([&](auto&&... port){
+            std::apply([&](auto&&... val){
+                std::apply([&](auto&&... otok){
+                    (
+                        [&val,&port,&otok](){
+                            for (size_t i=0;i<=otok;i++)
+                                write_multiport(port, val);
+                        }()
+                    , ...);
+                }, scenario_table[*sc_val]);
+            }, ovals);
+        }, oport);
+    }
+    
+    void clean()
+    {
+        delete sc_val;
+    }
+    
+#ifdef FORSYDE_INTROSPECTION
+    void bindInfo()
+    {
+        boundInChans.resize(sizeof...(TIs));     // input ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundInChans[n++].port = &ports),...);
+            }, iport
+        );
+        boundOutChans.resize(sizeof...(TOs));    // output ports
+        std::apply
+        (
+            [&](auto&... ports)
+            {
+                std::size_t n{0};
+                ((boundOutChans[n++].port = &ports),...);
+            }, oport
+        );
     }
 #endif
 };
