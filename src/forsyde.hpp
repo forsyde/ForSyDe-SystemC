@@ -84,6 +84,8 @@
 
 #include "forsyde/sdf_moc.hpp"
 
+#include "forsyde/sadf_moc.hpp"
+
 #include "forsyde/dde_moc.hpp"
 
 #include "forsyde/dt_moc.hpp"
