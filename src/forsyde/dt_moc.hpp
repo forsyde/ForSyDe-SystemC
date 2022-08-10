@@ -27,6 +27,7 @@
 #include "abst_ext.hpp"
 #include "dt_process.hpp"
 #include "dt_process_constructors.hpp"
+#include "dt_process_constructors_p.hpp"
 #include "dt_helpers.hpp"
 
 namespace ForSyDe

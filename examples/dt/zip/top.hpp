@@ -46,7 +46,7 @@ SC_MODULE(top)
         auto zip1_gamma = [] (auto& itoks, const auto& k) {itoks = k+1;};
         DT::make_zip("zip1", zip1_gamma, zipped2, src1p, src2p, srcc);
 
-        auto swap1 = new DT::mealyMN<tuple<int,int>,tuple<int,int>,tuple<int>>("swap1", swap_gamma, swap_ns_func, swap_od_func, make_tuple(0));
+        auto swap1 = new DT::mealyMN<tuple<int,int>,tuple<int,int>,int>("swap1", swap_gamma, swap_ns_func, swap_od_func, 0);
         get<0>(swap1->iport)(src1pp);
         get<1>(swap1->iport)(src2pp);
         get<0>(swap1->oport)(report3);

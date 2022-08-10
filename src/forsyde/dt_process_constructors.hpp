@@ -341,10 +341,10 @@ private:
  * Given an initial state, a next-state function, and an output decoding
  * function it creates a Mealy process.
  */
-template<typename TO_tuple, typename TI_tuple, typename TS_tuple> class mealyMN;
+template<typename TO_tuple, typename TI_tuple, typename TS> class mealyMN;
 
-template <typename... TOs, typename... TIs, typename... TSs>
-class mealyMN<std::tuple<TOs...>,std::tuple<TIs...>,std::tuple<TSs...>>: public dt_process
+template <typename... TOs, typename... TIs, typename TS>
+class mealyMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>: public dt_process
 {
 public:
     std::tuple<DT_in<TIs>...>  iport;///< tuple of ports for the input channels
@@ -352,16 +352,16 @@ public:
     
     //! Type of the partitioning function to be passed to the process constructor
     typedef std::function<void(size_t&,
-                                const std::tuple<TSs...>&)> gamma_functype;
+                                const TS&)> gamma_functype;
     
     //! Type of the next-state function to be passed to the process constructor
-    typedef std::function<void(std::tuple<TSs...>&,
-                                const std::tuple<TSs...>&,
+    typedef std::function<void(TS&,
+                                const TS&,
                                 const std::tuple<std::vector<abst_ext<TIs>>...>&)> ns_functype;
     
     //! Type of the output-decoding function to be passed to the process constructor
     typedef std::function<void(std::tuple<std::vector<abst_ext<TOs>>...>&,
-                                const std::tuple<TSs...>&,
+                                const TS&,
                                 const std::tuple<std::vector<abst_ext<TIs>>...>&)> od_functype;
     
     //! The constructor requires the module name
@@ -373,7 +373,7 @@ public:
             const gamma_functype& _gamma_func,  ///< The partitioning function
             const ns_functype& _ns_func,        ///< The next_state function
             const od_functype& _od_func,        ///< The output-decoding function
-            const std::tuple<TSs...>& init_st   ///< Initial state
+            const TS& init_st   ///< Initial state
             ) : dt_process(_name), _gamma_func(_gamma_func), _ns_func(_ns_func),
               _od_func(_od_func), init_st(init_st)
     {
@@ -398,14 +398,14 @@ private:
     ns_functype _ns_func;
     od_functype _od_func;
     // Initial value
-    std::tuple<TSs...> init_st;
+    TS init_st;
     // consumption rates
     size_t itoks;
     
     // Input, output, current state, and next state variables
     std::tuple<std::vector<abst_ext<TOs>>...>* ovals;
-    std::tuple<TSs...>* stvals;
-    std::tuple<TSs...>* nsvals;
+    TS* stvals;
+    TS* nsvals;
     std::tuple<std::vector<abst_ext<TIs>>...>* ivals;
 
     // The current input/output time
@@ -420,9 +420,9 @@ private:
         std::fill_n(touts.begin(), sizeof...(TOs), 0);
         std::fill_n(ks.begin(), sizeof...(TOs), 0);
         ovals = new std::tuple<std::vector<abst_ext<TOs>>...>;
-        stvals = new std::tuple<TSs...>;
+        stvals = new TS;
         *stvals = init_st;
-        nsvals = new std::tuple<TSs...>;
+        nsvals = new TS;
         ivals = new std::tuple<std::vector<abst_ext<TIs>>...>;
     }
     
@@ -460,17 +460,20 @@ private:
     {
         // Update ks
         for (size_t i=0; i<sizeof...(TOs); i++)
-            ks[i] += std::max((int)tin-(int)touts[i]-1, 0);
+            ks[i] = std::max((int)tin-(int)touts[i]-1, 0);
 
         // First write the required absent events to ensure casaulity
         std::apply([&](auto&... oport) {
             std::apply([&](auto&&... val){
+                size_t n{0};
                 (
-                    [&oport,this](){
-                        for (size_t i=0;i<ks[i];i++)
-                        {   using T = std::decay_t<decltype(val[0])>;
+                    [&oport,&val,&n,this](){
+                        for (size_t i=0;i<ks[n];i++)
+                        {   
+                            using T = std::decay_t<decltype(val[0])>;
                             write_multiport(oport, T());
                         }
+                        n++;
                     }()
                 , ...);
             }, *ovals);
@@ -479,7 +482,6 @@ private:
         std::apply([&](auto&&... port){
             std::apply([&](auto&&... val){
                 (write_vec_multiport(port, val), ...);
-                (val.clear(), ...);
             }, *ovals);
         }, oport);
 
@@ -487,6 +489,8 @@ private:
         std::apply([&](auto&&... val){
             size_t n{0};
             ((touts[n] += (ks[n]+val.size())), ...);
+            n++;
+            (val.clear(), ...);
         }, *ovals);
     }
     

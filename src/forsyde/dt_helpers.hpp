@@ -299,6 +299,37 @@ inline fanout<T>* make_fanout(std::string pName,
     return p;
 }
 
+namespace P
+{
+
+//! Helper function to construct the timer based invocation version of a mealy process
+/*! This function is used to construct a mealy process (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input and output FIFOs.
+ */
+template <typename IT, typename ST, typename OT,
+           template <class> class IIf,
+           template <class> class OIf>
+inline mealy<IT,ST,OT>* make_mealy(std::string pName,
+    typename mealy<IT,ST,OT>::gamma_functype gamma,
+    typename mealy<IT,ST,OT>::ns_functype _ns_func,
+    typename mealy<IT,ST,OT>::od_functype _od_func,
+    ST init_st,
+    OIf<OT>& outS,
+    IIf<IT>& inpS
+    )
+{
+    auto p = new mealy<IT,ST,OT>(pName.c_str(), gamma, _ns_func, _od_func, init_st);
+    
+    (*p).iport1(inpS);
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+}
 
 }
 }
