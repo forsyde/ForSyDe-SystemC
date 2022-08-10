@@ -41,9 +41,11 @@ void swap_od_func(tuple<vector<abst_ext<int>>,vector<abst_ext<int>>>& out1,
                   const tuple<vector<abst_ext<int>>,vector<abst_ext<int>>>& inp2)
 {
 #pragma ForSyDe begin swap_od_func
+    get<0>(out1).resize(2);
     get<0>(out1)[0] = get<1>(inp2)[1];
     get<0>(out1)[1] = get<1>(inp2)[0];
 
+    get<1>(out1).resize(2);
     get<1>(out1)[0] = get<0>(inp2)[1];
     get<1>(out1)[1] = get<0>(inp2)[0];
 #pragma ForSyDe end

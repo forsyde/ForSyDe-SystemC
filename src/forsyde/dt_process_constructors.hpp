@@ -268,12 +268,14 @@ private:
     bool invoke;
     
     // The current input/output time
+    size_t tin;
+    size_t tout;
     size_t k;
     
     //Implementing the abstract semantics
     void init()
     {
-        k = 0;
+        tin = tout = k = 0;
         stval = new ST;
         *stval = init_st;
         nsval = new ST;
@@ -281,14 +283,14 @@ private:
     
     void prep()
     {
+        // Determine the number of event to be read
         gamma(itoks, *stval);
+        // Read the input events
         ivals.resize(itoks);
-        ovals.resize(itoks);
         for (size_t i=0; i<itoks; i++)
             ivals[i] = iport1.read();
-        ovals.resize(itoks);
-        // update k with the number of tokens read
-        k += itoks;
+        // Update tin with the number of tokens read
+        tin += itoks;
     }
     
     void exec()
@@ -300,17 +302,20 @@ private:
     
     void prod()
     {
-        // First write the required k-1 absent events to ensure casaulity
-        for (size_t i=0; i<k-1; i++)
+        // Update k
+        k = std::max((int)tin-(int)tout-1, 0);
+
+        // First write the required absent events to ensure casaulity
+        for (size_t i=0; i<k; i++)
             write_multiport(oport1, abst_ext<OT>());
 
         // Then write out the result
         write_vec_multiport(oport1, ovals);
 
-        // update k with the number of tokens written
-        k -= ((k-1) + itoks);
+        // Update tout with the total number of written tokens
+        tout += (k+ovals.size());
         
-        // clean up the input and output vectors (not necessary)
+        // clean up the input and output vectors
         ivals.clear();
         ovals.clear();
     }
@@ -404,16 +409,16 @@ private:
     std::tuple<std::vector<abst_ext<TIs>>...>* ivals;
 
     // The current input/output time
-    size_t k;
-    // std::array<size_t, sizeof...(TIs)> tis;
-    // std::array<size_t, sizeof...(TOs)> tos;
+    std::array<size_t, sizeof...(TOs)> ks;
+    size_t tin;
+    std::array<size_t, sizeof...(TOs)> touts;
 
     //Implementing the abstract semantics
     void init()
     {
-        k = 0;
-        // std::fill_n(tis.begin(), sizeof...(TIs), 0);
-        // std::fill_n(tos.begin(), sizeof...(TOs), 0);
+        tin = 0;
+        std::fill_n(touts.begin(), sizeof...(TOs), 0);
+        std::fill_n(ks.begin(), sizeof...(TOs), 0);
         ovals = new std::tuple<std::vector<abst_ext<TOs>>...>;
         stvals = new std::tuple<TSs...>;
         *stvals = init_st;
@@ -423,14 +428,12 @@ private:
     
     void prep()
     {
-        _gamma_func(itoks, *stvals);    // determine how many tokens to read
+        // Determine the number of event to be read
+        _gamma_func(itoks, *stvals);
         // Size the input and output buffers
         std::apply([&](auto&... ival) {
             (ival.resize(itoks), ...);
         }, *ivals);
-        std::apply([&](auto&... oval) {
-            (oval.resize(itoks), ...);
-        }, *ovals);
         // Read the input tokens
         std::apply([&](auto&... inport) {
             std::apply([&](auto&... ival) {
@@ -442,10 +445,8 @@ private:
                 , ...);
             }, *ivals);
         }, iport);
-        // update input times with the number of tokens read
-        k += itoks;
-        // for (auto i=0;i<sizeof...(TIs);i++)
-        //     tis[i] += itoks[i];
+        // update tin with the number of tokens read
+        tin += itoks;
     }
     
     void exec()
@@ -457,13 +458,16 @@ private:
     
     void prod()
     {
-        // auto min_ti = *std::min_element(tis.begin(), tis.end());
+        // Update ks
+        for (size_t i=0; i<sizeof...(TOs); i++)
+            ks[i] += std::max((int)tin-(int)touts[i]-1, 0);
+
         // First write the required absent events to ensure casaulity
         std::apply([&](auto&... oport) {
             std::apply([&](auto&&... val){
                 (
                     [&oport,this](){
-                        for (size_t i=0;i<k-1;i++)
+                        for (size_t i=0;i<ks[i];i++)
                         {   using T = std::decay_t<decltype(val[0])>;
                             write_multiport(oport, T());
                         }
@@ -478,8 +482,12 @@ private:
                 (val.clear(), ...);
             }, *ovals);
         }, oport);
-        // update k with the number of tokens written
-        k -= ((k-1) + itoks);
+
+        // Update tout with the total number of written tokens
+        std::apply([&](auto&&... val){
+            size_t n{0};
+            ((touts[n] += (ks[n]+val.size())), ...);
+        }, *ovals);
     }
     
     void clean()
@@ -1020,10 +1028,6 @@ private:
             ival2[i] = iport2.read();
             ival3[i] = iport3.read();
         }
-
-        std::cout << "k = " << k << std::endl;
-        std::cout << "itoks = " << itoks << std::endl;
-        std::cout << "ival3[0] = " << ival3[0] << std::endl;
 
         // update k for the next iteration
         if (ival3[0].is_absent())

@@ -18,8 +18,15 @@ using namespace std;
 using namespace ForSyDe;
 
 vector<tuple<size_t,int>> in_vec1 = 
+    // {make_tuple(0,1), make_tuple(1,2), make_tuple(2,3),
+    //  make_tuple(3,4), make_tuple(4,5), make_tuple(5,6)};
     {make_tuple(0,1), make_tuple(1,2), make_tuple(2,3),
-     make_tuple(3,4), make_tuple(4,5), make_tuple(5,6)};
+     make_tuple(3,4), make_tuple(4,5), make_tuple(5,5),
+     make_tuple(6,5), make_tuple(7,5), make_tuple(8,4),
+     make_tuple(9,3), make_tuple(10,2), make_tuple(11,1),
+     make_tuple(12,1), make_tuple(13,1), make_tuple(14,2),
+     make_tuple(15,2), make_tuple(16,3), make_tuple(17,3),
+     make_tuple(18,4), make_tuple(19,4)};
 
 SC_MODULE(top)
 {
