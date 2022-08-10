@@ -1,7 +1,7 @@
 /**********************************************************************           
     * dt_moc.hpp -- The discrete-time model of computation            *
     *                                                                 *
-    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (h_attarzadeh@sbu.ac.ir)             *
     *                                                                 *
     * Purpose: Providing promitive element required for modeling      *
     *          discrete-time systems in ForSyDe-SystemC               *
@@ -28,6 +28,8 @@
 #include "dt_process.hpp"
 #include "dt_process_constructors.hpp"
 #include "dt_process_constructors_p.hpp"
+#include "dt_process_constructors_s.hpp"
+#include "dt_process_constructors_t.hpp"
 #include "dt_helpers.hpp"
 
 namespace ForSyDe

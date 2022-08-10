@@ -2,7 +2,7 @@
     * dt_process_constructors.hpp -- Process constructors in the DT   *
     *                          MOC with timer based process invocation*
     *                                                                 *
-    * Author:  Hosein Attarzadeh (shan2@kth.se)                       *
+    * Author:  Hosein Attarzadeh (h_attarzadeh@sbu.ac.ir)             *
     *                                                                 *
     * Purpose: Providing basic process constructors for modeling      *
     *          discrete-time systems in ForSyDe-SystemC               *
