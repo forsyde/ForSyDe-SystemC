@@ -21,14 +21,19 @@ using namespace std;
 
 SC_MODULE(top)
 {
-
-    SADF::signal<kernel1_scenario_type> from_detector1; 
-    SADF::signal<kernel2_scenario_type> from_detector2;
     SADF::signal<int> from_source;
     SADF::signal<int> to_kernel1, from_kernel1, to_kernel2, from_kernel2;
+#ifdef FORSYDE_SELF_REPORTING
+    // Communication pipes
+    FILE* report_pipe;      // Report pipe
+    int report_pipe_fd;     // Report pipe file descriptor
+#endif
 
     SC_CTOR(top)
     {
+
+        auto from_detector1 = new SADF::signal<kernel1_scenario_type>("from_detector1",1);
+        auto from_detector2 = new SADF::signal<kernel2_scenario_type>("from_detector2",1);
         
         //! < -------------------------------- Without Using Helper--------------------------------> //!
         
@@ -52,8 +57,8 @@ SC_MODULE(top)
         // detector1->oport1(to_zip);
         // auto unzip1 = new SDF::unzip<kernel1_scenario_type,kernel2_scenario_type>("unzip1",1,1);
         // unzip1->iport1(to_zip);
-        // unzip1->oport1(from_detector1);
-        // unzip1->oport2(from_detector2);
+        // unzip1->oport1(*from_detector1);
+        // unzip1->oport2(*from_detector2);
         auto detector1 = new SADF::detectorMN<
                                 tuple<kernel1_scenario_type,kernel2_scenario_type>,
                                 tuple<int>,
@@ -66,17 +71,23 @@ SC_MODULE(top)
                                 detector1_table,
                                 S1,
                                 {1}
+                                #ifdef FORSYDE_SELF_REPORTING
+                                ,&report_pipe
+                                #endif
                             );
         get<0>(detector1->iport)(from_source);
-        get<0>(detector1->oport)(from_detector1);
-        get<1>(detector1->oport)(from_detector2);
+        get<0>(detector1->oport)(*from_detector1);
+        get<1>(detector1->oport)(*from_detector2);
 
         auto kernel1 = new SADF::kernelMN<tuple<int>,kernel1_scenario_type,tuple<int>>(
                             "kernel1",
                             kernel1_func,
                             kernel1_table
+                            #ifdef FORSYDE_SELF_REPORTING
+                            ,&report_pipe
+                            #endif
                         );
-        kernel1->cport1(from_detector1);
+        kernel1->cport1(*from_detector1);
         get<0>(kernel1->iport)(to_kernel1);
         get<0>(kernel1->oport)(from_kernel1);
                             
@@ -84,8 +95,11 @@ SC_MODULE(top)
                             "kernel2",
                             kernel2_func,
                             kernel2_table
+                            #ifdef FORSYDE_SELF_REPORTING
+                            ,&report_pipe
+                            #endif
                         );
-        kernel2->cport1(from_detector2);
+        kernel2->cport1(*from_detector2);
         get<0>(kernel2->iport)(to_kernel2);
         get<0>(kernel2->oport)(from_kernel2);
 
@@ -110,6 +124,20 @@ SC_MODULE(top)
     {
         ForSyDe::XMLExport dumper("gen/");
         dumper.traverse(this);
+#ifdef FORSYDE_SELF_REPORTING
+        while (report_pipe_fd<=0) // pipe is not open
+        {
+            report_pipe_fd = open("gen/self_report", O_WRONLY|O_NONBLOCK);
+            if (report_pipe_fd > 0)
+                report_pipe = fdopen(report_pipe_fd, "w");
+        }
+#endif
+    }
+#endif
+#ifdef FORSYDE_SELF_REPORTING
+    void end_of_simulation()
+    {
+        fclose(report_pipe);
     }
 #endif
 

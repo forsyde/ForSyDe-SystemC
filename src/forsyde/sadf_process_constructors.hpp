@@ -26,6 +26,10 @@
 #include <tuple>
 #include <vector>
 #include <map>
+#ifdef FORSYDE_SELF_REPORTING
+#include <iostream>
+#include <fcntl.h>
+#endif
 
 #include "sadf_process.hpp"
 
@@ -315,7 +319,13 @@ public:
     kernelMN(sc_module_name _name,      ///< process name
           const functype& _func,        ///< function to be passed
           const scenario_table_type& scenario_table///< the kernel scenario table
+#ifdef FORSYDE_SELF_REPORTING
+        , FILE** _report_pipe   ///< the report named pipe
+#endif
           ) : SADF_process(_name), _func(_func), scenario_table(scenario_table)
+#ifdef FORSYDE_SELF_REPORTING
+        , report_pipe(_report_pipe)
+#endif
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
@@ -340,6 +350,14 @@ private:
 
     //! The table of kernel's scenarios to be passed to the process constructor
     scenario_table_type scenario_table;
+
+#ifdef FORSYDE_SELF_REPORTING
+    //! Self-report string
+    std::ostringstream report_str;
+
+    // Communication pipes
+    FILE** report_pipe;      // Report pipe
+#endif
 
     //Implementing the abstract semantics
     void init()
@@ -384,6 +402,16 @@ private:
     {
         // Call the user-imlpemented kernel function with input and output vectors and the control value
         _func(ovals, *cval1, ivals);
+#ifdef FORSYDE_SELF_REPORTING
+        // Write the report to the pipe
+        report_str << "kernelMN" << " " << basename() 
+                                << " " << *cval1 
+                                << " " << std::get<0>(scenario_table[*cval1]) 
+                                << " " << std::get<1>(scenario_table[*cval1]) << std::endl;
+        fputs(report_str.str().c_str(), *report_pipe);
+        fflush(*report_pipe);
+        report_str.str("");
+#endif
     }
     
     void prod()
@@ -595,8 +623,14 @@ public:
           const scenario_table_type& scenario_table,///< the detector scenario table
           const TS& init_sc,                        ///< Initial scenario
           const std::array<size_t,sizeof...(TIs)>& itoks    ///< consumption rate for the first input
+#ifdef FORSYDE_SELF_REPORTING
+        , FILE** _report_pipe                 ///< the report named pipe
+#endif
           ) : SADF_process(_name), itoks(itoks), init_sc(init_sc),
           _cds_func(_cds_func), _kss_func(_kss_func), scenario_table(scenario_table)
+#ifdef FORSYDE_SELF_REPORTING
+        , report_pipe(_report_pipe)
+#endif
     {
 #ifdef FORSYDE_INTROSPECTION
         std::string func_name = std::string(basename());
@@ -634,6 +668,14 @@ private:
 
     //! The table of kernel's scenarios to be passed to the process constructor
     scenario_table_type scenario_table;
+
+#ifdef FORSYDE_SELF_REPORTING
+    //! Self-report string
+    std::ostringstream report_str;
+    
+    // Communication pipes
+    FILE** report_pipe;      // Report pipe
+#endif
 
     //Implementing the abstract semantics
     void init()
@@ -688,6 +730,13 @@ private:
                 }, scenario_table[*sc_val]);
             }, ovals);
         }, oport);
+#ifdef FORSYDE_SELF_REPORTING
+        // Write the report to the pipe
+        report_str << "detectorMN" << " " << basename() << " " << *sc_val << " " << scenario_table[*sc_val] << std::endl;
+        fputs(report_str.str().c_str(), *report_pipe);
+        fflush(*report_pipe);
+        report_str.str("");
+#endif
     }
     
     void clean()
