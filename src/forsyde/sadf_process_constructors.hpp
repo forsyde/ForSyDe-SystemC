@@ -404,10 +404,10 @@ private:
         _func(ovals, *cval1, ivals);
 #ifdef FORSYDE_SELF_REPORTING
         // Write the report to the pipe
-        report_str << "kernelMN" << " " << basename() 
-                                << " " << *cval1 
-                                << " " << std::get<0>(scenario_table[*cval1]) 
-                                << " " << std::get<1>(scenario_table[*cval1]) << std::endl;
+        report_str << "kernelMN" << "  " << basename() 
+                                << "  " << *cval1 
+                                << "  " << std::get<0>(scenario_table[*cval1]) 
+                                << "  " << std::get<1>(scenario_table[*cval1]) << std::endl;
         fputs(report_str.str().c_str(), *report_pipe);
         fflush(*report_pipe);
         report_str.str("");
@@ -732,7 +732,7 @@ private:
         }, oport);
 #ifdef FORSYDE_SELF_REPORTING
         // Write the report to the pipe
-        report_str << "detectorMN" << " " << basename() << " " << *sc_val << " " << scenario_table[*sc_val] << std::endl;
+        report_str << "detectorMN" << "  " << basename() << "  " << *sc_val << "  " << scenario_table[*sc_val] << std::endl;
         fputs(report_str.str().c_str(), *report_pipe);
         fflush(*report_pipe);
         report_str.str("");
