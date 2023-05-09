@@ -62,6 +62,45 @@ inline kernel<T0,TC,T1>* make_kernel(const std::string& pName,
     return p;
 }
 
+//! Helper function to construct a kernelMN process
+/*! This function is used to construct a kernelMN (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <typename... TOs, typename TC, typename... TIs,
+           template <class> class CIf,
+           template <class> class IIf,
+           template <class> class OIf>
+inline kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>* make_kernelMN(const std::string& pName,
+    const typename kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>::functype& _func,
+    const typename kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>::scenario_table_type& _scenario_table,
+    std::tuple<OIf<TOs>&...> outS,
+    CIf<TC>& cS1,
+    std::tuple<IIf<TIs>&...> inpS
+    )
+    
+{
+    auto p = new kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>(pName.c_str(), _func, _scenario_table);
+    
+    (*p).cport1(cS1);
+
+    std::apply([&](auto&... inpS){
+        std::apply([&](auto&... inpP){
+            (inpP(inpS), ...);
+        }, p->iport);
+    }, inpS);
+
+    std::apply([&](auto&... outS){
+        std::apply([&](auto&... outP){
+            (outP(outS), ...);
+        }, p->oport);
+    }, outS);
+
+    return p;
+}
+
 //! Helper function to construct a detector12 process
 /*! This function is used to construct a detector12 (SystemC module) and
  * connect its output and output signals.
@@ -87,6 +126,43 @@ inline detector<T0,T1,TS>* make_detector(const std::string& pName,
     (*p).iport1(inpS1);
     (*p).oport1(outS);
     
+    return p;
+}
+
+//! Helper function to construct a detectorMN process
+/*! This function is used to construct a detectorMN (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <typename... TOs, typename... TIs, typename TS,
+           template <class> class OIf,
+           template <class> class IIf>
+inline detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>* make_detectorMN(const std::string& pName,
+    const typename detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>::cds_functype& _cds_func,
+    const typename detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>::kss_functype& _kss_func,
+    const typename detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>::scenario_table_type& scenario_table,
+    const TS& init_sc,
+    const std::array<size_t,sizeof...(TIs)>& itoks,
+    std::tuple<OIf<TOs>&...> outS,
+    std::tuple<IIf<TIs>&...> inpS
+    )
+{
+    auto p = new detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>(pName.c_str(), _cds_func, _kss_func, scenario_table, init_sc, itoks);
+    
+    std::apply([&](auto&... inpS){
+        std::apply([&](auto&... inpP){
+            (inpP(inpS), ...);
+        }, p->iport);
+    }, inpS);
+
+    std::apply([&](auto&... outS){
+        std::apply([&](auto&... outP){
+            (outP(outS), ...);
+        }, p->oport);
+    }, outS);
+
     return p;
 }
 
