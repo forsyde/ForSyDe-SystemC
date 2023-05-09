@@ -42,23 +42,28 @@ void detector1_cds_func(detector_scenario_type& new_scenario,
 }
 
 
-void detector1_kss_func(tuple<kernel1_scenario_type,kernel2_scenario_type>& out,
+void detector1_kss_func(tuple<vector<kernel1_scenario_type>,vector<kernel2_scenario_type>>& out,
                         const detector_scenario_type& current_scenario,
                         const tuple<vector<int>>& inp)
 {
+    auto& [k1s,k2s] = out;
     switch (current_scenario)
     {
         case S1:
-            out = make_tuple(ADD,MUL);
+            k1s[0] = ADD;
+            k2s[0] = MUL;
             break;
         case S2:
-            out = make_tuple(MINUS,DIV);
+            k1s[0] = MINUS;
+            k2s[0] = DIV;
             break;
         case S3:
-            out = make_tuple(ADD,MUL);
+            k1s[0] = ADD;
+            k2s[0] = MUL;
             break;
         case S4:
-            out = make_tuple(MINUS,DIV);
+            k1s[0] = MINUS;
+            k2s[0] = DIV;
             break;
     }
 }

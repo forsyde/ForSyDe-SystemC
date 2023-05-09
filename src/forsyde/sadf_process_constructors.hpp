@@ -477,7 +477,7 @@ public:
                                 const std::vector<T1>&)> cds_functype;
     
     //! Type of the kernel scenario selection function to be passed to the process constructor
-    typedef std::function<void(T0&,
+    typedef std::function<void(std::vector<T0>&,
                                 const TS&,
                                 const std::vector<T1>&)> kss_functype;
 
@@ -518,7 +518,7 @@ private:
     size_t o1toks;
     
     // Input, output, current scenario, and previous scenario variables
-    T0* o1vals;
+    std::vector<T0> o1vals;
     std::vector<T1> i1vals;
     TS* sc_val;
     TS init_sc;
@@ -535,7 +535,6 @@ private:
     {
         i1vals.resize(i1toks);
 
-        o1vals = new T0;
         sc_val = new TS;
         *sc_val = init_sc;
     }
@@ -552,24 +551,25 @@ private:
         // Applying the current detector scenario function to the previous scenario and input tokens to get the operating scenario
         _cds_func(*sc_val, *sc_val, i1vals);
         
-        // look up the scenario table to get the output tokens production rate
+        // Look up the scenario table to get the output tokens production rate
         o1toks = scenario_table[*sc_val];
+
+        // Resize the output buffers
+        o1vals.resize(o1toks);
 
         /*  Applying the kernel scenario selection function to the current scenario and the input tokens
         *   to determine scenario for each output port (control token for sending to the kernel)
         */
-        _kss_func(*o1vals, *sc_val, i1vals);
+        _kss_func(o1vals, *sc_val, i1vals);
     }
     
     void prod()
     {
-        for (size_t it=0; it<o1toks; it++)
-            write_multiport(oport1, *o1vals);
+        write_vec_multiport(oport1, o1vals);
     }
     
     void clean()
     {
-        delete o1vals;
         delete sc_val;
     }
     
@@ -608,7 +608,7 @@ public:
                                 const std::tuple<std::vector<TIs>...>&)> cds_functype;
 
     //! Type of the kernel scenario selection function to be passed to the process constructor
-    typedef std::function<void(std::tuple<TOs...>&,
+    typedef std::function<void(std::tuple<std::vector<TOs>...>&,
                                 const TS&,
                                 const std::tuple<std::vector<TIs>...>&)> kss_functype;
 
@@ -657,7 +657,7 @@ private:
     std::array<size_t,sizeof...(TOs)> otoks;
 
     // Input, output, current scenario, and previous scenario variables
-    std::tuple<TOs...> ovals;
+    std::tuple<std::vector<TOs>...> ovals;
     std::tuple<std::vector<TIs>...> ivals;
     TS* sc_val;
     TS init_sc;
@@ -710,6 +710,16 @@ private:
         // Applying the current detector scenario function to the previous scenario and input tokens to get the operating scenario
         _cds_func(*sc_val, *sc_val, ivals);
 
+        // Look up the scenario table to get the output tokens production rate
+        otoks = scenario_table[*sc_val];
+
+        // Resize the output buffers
+        std::apply([&](auto&... oval) {
+            std::apply([&](auto&... otok) {
+                (oval.resize(otok), ...);
+            }, otoks);
+        }, ovals);
+
         /*  Applying the kernel scenario selection function to the current scenario and the input tokens
         *   to determine scenario for each output port (control token for sending to the kernel)
         */
@@ -720,14 +730,7 @@ private:
     {
         std::apply([&](auto&&... port){
             std::apply([&](auto&&... val){
-                std::apply([&](auto&&... otok){
-                    (
-                        [&val,&port,&otok](){
-                            for (size_t i=0;i<otok;i++)
-                                write_multiport(port, val);
-                        }()
-                    , ...);
-                }, scenario_table[*sc_val]);
+                (write_vec_multiport(port, val), ...);
             }, ovals);
         }, oport);
 #ifdef FORSYDE_SELF_REPORTING
