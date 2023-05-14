@@ -26,7 +26,7 @@ SC_MODULE(top)
 #ifdef FORSYDE_SELF_REPORTING
     // Communication pipes
     FILE* report_pipe;      // Report pipe
-    int report_pipe_fd;     // Report pipe file descriptor
+    int report_pipe_fd = 0;     // Report pipe file descriptor
 #endif
 
     SC_CTOR(top)
@@ -44,6 +44,9 @@ SC_MODULE(top)
                                 detector1_table,
                                 S1,
                                 {1},
+                                #ifdef FORSYDE_SELF_REPORTING
+                                &report_pipe,
+                                #endif
                                 tie(*from_detector1,*from_detector2),
                                 tie(from_source)
                             );
@@ -51,6 +54,9 @@ SC_MODULE(top)
         SADF::make_kernelMN("kernel1",
                             kernel1_func,
                             kernel1_table,
+                            #ifdef FORSYDE_SELF_REPORTING
+                            &report_pipe,
+                            #endif
                             tie(from_kernel1),
                             *from_detector1,
                             tie(to_kernel1)
@@ -59,6 +65,9 @@ SC_MODULE(top)
         SADF::make_kernelMN("kernel2",
                             kernel2_func,
                             kernel2_table,
+                            #ifdef FORSYDE_SELF_REPORTING
+                            &report_pipe,
+                            #endif
                             tie(from_kernel2),
                             *from_detector2,
                             tie(to_kernel2)

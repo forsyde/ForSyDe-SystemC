@@ -76,13 +76,23 @@ template <typename... TOs, typename TC, typename... TIs,
 inline kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>* make_kernelMN(const std::string& pName,
     const typename kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>::functype& _func,
     const typename kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>::scenario_table_type& _scenario_table,
+#ifdef FORSYDE_SELF_REPORTING
+    FILE** report_pipe,   ///< the report named pipe
+#endif
     std::tuple<OIf<TOs>&...> outS,
     CIf<TC>& cS1,
     std::tuple<IIf<TIs>&...> inpS
     )
     
 {
-    auto p = new kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>(pName.c_str(), _func, _scenario_table);
+    auto p = new kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>(
+        pName.c_str(),
+        _func,
+        _scenario_table
+#ifdef FORSYDE_SELF_REPORTING
+        , report_pipe
+#endif       
+    );
     
     (*p).cport1(cS1);
 
@@ -145,11 +155,24 @@ inline detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>* make_detectorMN(con
     const typename detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>::scenario_table_type& scenario_table,
     const TS& init_sc,
     const std::array<size_t,sizeof...(TIs)>& itoks,
+#ifdef FORSYDE_SELF_REPORTING
+    FILE** report_pipe,   ///< the report named pipe
+#endif
     std::tuple<OIf<TOs>&...> outS,
     std::tuple<IIf<TIs>&...> inpS
     )
 {
-    auto p = new detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>(pName.c_str(), _cds_func, _kss_func, scenario_table, init_sc, itoks);
+    auto p = new detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>(
+        pName.c_str(),
+        _cds_func,
+        _kss_func,
+        scenario_table,
+        init_sc,
+        itoks
+#ifdef FORSYDE_SELF_REPORTING
+        , report_pipe
+#endif
+    );
     
     std::apply([&](auto&... inpS){
         std::apply([&](auto&... inpP){
