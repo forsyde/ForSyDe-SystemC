@@ -29,13 +29,19 @@ SC_MODULE(compAvg)
     
     SC_CTOR(compAvg)
     {
-        // auto averager1 = SDF::make_comb2("averager1", averager_func, 2,3,2, oport1, iport1, dout);
-        // averager1->oport1(din);
-        auto averager1 = new SDF::combMN<std::tuple<double>,std::tuple<double,double>>("double", averager_func, {2}, {3, 2});
-        std::get<0>(averager1->iport)(iport1);
-        std::get<1>(averager1->iport)(dout);
-        std::get<0>(averager1->oport)(oport1);
-        std::get<0>(averager1->oport)(din);
+        auto averager1 = SDF::make_combMN("averager1",
+                                            averager_func,
+                                            {2},
+                                            {3,2},
+                                            tie(oport1), 
+                                            tie(iport1, dout)
+        );
+        get<0>(averager1->oport)(din);
+        // auto averager1 = new SDF::combMN<std::tuple<double>,std::tuple<double,double>>("double", averager_func, {2}, {3, 2});
+        // std::get<0>(averager1->iport)(iport1);
+        // std::get<1>(averager1->iport)(dout);
+        // std::get<0>(averager1->oport)(oport1);
+        // std::get<0>(averager1->oport)(din);
         
         SDF::make_delayn("avginit1",0.0,2, dout, din);
     }

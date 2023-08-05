@@ -160,6 +160,47 @@ inline comb4<T0,T1,T2,T3,T4>* make_comb4(std::string pName,///< process name
     return p;
 }
 
+//! Helper function to construct a combMN process
+/*! This function is used to construct a combMN (SystemC module) and
+ * connect its input and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes boilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <typename... TOs, typename... TIs,
+           template <class> class... IIf,
+           template <class> class... OIf>
+inline combMN<std::tuple<TOs...>,std::tuple<TIs...>>* make_combMN(const std::string& pName,
+    const typename combMN<std::tuple<TOs...>,std::tuple<TIs...>>::functype& _func,
+    std::array<size_t, sizeof...(TOs)> otoks,
+    std::array<size_t, sizeof...(TIs)> itoks,
+    std::tuple<OIf<TOs>&...> outS,
+    std::tuple<IIf<TIs>&...> inpS
+    )
+    
+{
+    auto p = new combMN<std::tuple<TOs...>,std::tuple<TIs...>>(
+        pName.c_str(),
+        _func,
+        otoks,
+        itoks      
+    );
+    
+    std::apply([&](auto&... inpS){
+        std::apply([&](auto&... inpP){
+            (inpP(inpS), ...);
+        }, p->iport);
+    }, inpS);
+
+    std::apply([&](auto&... outS){
+        std::apply([&](auto&... outP){
+            (outP(outS), ...);
+        }, p->oport);
+    }, outS);
+
+    return p;
+}
+
 //! Helper function to construct a delay process
 /*! This function is used to construct a process (SystemC module) and
  * connect its output and output signals.

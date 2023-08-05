@@ -18,10 +18,12 @@
 
 using namespace ForSyDe::SDF;
 
-void report_func(double inp1)
+void report_func(tuple<>& out,
+                const tuple<vector<double>>& inp)
 {
+    auto inp1 = get<0>(inp);
 #pragma ForSyDe begin report_func
-    std::cout << "output value: " << inp1 << std::endl;
+    std::cout << "output value: " << inp1[0] << std::endl;
 #pragma ForSyDe end
 }
 
