@@ -772,6 +772,29 @@ private:
 #endif
 };
 
+//! Process constructor for a combinational process with M inputs and N outputs
+/*! similar to comb with M inputs and unzipN, re-exported from the SDF MoC
+ */
+template <typename TO_tuple, typename TI_tuple>
+using combMN = SDF::combMN<TO_tuple,TI_tuple>;
+
+//! Process constructor for a source process
+/*! This class is used to build a souce process which only has an output.
+ * Given an initial state and a function, the process repeatedly applies
+ * the function to the current state to produce next state, which is
+ * also the process output. It can be used in test-benches.
+ */
+template <class T>
+using source = SDF::source<T>;
+
+//! Process constructor for a sink process
+/*! This class is used to build a sink process which only has an input.
+ * Its main purpose is to be used in test-benches. The process repeatedly
+ * applies a given function to the current input.
+ */
+template <class T>
+using sink = SDF::sink<T>;
+
 }
 }
 

@@ -64,15 +64,15 @@ inline kernel<T0,TC,T1>* make_kernel(const std::string& pName,
 
 //! Helper function to construct a kernelMN process
 /*! This function is used to construct a kernelMN (SystemC module) and
- * connect its output and output signals.
+ * connect its input and output signals.
  * It provides a more functional style definition of a ForSyDe process.
- * It also removes bilerplate code by using type-inference feature of
+ * It also removes boilerplate code by using type-inference feature of
  * C++ and automatic binding to the input FIFOs.
  */
 template <typename... TOs, typename TC, typename... TIs,
            template <class> class CIf,
-           template <class> class IIf,
-           template <class> class OIf>
+           template <class> class... IIf,
+           template <class> class... OIf>
 inline kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>* make_kernelMN(const std::string& pName,
     const typename kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>::functype& _func,
     const typename kernelMN<std::tuple<TOs...>,TC,std::tuple<TIs...>>::scenario_table_type& _scenario_table,
@@ -147,8 +147,8 @@ inline detector<T0,T1,TS>* make_detector(const std::string& pName,
  * C++ and automatic binding to the input FIFOs.
  */
 template <typename... TOs, typename... TIs, typename TS,
-           template <class> class OIf,
-           template <class> class IIf>
+           template <class> class... OIf,
+           template <class> class... IIf>
 inline detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>* make_detectorMN(const std::string& pName,
     const typename detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>::cds_functype& _cds_func,
     const typename detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>::kss_functype& _kss_func,
@@ -186,6 +186,54 @@ inline detectorMN<std::tuple<TOs...>,std::tuple<TIs...>,TS>* make_detectorMN(con
         }, p->oport);
     }, outS);
 
+    return p;
+}
+
+// template <class T, template <class> class OIf>
+// using make_source = SDF::make_source<T,OIf>;
+
+//! Helper function to construct a source process
+/*! This function is used to construct a source (SystemC module) and
+ * connect its output signal.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the output FIFOs.
+ */
+template <class T, template <class> class OIf>
+inline source<T>* make_source(std::string pName,
+    typename source<T>::functype _func,
+    T initval,
+    unsigned long long take,
+    OIf<T>& outS
+    )
+{
+    auto p = new source<T>(pName.c_str(), _func, initval, take);
+    
+    (*p).oport1(outS);
+    
+    return p;
+}
+
+// template <class T, template <class> class IIf>
+// using make_sink = SDF::make_sink<T,IIf>;
+
+//! Helper function to construct a sink process
+/*! This function is used to construct a sink (SystemC module) and
+ * connect its output and output signals.
+ * It provides a more functional style definition of a ForSyDe process.
+ * It also removes bilerplate code by using type-inference feature of
+ * C++ and automatic binding to the input FIFOs.
+ */
+template <class T, template <class> class IIf>
+inline sink<T>* make_sink(std::string pName,
+    typename sink<T>::functype _func,
+    IIf<T>& inS
+    )
+{
+    auto p = new sink<T>(pName.c_str(), _func);
+    
+    (*p).iport1(inS);
+    
     return p;
 }
 

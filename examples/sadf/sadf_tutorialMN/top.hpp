@@ -73,17 +73,17 @@ SC_MODULE(top)
                             tie(to_kernel2)
         );
 
-        SDF::make_source("source1", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 0, to_kernel1);
+        SADF::make_source("source1", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 0, to_kernel1);
         
-        SDF::make_source("source2", [] (int& out1, const int& inp1) {out1 = inp1 - 1;}, -1, 0, to_kernel2);        
+        SADF::make_source("source2", [] (int& out1, const int& inp1) {out1 = inp1 - 1;}, -1, 0, to_kernel2);        
         
-        SDF::make_sink ("sink1", [] (const int& out) {std::cout <<"kernel1 = " <<out << std::endl;}, from_kernel1);
+        SADF::make_sink ("sink1", [] (const int& out) {std::cout <<"kernel1 = " <<out << std::endl;}, from_kernel1);
         
-        SDF::make_sink ("sink2", [] (const int& out) {std::cout <<"kernel2 = " <<out << std::endl;}, from_kernel2);
+        SADF::make_sink ("sink2", [] (const int& out) {std::cout <<"kernel2 = " <<out << std::endl;}, from_kernel2);
         
         //! < -------------------------------- Without Using Helper--------------------------------> //!
         
-        auto sourced = new SDF::source<int>("sourced", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 4);
+        auto sourced = new SADF::source<int>("sourced", [] (int& out1, const int& inp1) {out1 = inp1 + 1;}, 1, 4);
         sourced->oport1(from_source);
 
         // auto detector1 = new SADF::detectorMN<
