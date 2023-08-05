@@ -471,6 +471,7 @@ public:
         ss << itoks;
         arg_vec.push_back(std::make_tuple("otoks",ss.str()));
         ss.clear();
+        ss.str(std::string());
         ss << otoks;
         arg_vec.push_back(std::make_tuple("itoks",ss.str()));
 #endif

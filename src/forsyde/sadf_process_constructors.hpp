@@ -504,6 +504,7 @@ public:
         ss << scenario_table;
         arg_vec.push_back(std::make_tuple("scenario_table",ss.str()));
         ss.clear();
+        ss.str(std::string());
         ss << init_sc;
         arg_vec.push_back(std::make_tuple("init_sc",ss.str()));
         arg_vec.push_back(std::make_tuple("i1toks",std::to_string(i1toks)));
@@ -641,9 +642,11 @@ public:
         ss << scenario_table;
         arg_vec.push_back(std::make_tuple("scenario_table",ss.str()));
         ss.clear();
+        ss.str(std::string());
         ss << init_sc;
         arg_vec.push_back(std::make_tuple("init_sc",ss.str()));
         ss.clear();
+        ss.str(std::string());
         ss << itoks;
         arg_vec.push_back(std::make_tuple("itoks",ss.str()));
 #endif
