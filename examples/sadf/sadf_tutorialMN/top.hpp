@@ -41,7 +41,12 @@ SC_MODULE(top)
                                 "detector1",
                                 detector1_cds_func,
                                 detector1_kss_func,
-                                detector1_table,
+                                {
+                                    {S1,{1,1}},
+                                    {S2,{1,1}},
+                                    {S3,{1,1}},
+                                    {S4,{1,1}}
+                                }, // detector1_table
                                 S1,
                                 {1},
                                 #ifdef FORSYDE_SELF_REPORTING
@@ -53,7 +58,10 @@ SC_MODULE(top)
         
         SADF::make_kernelMN("kernel1",
                             kernel1_func,
-                            kernel1_table,
+                            {
+                                {ADD,  {{3},{1}}},
+                                {MINUS,{{2},{1}}}
+                            }, // kernel1_table
                             #ifdef FORSYDE_SELF_REPORTING
                             &report_pipe,
                             #endif
@@ -64,7 +72,10 @@ SC_MODULE(top)
         
         SADF::make_kernelMN("kernel2",
                             kernel2_func,
-                            kernel2_table,
+                            {
+                                {MUL,{{2},{1}}},
+                                {DIV,{{2},{1}}}
+                            }, // kernel2_table
                             #ifdef FORSYDE_SELF_REPORTING
                             &report_pipe,
                             #endif
