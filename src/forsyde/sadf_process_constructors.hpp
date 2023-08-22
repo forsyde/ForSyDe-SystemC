@@ -798,6 +798,17 @@ using source = SDF::source<T>;
 template <class T>
 using sink = SDF::sink<T>;
 
+//! Process constructor for a n-delay element
+/*! This class is used to build a sequential process similar to dalay
+ * but with an extra initial variable which sets the number of delay
+ * elements (initial tokens). Given an initial value, it inserts the
+ * initial value n times at the the beginning of output stream and
+ * passes the rest of the inputs to its output untouched. The class is
+ * parameterized for its input/output data-type.
+ */
+template <class T>
+using delayn = SDF::delayn<T>;
+
 }
 }
 
