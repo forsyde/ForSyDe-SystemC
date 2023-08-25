@@ -40,14 +40,14 @@ SC_MODULE(top)
         auto k_kss_func = [](auto&& out, const auto& sc, const auto& inp) {
             switch (sc) {
                 case Sp:
-                    get<0>(out)[0] = get<1>(out)[0] = get<4>(out)[0] = Sp;
+                    get<0>(out) = get<1>(out) = get<4>(out) = {Sp};
                     break;
                 case Sm:
-                    get<0>(out)[0] = get<2>(out)[0] = get<4>(out)[0] = Sm;
+                    get<0>(out) = get<2>(out) = get<4>(out) = {Sm};
                     break;
                 case Sc:
-                    get<0>(out)[0] = get<3>(out)[0] = get<4>(out)[0] = Sc;
-                    get<0>(out)[1] = Sc;
+                    get<0>(out) = {Sc, Sc};
+                    get<3>(out) = get<4>(out) = {Sc};
                     break;
                 default:
                     break;
@@ -74,21 +74,22 @@ SC_MODULE(top)
 
         // The kernel T        
         auto t_func = [&](auto&& out, const auto& sc, const auto& inp) {
-            get<0>(out)[0] = get<0>(inp)[0] + 1;
+            auto cur_st = get<0>(inp)[0];
+            get<0>(out) = {cur_st + 1};
             switch (sc) {
                 case Sp:
-                    get<1>(out)[0] = get<0>(inp)[0];
+                    get<1>(out) = {cur_st};
                     break;
                 case Sm:
-                    get<2>(out)[0] = get<0>(inp)[0];
+                    get<2>(out) = {cur_st};
                     break;
                 case Sc:
-                    get<3>(out)[0] = get<0>(inp)[0];
+                    get<3>(out) = {cur_st};
                     break;
                 default:
                     break;
             }
-            if (get<0>(inp)[0]>20) wait();
+            if (cur_st > 20) wait();
         };
         
         SADF::make_kernelMN(
@@ -112,7 +113,7 @@ SC_MODULE(top)
         // The kernel E+
         
         auto ep_func = [](auto&& out, const auto& sc, const auto& inp) {
-            get<0>(out)[0] = get<0>(inp)[0] + 1;
+            out = {{ {get<0>(inp)[0] + 1} }};
         };
         
         SADF::make_kernelMN(
@@ -134,7 +135,7 @@ SC_MODULE(top)
         // The kernel E-
         
         auto em_func = [](auto&& out, const auto& sc, const auto& inp) {
-            get<0>(out)[0] = get<0>(inp)[0] - 1;
+            out = {{ {get<0>(inp)[0] - 1} }};
         };
 
         SADF::make_kernelMN(
@@ -156,8 +157,9 @@ SC_MODULE(top)
         // The kernel Ec
 
         auto ec_func = [](auto&& out, const auto& sc, const auto& inp) {
-            get<0>(out)[0] = get<0>(inp)[0] + get<0>(inp)[1];
-            get<0>(out)[1] = get<0>(inp)[0] - get<0>(inp)[1];
+            auto a = get<0>(inp)[0];
+            auto b = get<0>(inp)[1];
+            out = {{ {a + b, a - b} }};
         };
         
         SADF::make_kernelMN(
@@ -181,14 +183,17 @@ SC_MODULE(top)
         auto d_func = [](auto&& out, const auto& sc, const auto& inp) {
             switch (sc) {
                 case Sp:
-                    get<0>(out)[0] = get<0>(inp)[0] -1 ;
+                    out = {{ {get<0>(inp)[0] - 1} }};
                     break;
                 case Sm:
-                    get<0>(out)[0] = get<1>(inp)[0] + 1;
+                    out = {{ {get<1>(inp)[0] + 1} }};
                     break;
                 case Sc:
-                    get<0>(out)[0] = (get<2>(inp)[0] + get<2>(inp)[1])/2;
-                    get<0>(out)[1] = (get<2>(inp)[0] - get<2>(inp)[1])/2;
+                {
+                    auto n = get<2>(inp)[0];
+                    auto m = get<2>(inp)[1];
+                    out = {{ {(n + m)/2, (n - m)/2} }};
+                }
                     break;
                 default:
                     break;
@@ -213,8 +218,13 @@ SC_MODULE(top)
 
         // The SDF sink actor r
         
-        SDF::make_sink("r", [](const int& out) {std::cout <<"out = " <<out << std::endl;}, dtor);
-
+        SDF::make_sink(
+            "r", 
+            [](const int& out) {
+                std::cout <<"out = " <<out << std::endl;
+            },
+            dtor
+        );
     }
 #ifdef FORSYDE_INTROSPECTION
     void start_of_simulation()
