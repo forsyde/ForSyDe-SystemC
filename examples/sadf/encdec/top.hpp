@@ -38,16 +38,17 @@ SC_MODULE(top)
         };
 
         auto k_kss_func = [](auto&& out, const auto& sc, const auto& inp) {
+            auto&& [outT,outEp,outEm,outEc,outD] = out;
+
             switch (sc) {
                 case Sp:
-                    get<0>(out) = get<1>(out) = get<4>(out) = {Sp};
+                    outT[0] = outEp[0] = outD [0]= Sp;
                     break;
                 case Sm:
-                    get<0>(out) = get<2>(out) = get<4>(out) = {Sm};
+                    outT[0] = outEm[0]= outD[0] = Sm;
                     break;
                 case Sc:
-                    get<0>(out) = {Sc, Sc};
-                    get<3>(out) = get<4>(out) = {Sc};
+                    outT[0] = outT[1] = outEc[0] = outD[0] = Sc;
                     break;
                 default:
                     break;
@@ -74,20 +75,15 @@ SC_MODULE(top)
 
         // The kernel T        
         auto t_func = [&](auto&& out, const auto& sc, const auto& inp) {
-            auto cur_st = get<0>(inp)[0];
-            get<0>(out) = {cur_st + 1};
+            const auto& [inp1] = inp;
+            auto&& [outT,outEp,outEm,outEc] = out;
+            auto& cur_st = inp1[0];
+
+            outT[0] = cur_st + 1;
             switch (sc) {
-                case Sp:
-                    get<1>(out) = {cur_st};
-                    break;
-                case Sm:
-                    get<2>(out) = {cur_st};
-                    break;
-                case Sc:
-                    get<3>(out) = {cur_st};
-                    break;
-                default:
-                    break;
+                case Sp:    outEp[0] = cur_st;  break;
+                case Sm:    outEm[0] = cur_st;  break;
+                case Sc:    outEc[0] = cur_st;  break;
             }
             if (cur_st > 20) wait();
         };
@@ -113,7 +109,10 @@ SC_MODULE(top)
         // The kernel E+
         
         auto ep_func = [](auto&& out, const auto& sc, const auto& inp) {
-            out = {{ {get<0>(inp)[0] + 1} }};
+            const auto& [inpT] = inp;
+            auto&& [outD] = out;
+
+            outD[0] = inpT[0] + 1;
         };
         
         SADF::make_kernelMN(
@@ -135,7 +134,10 @@ SC_MODULE(top)
         // The kernel E-
         
         auto em_func = [](auto&& out, const auto& sc, const auto& inp) {
-            out = {{ {get<0>(inp)[0] - 1} }};
+            const auto& [inpT] = inp;
+            auto&& [outD] = out;
+
+            outD[0] = {inpT[0] - 1};
         };
 
         SADF::make_kernelMN(
@@ -157,9 +159,11 @@ SC_MODULE(top)
         // The kernel Ec
 
         auto ec_func = [](auto&& out, const auto& sc, const auto& inp) {
-            auto a = get<0>(inp)[0];
-            auto b = get<0>(inp)[1];
-            out = {{ {a + b, a - b} }};
+            const auto& [inpT] = inp;
+            auto&& [outD] = out;
+
+            outD[0] = inpT[0]+inpT[1];
+            outD[1] = inpT[0]-inpT[1];
         };
         
         SADF::make_kernelMN(
@@ -181,21 +185,19 @@ SC_MODULE(top)
         // The kernel D
         
         auto d_func = [](auto&& out, const auto& sc, const auto& inp) {
+            const auto& [inpEp, inpEm, inpEc] = inp;
+            auto&& [outR] = out;
+
             switch (sc) {
                 case Sp:
-                    out = {{ {get<0>(inp)[0] - 1} }};
+                    outR[0] = inpEp[0] - 1;
                     break;
                 case Sm:
-                    out = {{ {get<1>(inp)[0] + 1} }};
+                    outR[0] = inpEm[0] + 1;
                     break;
                 case Sc:
-                {
-                    auto n = get<2>(inp)[0];
-                    auto m = get<2>(inp)[1];
-                    out = {{ {(n + m)/2, (n - m)/2} }};
-                }
-                    break;
-                default:
+                    outR[0] = (inpEc[0] + inpEc[1]) / 2;
+                    outR[1] = (inpEc[0] - inpEc[1]) / 2;
                     break;
             }
         };
